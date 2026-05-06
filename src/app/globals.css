@@ -340,6 +340,15 @@
   -webkit-backdrop-filter: blur(16px);
 }
 
+/* Hide scrollbar utility */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Selection highlight */
 ::selection {
   background: color-mix(in oklch, var(--primary) 30%, transparent);

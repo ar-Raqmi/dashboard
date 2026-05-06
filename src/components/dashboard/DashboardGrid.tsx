@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useRef } from 'react'
 import { ResponsiveGridLayout, useContainerWidth } from 'react-grid-layout'
 import { CheckCircle, CalendarDays, StickyNote, BookOpen, Flag, Clock } from 'lucide-react'
 import 'react-grid-layout/css/styles.css'
@@ -215,7 +215,9 @@ const widgetComponents: Record<WidgetType, React.ComponentType> = {
 
 export function DashboardGrid() {
   const layouts = useAppStore((s) => s.layouts)
+  const mobileLayouts = useAppStore((s) => s.mobileLayouts)
   const setLayouts = useAppStore((s) => s.setLayouts)
+  const setMobileLayouts = useAppStore((s) => s.setMobileLayouts)
   const updateWidgetSize = useAppStore((s) => s.updateWidgetSize)
   const widgets = useAppStore((s) => s.widgets)
 
@@ -231,7 +233,7 @@ export function DashboardGrid() {
     [widgets, visibleWidgetTypesKey]
   )
 
-  // Lookup map: widget type → current layout size
+  // Lookup map: widget type → current layout size (desktop)
   const layoutMap = useMemo(() => {
     const map = new Map<string, Layout>()
     for (const l of layouts) {
@@ -243,46 +245,76 @@ export function DashboardGrid() {
   // Use the container width hook from react-grid-layout v2
   const { containerRef, width } = useContainerWidth()
 
-  // Build responsive layouts: 3 columns for desktop, 1 for mobile
+  // Track current breakpoint to save to the correct layout store
+  const currentBreakpointRef = useRef<string>('lg')
+
+  // Build responsive layouts: desktop uses `layouts`, mobile uses `mobileLayouts`
   const responsiveLayouts = useMemo(() => {
     const visibleTypes = new Set(visibleWidgets.map((w) => w.type))
-    const currentLayout = layouts.filter((l) => visibleTypes.has(l.i))
 
-    // Desktop: 3 columns - keep original layout, cap w at 3, h at 3, x at 2
-    const desktopLayout = currentLayout.map((l) => ({
-      ...l,
-      w: Math.min(l.w, 3),
-      h: Math.min(l.h, 3),
-      x: Math.min(l.x, 2),
-    }))
+    // Desktop: 3 columns - use dedicated desktop layouts
+    const desktopLayout = layouts
+      .filter((l) => visibleTypes.has(l.i))
+      .map((l) => ({
+        ...l,
+        w: Math.min(l.w, 3),
+        h: Math.min(l.h, 3),
+        x: Math.min(l.x, 2),
+      }))
 
-    // Mobile: 1 column - each widget takes full width, cap h at 3
-    const mobileLayout = currentLayout.map((l, idx) => ({
-      ...l,
-      w: 1,
-      h: Math.min(l.h, 3),
-      x: 0,
-      y: idx * (Math.min(l.h, 3) || 2),
-    }))
+    // Mobile: 1 column - use dedicated mobile layouts
+    const mobileLayout = mobileLayouts
+      .filter((l) => visibleTypes.has(l.i))
+      .map((l) => ({
+        ...l,
+        w: 1,
+        h: Math.min(l.h, 3),
+        x: 0,
+      }))
 
     return {
       lg: desktopLayout,
       md: desktopLayout,
       sm: mobileLayout,
     }
-  }, [layouts, visibleWidgets])
+  }, [layouts, mobileLayouts, visibleWidgets])
 
-  const handleLayoutChange = useCallback(
+  // Save desktop layouts when they change (only for lg/md breakpoint)
+  const handleDesktopLayoutChange = useCallback(
     (currentLayout: Layout[]) => {
       const visibleTypes = new Set(visibleWidgets.map((w) => w.type))
-      // Merge with existing layouts to preserve hidden widget layouts
-      const hiddenLayouts = layouts.filter(
-        (l) => !visibleTypes.has(l.i)
-      )
+      const hiddenLayouts = layouts.filter((l) => !visibleTypes.has(l.i))
       setLayouts([...hiddenLayouts, ...currentLayout])
     },
     [layouts, visibleWidgets, setLayouts]
   )
+
+  // Save mobile layouts when they change (only for sm breakpoint)
+  const handleMobileLayoutChange = useCallback(
+    (currentLayout: Layout[]) => {
+      const visibleTypes = new Set(visibleWidgets.map((w) => w.type))
+      const hiddenLayouts = mobileLayouts.filter((l) => !visibleTypes.has(l.i))
+      setMobileLayouts([...hiddenLayouts, ...currentLayout])
+    },
+    [mobileLayouts, visibleWidgets, setMobileLayouts]
+  )
+
+  // Unified handler that routes to the correct save function based on current breakpoint
+  const handleLayoutChange = useCallback(
+    (currentLayout: Layout[]) => {
+      if (currentBreakpointRef.current === 'sm') {
+        handleMobileLayoutChange(currentLayout)
+      } else {
+        handleDesktopLayoutChange(currentLayout)
+      }
+    },
+    [handleDesktopLayoutChange, handleMobileLayoutChange]
+  )
+
+  // Track which breakpoint we're on
+  const handleBreakpointChange = useCallback((newBreakpoint: string) => {
+    currentBreakpointRef.current = newBreakpoint
+  }, [])
 
   const handleSizeChange = useCallback(
     (widgetId: string, w: number, h: number) => {
@@ -301,6 +333,7 @@ export function DashboardGrid() {
         rowHeight={120}
         width={width}
         onLayoutChange={handleLayoutChange}
+        onBreakpointChange={handleBreakpointChange}
         draggableHandle=".widget-drag-handle"
         compactType="vertical"
         margin={[16, 16]}

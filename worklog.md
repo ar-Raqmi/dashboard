@@ -55,3 +55,28 @@ Stage Summary:
 - No more freeform drag-to-resize (was "off and whack")
 - All lint checks pass, page serves with 200 status
 - Backward compatible with old localStorage data (h values capped at 3)
+---
+Task ID: 2
+Agent: main
+Task: Fix mobile→desktop layout reset bug; Replace sidebar with horizontal tab navigation
+
+Work Log:
+- Diagnosed layout reset bug: onLayoutChange was overwriting the single `layouts` array with mobile layout (w:1) when on mobile breakpoint, destroying desktop layout
+- Added `mobileLayouts` and `setMobileLayouts` to Zustand store (separate from desktop `layouts`)
+- Added `defaultMobileLayouts` (1-column stack) alongside `defaultLayouts` (3-column grid)
+- `updateWidgetSize` now updates both desktop (w+h) and mobile (h only) layouts
+- Both `layouts` and `mobileLayouts` persisted to localStorage
+- DashboardGrid now tracks current breakpoint via `onBreakpointChange` + ref
+- `handleLayoutChange` routes saves to correct store based on current breakpoint
+- Removed NavigationRail component usage from page.tsx
+- Created new TabBar component: horizontal scrollable tab bar with animated active pill
+- TabBar has scroll indicators (chevrons) when tabs overflow on mobile
+- Updated page.tsx layout: Header → fixed TabBar → full-width content (no more left margin)
+- Added `.scrollbar-none` CSS utility for the tab bar
+- Content area `pt-[112px]` accounts for header (64px) + tab bar (~48px)
+
+Stage Summary:
+- Desktop and mobile layouts now stored independently — switching breakpoints no longer resets the other
+- Navigation is now a horizontal tab bar instead of a vertical sidebar/nav rail
+- Full-width content area with no left margin offset
+- All lint checks pass, page loads with 200

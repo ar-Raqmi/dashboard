@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAppStore, type ActivePage } from '@/lib/store'
 import Header from '@/components/navigation/Header'
-import NavigationRail from '@/components/navigation/NavigationRail'
+import TabBar from '@/components/navigation/TabBar'
 import { DashboardGrid } from '@/components/dashboard/DashboardGrid'
 import { DashboardManager } from '@/components/dashboard/DashboardManager'
 import GlobalSearch from '@/components/search/GlobalSearch'
@@ -69,32 +69,31 @@ export default function Home() {
       {/* Header */}
       <Header />
 
-      {/* Main Layout */}
-      <div className="flex flex-1 pt-16">
-        {/* Navigation Rail (desktop only) */}
-        <NavigationRail />
-
-        {/* Content Area */}
-        <main className="flex-1 md:ml-[84px] pb-20 md:pb-4 overflow-y-auto">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activePage}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{
-                type: 'spring',
-                stiffness: 300,
-                damping: 30,
-                mass: 0.8,
-              }}
-              className={activePage === 'dashboard' ? 'p-4 md:p-6' : ''}
-            >
-              <PageComponent />
-            </motion.div>
-          </AnimatePresence>
-        </main>
+      {/* Tab Bar Navigation (below header) */}
+      <div className="fixed top-16 left-0 right-0 z-40">
+        <TabBar />
       </div>
+
+      {/* Content Area */}
+      <main className="flex-1 pt-[112px] overflow-y-auto">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activePage}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{
+              type: 'spring',
+              stiffness: 300,
+              damping: 30,
+              mass: 0.8,
+            }}
+            className={activePage === 'dashboard' ? 'p-4 md:p-6' : ''}
+          >
+            <PageComponent />
+          </motion.div>
+        </AnimatePresence>
+      </main>
 
       {/* Dashboard Manager Sheet */}
       <DashboardManager />
