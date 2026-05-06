@@ -181,11 +181,19 @@ const sampleNotes: Note[] = [
   { id: crypto.randomUUID(), title: 'Design Inspiration', content: 'Material 3 Expressive: bouncy animations, bold colors, rounded shapes', color: '#80CBC4', pinned: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
 ]
 
+// Helper: local date string to avoid UTC shift from toISOString()
+const localDateStr = (date: Date) => {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
 const sampleEvents: CalendarEvent[] = [
-  { id: crypto.randomUUID(), title: 'Team Meeting', date: new Date().toISOString().split('T')[0], color: '#A5D6A7' },
-  { id: crypto.randomUUID(), title: 'Project Deadline', date: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0], color: '#F48FB1' },
-  { id: crypto.randomUUID(), title: 'Design Review', date: new Date(Date.now() + 86400000 * 5).toISOString().split('T')[0], color: '#CE93D8' },
-  { id: crypto.randomUUID(), title: 'Sprint Planning', date: new Date(Date.now() + 86400000 * 7).toISOString().split('T')[0], color: '#80CBC4' },
+  { id: crypto.randomUUID(), title: 'Team Meeting', date: localDateStr(new Date()), color: '#A5D6A7' },
+  { id: crypto.randomUUID(), title: 'Project Deadline', date: localDateStr(new Date(Date.now() + 86400000 * 2)), color: '#F48FB1' },
+  { id: crypto.randomUUID(), title: 'Design Review', date: localDateStr(new Date(Date.now() + 86400000 * 5)), color: '#CE93D8' },
+  { id: crypto.randomUUID(), title: 'Sprint Planning', date: localDateStr(new Date(Date.now() + 86400000 * 7)), color: '#80CBC4' },
 ]
 
 const sampleFiles: FileItem[] = [

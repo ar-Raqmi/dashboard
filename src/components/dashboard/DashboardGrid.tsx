@@ -63,14 +63,15 @@ function getFileIcon(category: FileItem['category']) {
   }
 }
 
-// ===== Widget Content Components =====
+// ===== Widget Content Components (all receive w/h for size-adaptive rendering) =====
 
-function DailyTasksContent() {
+function DailyTasksContent({ h }: { w: number; h: number }) {
   const tasks = useAppStore((s) => s.tasks)
   const toggleTaskStatus = useAppStore((s) => s.toggleTaskStatus)
+  const maxTasks = Math.min(tasks.length, h >= 4 ? 10 : h >= 3 ? 7 : h >= 2 ? 5 : 4)
   return (
-    <div className="space-y-2">
-      {tasks.slice(0, 5).map((task) => (
+    <div className="space-y-1.5">
+      {tasks.slice(0, maxTasks).map((task) => (
         <div
           key={task.id}
           className="flex items-center gap-3 p-2 rounded-xl hover:bg-accent transition-colors cursor-pointer"
@@ -104,38 +105,133 @@ function DailyTasksContent() {
   )
 }
 
-function CalendarContent() {
+function CalendarContent({ w, h }: { w: number; h: number }) {
   const events = useAppStore((s) => s.events)
+  const today = new Date()
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+
+  // Upcoming events (today + future)
+  const upcomingEvents = useMemo(() => {
+    return events
+      .filter((e) => e.date >= todayStr)
+      .sort((a, b) => a.date.localeCompare(b.date))
+  }, [events, todayStr])
+
+  // Events today
+  const todayEvents = upcomingEvents.filter((e) => e.date === todayStr)
+  const futureEvents = upcomingEvents.filter((e) => e.date > todayStr)
+
+  const maxUpcoming = h >= 4 ? 8 : h >= 3 ? 5 : h >= 2 ? 4 : 3
+  const showToday = h >= 2
+  const showFuture = h >= 2
+
   return (
-    <div className="space-y-2">
-      {events.slice(0, 4).map((event) => (
-        <div key={event.id} className="flex items-center gap-3 p-2 rounded-xl">
-          <div
-            className="w-2 h-2 rounded-full shrink-0"
-            style={{ backgroundColor: event.color || 'var(--citrus)' }}
-          />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-foreground truncate">{event.title}</p>
-            <p className="text-xs text-muted-foreground">{event.date}</p>
+    <div className="flex flex-col gap-3 h-full">
+      {/* Today's events */}
+      {showToday && (
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="size-2 rounded-full bg-primary animate-pulse" />
+            <span className="text-xs font-semibold text-primary uppercase tracking-wider">Today</span>
           </div>
+          {todayEvents.length === 0 ? (
+            <p className="text-xs text-muted-foreground pl-4">No events today</p>
+          ) : (
+            <div className="space-y-1.5 pl-4">
+              {todayEvents.map((event) => (
+                <div key={event.id} className="flex items-center gap-2.5">
+                  <div className="size-2 rounded-full shrink-0" style={{ backgroundColor: event.color || '#A5D6A7' }} />
+                  <span className="text-sm text-foreground truncate">{event.title}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      ))}
+      )}
+
+      {/* Upcoming events */}
+      {showFuture && (
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <CalendarDays className="size-3 text-muted-foreground" />
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Upcoming</span>
+          </div>
+          {futureEvents.length === 0 ? (
+            <p className="text-xs text-muted-foreground pl-4">No upcoming events</p>
+          ) : (
+            <div className="space-y-1.5 pl-4">
+              {futureEvents.slice(0, maxUpcoming).map((event) => (
+                <div key={event.id} className="flex items-center gap-2.5">
+                  <div className="size-2 rounded-full shrink-0" style={{ backgroundColor: event.color || '#A5D6A7' }} />
+                  <span className="text-sm text-foreground truncate flex-1 min-w-0">{event.title}</span>
+                  <span className="text-[0.65rem] text-muted-foreground shrink-0">
+                    {new Date(event.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Compact mode for 1-row cards */}
+      {!showToday && !showFuture && (
+        <div className="space-y-1.5">
+          {upcomingEvents.slice(0, 3).map((event) => (
+            <div key={event.id} className="flex items-center gap-2.5">
+              <div className="size-2 rounded-full shrink-0" style={{ backgroundColor: event.color || '#A5D6A7' }} />
+              <span className="text-sm text-foreground truncate flex-1 min-w-0">{event.title}</span>
+            </div>
+          ))}
+          {upcomingEvents.length === 0 && (
+            <p className="text-xs text-muted-foreground">No events</p>
+          )}
+        </div>
+      )}
     </div>
   )
 }
 
-function NotesContent() {
+function NotesContent({ w, h }: { w: number; h: number }) {
   const notes = useAppStore((s) => s.notes)
+  const maxNotes = Math.min(notes.length, h >= 5 ? 10 : h >= 4 ? 8 : h >= 3 ? 5 : h >= 2 ? 4 : 3)
+  const showContent = h >= 3
+  const useGrid = w >= 2 && h >= 2
+
+  if (useGrid) {
+    // Grid layout for wider/taller cards
+    const cols = w >= 3 ? 3 : 2
+    return (
+      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+        {notes.slice(0, maxNotes).map((note) => (
+          <div
+            key={note.id}
+            className="p-2.5 rounded-xl border border-border hover:bg-accent/50 transition-colors"
+            style={{ borderLeftColor: note.color, borderLeftWidth: '3px' }}
+          >
+            <p className="text-sm font-medium text-foreground line-clamp-1">{note.title}</p>
+            {showContent && (
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{note.content}</p>
+            )}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  // List layout for narrow cards
   return (
-    <div className="space-y-2">
-      {notes.slice(0, 3).map((note) => (
+    <div className="space-y-1.5">
+      {notes.slice(0, maxNotes).map((note) => (
         <div
           key={note.id}
-          className="p-3 rounded-xl border border-border"
+          className="p-2.5 rounded-xl border border-border hover:bg-accent/50 transition-colors"
           style={{ borderLeftColor: note.color, borderLeftWidth: '3px' }}
         >
-          <p className="text-sm font-medium text-foreground">{note.title}</p>
-          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{note.content}</p>
+          <p className="text-sm font-medium text-foreground line-clamp-1">{note.title}</p>
+          {showContent && (
+            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{note.content}</p>
+          )}
         </div>
       ))}
     </div>
@@ -258,15 +354,16 @@ function ClockContent() {
   )
 }
 
-// Widget component mapping
-const widgetComponents: Record<WidgetType, React.ComponentType> = {
+// Widget component mapping — components receive size props
+interface WidgetContentProps { w: number; h: number }
+const widgetComponents: Record<WidgetType, React.ComponentType<WidgetContentProps>> = {
   tasks: DailyTasksContent,
   calendar: CalendarContent,
   notes: NotesContent,
-  verse: VerseContent,
-  goals: GoalsContent,
-  clock: ClockContent,
-  files: FilesContent,
+  verse: VerseContent as React.ComponentType<WidgetContentProps>,
+  goals: GoalsContent as React.ComponentType<WidgetContentProps>,
+  clock: ClockContent as React.ComponentType<WidgetContentProps>,
+  files: FilesContent as React.ComponentType<WidgetContentProps>,
 }
 
 export function DashboardGrid() {
@@ -443,19 +540,21 @@ export function DashboardGrid() {
         {visibleWidgets.map((widget) => {
           const WidgetComponent = widgetComponents[widget.type]
           const layout = layoutMap.get(widget.type)
+          const w = layout?.w ?? 1
+          const h = layout?.h ?? 1
           return (
             <div key={widget.type} className="relative h-full">
               <WidgetCard
                 title={widgetTitles[widget.type]}
                 icon={widgetIcons[widget.type]}
                 widgetId={widget.type}
-                currentW={layout?.w ?? 1}
-                currentH={layout?.h ?? 1}
-                onSizeChange={(w, h) => handleSizeChange(widget.type, w, h)}
+                currentW={w}
+                currentH={h}
+                onSizeChange={(nw, nh) => handleSizeChange(widget.type, nw, nh)}
                 onNavigate={widget.type !== 'clock' ? () => setActivePage(widgetPageMap[widget.type]) : undefined}
                 editMode={dashboardEditMode}
               >
-                <WidgetComponent />
+                <WidgetComponent w={w} h={h} />
               </WidgetCard>
             </div>
           )
