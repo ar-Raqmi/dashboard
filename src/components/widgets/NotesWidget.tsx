@@ -1,16 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
 import { Copy, Plus, X, Check } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { useAppStore } from '@/lib/store'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 
 export default function NotesWidget() {
-  const { notes, addNote, updateNote, setActivePage } = useAppStore()
+  const { notes, addNote, setActivePage } = useAppStore()
   const [copiedId, setCopiedId] = useState<string | null>(null)
-  const [editingId, setEditingId] = useState<string | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newContent, setNewContent] = useState('')
@@ -36,11 +36,6 @@ export default function NotesWidget() {
     setShowAddForm(false)
   }
 
-  const handleUpdateNote = (id: string, updates: { title?: string; content?: string }) => {
-    updateNote(id, updates)
-    setEditingId(null)
-  }
-
   const colorOptions = ['#A5D6A7', '#F48FB1', '#CE93D8', '#80CBC4', '#FFE082', '#FFAB91']
 
   return (
@@ -60,12 +55,7 @@ export default function NotesWidget() {
 
       {/* Add Form */}
       {showAddForm && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          className="mb-3 p-3 rounded-2xl bg-[oklch(0.17_0.008_155)] space-y-2"
-        >
+        <div className="mb-3 p-3 rounded-2xl bg-[oklch(0.17_0.008_155)] space-y-2">
           <Input
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
@@ -75,8 +65,8 @@ export default function NotesWidget() {
           <Textarea
             value={newContent}
             onChange={(e) => setNewContent(e.target.value)}
-            placeholder="Note content..."
-            className="min-h-[50px] text-xs bg-[oklch(0.13_0.008_155)] border-[oklch(0.25_0.01_155)] rounded-xl placeholder:text-[oklch(0.4_0.01_155)] resize-none"
+            placeholder="Note content (markdown)..."
+            className="min-h-[50px] max-h-[80px] text-xs bg-[oklch(0.13_0.008_155)] border-[oklch(0.25_0.01_155)] rounded-xl placeholder:text-[oklch(0.4_0.01_155)] resize-none"
           />
           <div className="flex items-center gap-1.5">
             {colorOptions.map((c) => (
@@ -96,22 +86,17 @@ export default function NotesWidget() {
               Add
             </button>
           </div>
-        </motion.div>
+        </div>
       )}
 
       {/* Notes Grid */}
       <div className="flex-1 grid grid-cols-2 gap-2 auto-rows-min overflow-y-auto scrollbar-thin">
-        {visibleNotes.map((note, index) => (
-          <motion.div
+        {visibleNotes.map((note) => (
+          <div
             key={note.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.08, duration: 0.3 }}
             className="relative p-3 rounded-2xl cursor-pointer group hover:ring-1 hover:ring-white/10 transition-all min-h-[80px] flex flex-col"
             style={{ backgroundColor: note.color + '20' }}
-            onClick={() => {
-              if (editingId !== note.id) setEditingId(note.id)
-            }}
+            onClick={() => setActivePage('notes')}
           >
             {/* Color bar */}
             <div
@@ -121,7 +106,7 @@ export default function NotesWidget() {
 
             <div className="flex items-start justify-between gap-1 mb-1">
               <h4
-                className="text-xs font-semibold text-[oklch(0.9_0.005_155)] truncate flex-1"
+                className="text-xs font-semibold truncate flex-1"
                 style={{ color: note.color }}
               >
                 {note.title}
@@ -141,40 +126,10 @@ export default function NotesWidget() {
               </button>
             </div>
 
-            {editingId === note.id ? (
-              <div className="flex-1 space-y-1" onClick={(e) => e.stopPropagation()}>
-                <Input
-                  defaultValue={note.title}
-                  onBlur={(e) => handleUpdateNote(note.id, { title: e.target.value })}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleUpdateNote(note.id, { title: (e.target as HTMLInputElement).value })
-                    }
-                  }}
-                  className="h-6 text-[10px] bg-[oklch(0.13_0.008_155)] border-[oklch(0.25_0.01_155)] rounded-lg"
-                />
-                <Textarea
-                  defaultValue={note.content}
-                  onBlur={(e) => handleUpdateNote(note.id, { content: e.target.value })}
-                  className="min-h-[40px] text-[10px] bg-[oklch(0.13_0.008_155)] border-[oklch(0.25_0.01_155)] rounded-lg resize-none"
-                  autoFocus
-                />
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setEditingId(null)
-                  }}
-                  className="text-[9px] text-[oklch(0.72_0.19_142)] hover:underline"
-                >
-                  Done
-                </button>
-              </div>
-            ) : (
-              <p className="text-[10px] text-[oklch(0.6_0.01_155)] line-clamp-3 flex-1">
-                {note.content}
-              </p>
-            )}
-          </motion.div>
+            <div className="text-[10px] text-[oklch(0.6_0.01_155)] line-clamp-3 flex-1 prose-sm [&_p]:mb-0.5 [&_strong]:font-bold [&_code]:bg-[oklch(0.13_0.008_155)] [&_code]:px-0.5 [&_code]:rounded">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{note.content}</ReactMarkdown>
+            </div>
+          </div>
         ))}
       </div>
 
