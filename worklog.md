@@ -134,3 +134,35 @@ Stage Summary:
 - All 4 background types work: default (clean), solid color, gradient presets, image upload/URL
 - Opacity slider gives fine-grained control over background visibility
 - No lint errors, dev server compiles successfully
+---
+Task ID: 1
+Agent: Main
+Task: Major Notes overhaul: card backgrounds, pinned notes, arrangeable grid, fix duplicate key error
+
+Work Log:
+- Added `pinned: boolean` field to Note interface in store
+- Fixed duplicate key error by replacing idCounter (100+) with crypto.randomUUID()
+- Updated all sample data IDs (tasks, goals, notes, events) to use crypto.randomUUID()
+- Added note layout arrays to store: noteLayouts, noteMobileLayouts, pinnedNoteLayouts, pinnedNoteMobileLayouts
+- Added setNoteLayouts, setNoteMobileLayouts, setPinnedNoteLayouts, setPinnedNoteMobileLayouts actions
+- Added toggleNotePinned action that moves layout entries between pinned/regular sections
+- addNote now prepends (new notes on top) and creates layout entries at position (0,0)
+- deleteNote now cleans up layout entries from all 4 layout arrays
+- Persisted all 4 note layout arrays in partialize
+- Completely rewrote NotesPage.tsx with:
+  - Solid `bg-card` background on note cards for readability regardless of page background
+  - Color accent bar at top of each card
+  - Two sections: "Pinned Notes" and "Notes" with separate react-grid-layout instances
+  - Edit Layout toggle button (same pattern as dashboard)
+  - Drag handle + size picker (3x6 max) in edit mode
+  - Pin/Unpin button on each card and in the detail dialog
+  - Copy, Pin, Delete actions on hover
+  - Auto-generated layouts for notes that don't have stored layouts yet
+
+Stage Summary:
+- Note cards now have solid card background — always readable even with complex page backgrounds
+- Pinned notes system fully functional with separate section and layout storage
+- Notes are rearrangeable via react-grid-layout with 3x6 grid max, same as dashboard
+- New notes always appear at the top
+- Duplicate key error fixed by using crypto.randomUUID()
+- All layouts persisted across sessions
