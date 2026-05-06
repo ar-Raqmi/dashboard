@@ -228,7 +228,10 @@
   opacity: 0.9;
 }
 
-/* Resize handle removed — using grid-based size picker instead */
+/* Hide react-grid-layout resize handle — using grid-based size picker instead */
+.react-grid-item > .react-resizable-handle {
+  display: none !important;
+}
 
 /* Custom scrollbar for lists */
 .custom-scrollbar::-webkit-scrollbar {
