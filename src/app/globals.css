@@ -1,0 +1,309 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-arabic: 'Noto Sans Arabic', sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-citrus: var(--citrus);
+  --color-citrus-light: var(--citrus-light);
+  --color-citrus-dark: var(--citrus-dark);
+  --color-pink: var(--pink);
+  --color-pink-light: var(--pink-light);
+  --color-pink-dark: var(--pink-dark);
+  --color-surface: var(--surface);
+  --color-surface-variant: var(--surface-variant);
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-variant: var(--on-surface-variant);
+  --color-outline: var(--outline);
+  --color-outline-variant: var(--outline-variant);
+}
+
+/* Dark Mode by Default - Material 3 Expressive with Citrus Green + Light Pink */
+:root {
+  --radius: 1rem;
+  --background: oklch(0.13 0.005 155);
+  --foreground: oklch(0.96 0.005 155);
+  --card: oklch(0.17 0.008 155);
+  --card-foreground: oklch(0.96 0.005 155);
+  --popover: oklch(0.17 0.008 155);
+  --popover-foreground: oklch(0.96 0.005 155);
+  --primary: oklch(0.72 0.19 142);
+  --primary-foreground: oklch(0.13 0.005 155);
+  --secondary: oklch(0.8 0.08 350);
+  --secondary-foreground: oklch(0.13 0.005 155);
+  --muted: oklch(0.22 0.008 155);
+  --muted-foreground: oklch(0.65 0.01 155);
+  --accent: oklch(0.22 0.02 142);
+  --accent-foreground: oklch(0.96 0.005 155);
+  --destructive: oklch(0.65 0.2 25);
+  --border: oklch(0.28 0.01 155);
+  --input: oklch(0.24 0.01 155);
+  --ring: oklch(0.72 0.19 142);
+  --chart-1: oklch(0.72 0.19 142);
+  --chart-2: oklch(0.8 0.08 350);
+  --chart-3: oklch(0.7 0.15 80);
+  --chart-4: oklch(0.65 0.12 260);
+  --chart-5: oklch(0.75 0.1 30);
+  --sidebar: oklch(0.15 0.008 155);
+  --sidebar-foreground: oklch(0.96 0.005 155);
+  --sidebar-primary: oklch(0.72 0.19 142);
+  --sidebar-primary-foreground: oklch(0.13 0.005 155);
+  --sidebar-accent: oklch(0.22 0.02 142);
+  --sidebar-accent-foreground: oklch(0.96 0.005 155);
+  --sidebar-border: oklch(0.28 0.01 155);
+  --sidebar-ring: oklch(0.72 0.19 142);
+
+  /* Custom Material 3 tokens */
+  --citrus: oklch(0.72 0.19 142);
+  --citrus-light: oklch(0.82 0.15 142);
+  --citrus-dark: oklch(0.55 0.2 142);
+  --pink: oklch(0.8 0.08 350);
+  --pink-light: oklch(0.88 0.06 350);
+  --pink-dark: oklch(0.65 0.12 350);
+  --surface: oklch(0.15 0.006 155);
+  --surface-variant: oklch(0.2 0.01 155);
+  --on-surface: oklch(0.96 0.005 155);
+  --on-surface-variant: oklch(0.75 0.01 155);
+  --outline: oklch(0.38 0.01 155);
+  --outline-variant: oklch(0.28 0.01 155);
+}
+
+.dark {
+  --background: oklch(0.13 0.005 155);
+  --foreground: oklch(0.96 0.005 155);
+  --card: oklch(0.17 0.008 155);
+  --card-foreground: oklch(0.96 0.005 155);
+  --popover: oklch(0.17 0.008 155);
+  --popover-foreground: oklch(0.96 0.005 155);
+  --primary: oklch(0.72 0.19 142);
+  --primary-foreground: oklch(0.13 0.005 155);
+  --secondary: oklch(0.8 0.08 350);
+  --secondary-foreground: oklch(0.13 0.005 155);
+  --muted: oklch(0.22 0.008 155);
+  --muted-foreground: oklch(0.65 0.01 155);
+  --accent: oklch(0.22 0.02 142);
+  --accent-foreground: oklch(0.96 0.005 155);
+  --destructive: oklch(0.65 0.2 25);
+  --border: oklch(0.28 0.01 155);
+  --input: oklch(0.24 0.01 155);
+  --ring: oklch(0.72 0.19 142);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Arabic text styling */
+.arabic-text {
+  font-family: 'Noto Sans Arabic', sans-serif;
+  direction: rtl;
+  text-align: right;
+  line-height: 2;
+}
+
+/* Material 3 Expressive - Bouncy scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: oklch(0.38 0.01 155);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.48 0.01 155);
+}
+
+/* react-grid-layout overrides */
+.react-grid-layout {
+  position: relative;
+  transition: height 200ms ease;
+}
+
+.react-grid-item {
+  transition: all 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition-property: left, top, width, height;
+}
+
+.react-grid-item.cssTransforms {
+  transition-property: transform, width, height;
+}
+
+.react-grid-item.resizing {
+  transition: none;
+  z-index: 10;
+}
+
+.react-grid-item.react-draggable-dragging {
+  transition: none;
+  z-index: 10;
+  opacity: 0.9;
+}
+
+.react-grid-item > .react-resizable-handle {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+}
+
+.react-grid-item > .react-resizable-handle::after {
+  content: '';
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid oklch(0.72 0.19 142 / 0.5);
+  border-bottom: 2px solid oklch(0.72 0.19 142 / 0.5);
+  border-radius: 0 0 2px 0;
+}
+
+.react-grid-item > .react-resizable-handle:hover::after {
+  border-color: oklch(0.72 0.19 142);
+}
+
+/* Custom scrollbar for lists */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: oklch(0.35 0.01 155);
+  border-radius: 9999px;
+}
+
+/* Spring animation keyframes */
+@keyframes spring-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.85) translateY(10px);
+  }
+  60% {
+    transform: scale(1.02) translateY(-2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-spring-in {
+  animation: spring-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Widget card hover effect */
+.widget-card {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.widget-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px oklch(0 0 0 / 0.3);
+}
+
+/* Priority badge animations */
+.priority-high {
+  background: oklch(0.65 0.12 350 / 0.2);
+  border-color: oklch(0.8 0.08 350);
+  color: oklch(0.8 0.08 350);
+}
+
+.priority-medium {
+  background: oklch(0.72 0.15 80 / 0.2);
+  border-color: oklch(0.8 0.12 80);
+  color: oklch(0.8 0.12 80);
+}
+
+.priority-low {
+  background: oklch(0.72 0.19 142 / 0.2);
+  border-color: oklch(0.82 0.15 142);
+  color: oklch(0.82 0.15 142);
+}
+
+/* Glass morphism effect */
+.glass {
+  background: oklch(0.17 0.008 155 / 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Selection highlight */
+::selection {
+  background: oklch(0.72 0.19 142 / 0.3);
+  color: oklch(0.96 0.005 155);
+}
