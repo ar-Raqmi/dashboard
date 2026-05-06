@@ -4,6 +4,7 @@ import React, { useCallback } from 'react'
 import { GripVertical, Maximize2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
+import { MAX_GRID_W, MAX_GRID_H } from '@/lib/store'
 
 interface WidgetCardProps {
   title: string
@@ -20,7 +21,7 @@ interface WidgetCardProps {
   editMode?: boolean
 }
 
-// Grid size picker: shows a 3×3 visual grid where user clicks to select size
+// Grid size picker: shows a W×H visual grid where user clicks to select size
 function GridSizePicker({
   currentW,
   currentH,
@@ -35,9 +36,14 @@ function GridSizePicker({
       <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
         Grid Size
       </div>
-      <div className="grid grid-cols-3 gap-1.5" role="grid" aria-label="Select widget size">
-        {Array.from({ length: 3 }, (_, row) =>
-          Array.from({ length: 3 }, (_, col) => {
+      <div
+        className="grid gap-1.5"
+        style={{ gridTemplateColumns: `repeat(${MAX_GRID_W}, minmax(0, 1fr))` }}
+        role="grid"
+        aria-label="Select widget size"
+      >
+        {Array.from({ length: MAX_GRID_H }, (_, row) =>
+          Array.from({ length: MAX_GRID_W }, (_, col) => {
             const w = col + 1
             const h = row + 1
             const isSelected = w <= currentW && h <= currentH
@@ -47,7 +53,7 @@ function GridSizePicker({
                 key={`${w}-${h}`}
                 onClick={() => onSizeChange(w, h)}
                 className={cn(
-                  'w-10 h-10 rounded-xl transition-all duration-200 border-2 flex items-center justify-center',
+                  'w-10 h-8 rounded-lg transition-all duration-200 border-2 flex items-center justify-center',
                   'hover:scale-110 active:scale-95',
                   isCurrent
                     ? 'bg-primary border-primary text-primary-foreground shadow-sm'
@@ -59,7 +65,7 @@ function GridSizePicker({
                 aria-label={`${w} columns by ${h} rows`}
                 aria-pressed={isCurrent}
               >
-                <span className="text-[10px] font-bold leading-none">
+                <span className="text-[9px] font-bold leading-none">
                   {w}×{h}
                 </span>
               </button>

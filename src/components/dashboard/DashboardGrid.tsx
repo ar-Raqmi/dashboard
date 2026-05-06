@@ -5,7 +5,7 @@ import { ResponsiveGridLayout, useContainerWidth } from 'react-grid-layout'
 import { CheckCircle, CalendarDays, StickyNote, BookOpen, Flag, Clock, Folder, FileText, Image as ImageIcon, Music, Film, Pencil, Check } from 'lucide-react'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
-import { useAppStore } from '@/lib/store'
+import { useAppStore, MAX_GRID_W, MAX_GRID_H } from '@/lib/store'
 import { WidgetCard } from './WidgetCard'
 import type { WidgetType, Layout, ActivePage, FileItem } from '@/lib/store'
 
@@ -316,9 +316,9 @@ export function DashboardGrid() {
       .filter((l) => visibleTypes.has(l.i))
       .map((l) => ({
         ...l,
-        w: Math.min(l.w, 3),
-        h: Math.min(l.h, 3),
-        x: Math.min(l.x, 2),
+        w: Math.min(l.w, MAX_GRID_W),
+        h: Math.min(l.h, MAX_GRID_H),
+        x: Math.min(l.x, MAX_GRID_W - 1),
       }))
 
     // Mobile: 1 column - use dedicated mobile layouts
@@ -327,7 +327,7 @@ export function DashboardGrid() {
       .map((l) => ({
         ...l,
         w: 1,
-        h: Math.min(l.h, 3),
+        h: Math.min(l.h, MAX_GRID_H),
         x: 0,
       }))
 
