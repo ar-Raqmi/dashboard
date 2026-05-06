@@ -264,6 +264,10 @@ interface AppStore {
   // Dashboard Manager
   showDashboardManager: boolean
   setShowDashboardManager: (show: boolean) => void
+
+  // Dashboard Edit Mode
+  dashboardEditMode: boolean
+  setDashboardEditMode: (edit: boolean) => void
 }
 
 // ===== GENERATE ID =====
@@ -448,6 +452,10 @@ export const useAppStore = create<AppStore>()(
       // Dashboard Manager
       showDashboardManager: false,
       setShowDashboardManager: (show) => set({ showDashboardManager: show }),
+
+      // Dashboard Edit Mode
+      dashboardEditMode: false,
+      setDashboardEditMode: (edit) => set({ dashboardEditMode: edit }),
     }),
     {
       name: 'ar-raqmi-store',

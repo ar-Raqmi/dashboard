@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useCallback } from 'react'
-import { motion } from 'framer-motion'
 import { GripVertical, Maximize2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
@@ -18,6 +17,7 @@ interface WidgetCardProps {
   currentH: number
   onSizeChange: (w: number, h: number) => void
   onNavigate?: () => void
+  editMode?: boolean
 }
 
 // Grid size picker: shows a 3×3 visual grid where user clicks to select size
@@ -86,6 +86,7 @@ export function WidgetCard({
   currentH,
   onSizeChange,
   onNavigate,
+  editMode = false,
 }: WidgetCardProps) {
   const handleSizeChange = useCallback(
     (w: number, h: number) => {
@@ -95,26 +96,23 @@ export function WidgetCard({
   )
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.85, y: 10 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{
-        type: 'spring',
-        stiffness: 260,
-        damping: 20,
-        mass: 0.8,
-      }}
+    <div
       className={cn(
-        'widget-card rounded-3xl border border-border bg-card flex flex-col h-full overflow-hidden relative shadow-sm',
+        'widget-card rounded-3xl border bg-card flex flex-col h-full overflow-hidden relative shadow-sm transition-shadow duration-200',
+        editMode
+          ? 'border-primary/40 shadow-md shadow-primary/5 ring-1 ring-primary/20'
+          : 'border-border',
         className
       )}
     >
       {/* Header with drag handle */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50">
-        {/* Drag handle */}
-        <div className="widget-drag-handle cursor-grab active:cursor-grabbing p-0.5 -ml-1 rounded-xl hover:bg-accent transition-colors">
-          <GripVertical className="w-4 h-4 text-outline hover:text-primary transition-colors" />
-        </div>
+        {/* Drag handle - only visible in edit mode */}
+        {editMode && (
+          <div className="widget-drag-handle cursor-grab active:cursor-grabbing p-0.5 -ml-1 rounded-xl hover:bg-accent transition-colors">
+            <GripVertical className="w-4 h-4 text-primary/70 hover:text-primary transition-colors" />
+          </div>
+        )}
 
         {/* Icon + Title */}
         <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -124,30 +122,32 @@ export function WidgetCard({
           </h3>
         </div>
 
-        {/* Size picker — uses Popover with Portal so it renders outside the card's overflow-hidden */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              className="shrink-0 p-1.5 rounded-xl hover:bg-accent transition-colors text-muted-foreground hover:text-primary"
-              aria-label={`Resize ${title}`}
-              title={`${currentW}×${currentH} — click to resize`}
+        {/* Size picker — only visible in edit mode, uses Popover with Portal */}
+        {editMode && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                className="shrink-0 p-1.5 rounded-xl hover:bg-accent transition-colors text-muted-foreground hover:text-primary"
+                aria-label={`Resize ${title}`}
+                title={`${currentW}×${currentH} — click to resize`}
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              side="bottom"
+              align="end"
+              sideOffset={8}
+              className="rounded-2xl p-4 w-auto"
             >
-              <Maximize2 className="w-3.5 h-3.5" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent
-            side="bottom"
-            align="end"
-            sideOffset={8}
-            className="rounded-2xl p-4 w-auto"
-          >
-            <GridSizePicker
-              currentW={currentW}
-              currentH={currentH}
-              onSizeChange={handleSizeChange}
-            />
-          </PopoverContent>
-        </Popover>
+              <GridSizePicker
+                currentW={currentW}
+                currentH={currentH}
+                onSizeChange={handleSizeChange}
+              />
+            </PopoverContent>
+          </Popover>
+        )}
 
         {/* Optional action */}
         {onAction && actionIcon && (
@@ -165,15 +165,15 @@ export function WidgetCard({
       <div
         className={cn(
           'flex-1 overflow-y-auto custom-scrollbar p-4',
-          onNavigate && 'cursor-pointer'
+          onNavigate && !editMode && 'cursor-pointer'
         )}
-        onClick={onNavigate}
-        role={onNavigate ? 'button' : undefined}
-        tabIndex={onNavigate ? 0 : undefined}
-        onKeyDown={onNavigate ? (e) => { if (e.key === 'Enter' || e.key === ' ') onNavigate() } : undefined}
+        onClick={editMode ? undefined : onNavigate}
+        role={onNavigate && !editMode ? 'button' : undefined}
+        tabIndex={onNavigate && !editMode ? 0 : undefined}
+        onKeyDown={onNavigate && !editMode ? (e) => { if (e.key === 'Enter' || e.key === ' ') onNavigate() } : undefined}
       >
         {children}
       </div>
-    </motion.div>
+    </div>
   )
 }

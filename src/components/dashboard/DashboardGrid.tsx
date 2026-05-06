@@ -2,7 +2,7 @@
 
 import React, { useCallback, useMemo, useRef } from 'react'
 import { ResponsiveGridLayout, useContainerWidth } from 'react-grid-layout'
-import { CheckCircle, CalendarDays, StickyNote, BookOpen, Flag, Clock, Folder, FileText, Image as ImageIcon, Music, Film } from 'lucide-react'
+import { CheckCircle, CalendarDays, StickyNote, BookOpen, Flag, Clock, Folder, FileText, Image as ImageIcon, Music, Film, Pencil, Check } from 'lucide-react'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import { useAppStore } from '@/lib/store'
@@ -277,6 +277,8 @@ export function DashboardGrid() {
   const updateWidgetSize = useAppStore((s) => s.updateWidgetSize)
   const widgets = useAppStore((s) => s.widgets)
   const setActivePage = useAppStore((s) => s.setActivePage)
+  const dashboardEditMode = useAppStore((s) => s.dashboardEditMode)
+  const setDashboardEditMode = useAppStore((s) => s.setDashboardEditMode)
 
   // Stable selector: only re-renders when the set of visible widget types actually changes
   const visibleWidgetTypesKey = useAppStore(
@@ -382,6 +384,32 @@ export function DashboardGrid() {
 
   return (
     <div ref={containerRef} className="w-full">
+      {/* Edit Mode Toggle */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-foreground">Dashboard</h2>
+        <button
+          onClick={() => setDashboardEditMode(!dashboardEditMode)}
+          className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-medium transition-all ${
+            dashboardEditMode
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'bg-muted border border-border text-muted-foreground hover:text-foreground hover:bg-accent'
+          }`}
+        >
+          {dashboardEditMode ? (
+            <>
+              <Check className="size-4" />
+              Done
+            </>
+          ) : (
+            <>
+              <Pencil className="size-4" />
+              Edit Layout
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Grid */}
       <ResponsiveGridLayout
         className="layout"
         layouts={responsiveLayouts}
@@ -391,12 +419,12 @@ export function DashboardGrid() {
         width={width}
         onLayoutChange={handleLayoutChange}
         onBreakpointChange={handleBreakpointChange}
-        draggableHandle=".widget-drag-handle"
+        draggableHandle={dashboardEditMode ? '.widget-drag-handle' : undefined}
         compactType="vertical"
         margin={[16, 16]}
         containerPadding={[0, 0]}
         isResizable={false}
-        isDraggable={true}
+        isDraggable={dashboardEditMode}
       >
         {visibleWidgets.map((widget) => {
           const WidgetComponent = widgetComponents[widget.type]
@@ -411,6 +439,7 @@ export function DashboardGrid() {
                 currentH={layout?.h ?? 1}
                 onSizeChange={(w, h) => handleSizeChange(widget.type, w, h)}
                 onNavigate={widget.type !== 'clock' ? () => setActivePage(widgetPageMap[widget.type]) : undefined}
+                editMode={dashboardEditMode}
               >
                 <WidgetComponent />
               </WidgetCard>
