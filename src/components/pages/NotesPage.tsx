@@ -208,21 +208,21 @@ export default function NotesPage() {
 
       {/* Note View / Edit Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={handleViewDialogClose}>
-        <DialogContent className="bg-card border-border rounded-3xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
+        <DialogContent className={`bg-card border-border rounded-3xl flex flex-col p-0 gap-0 overflow-hidden ${isEditing ? 'sm:max-w-2xl h-[90vh]' : 'max-h-[90vh]'}`}>
           <DialogTitle className="sr-only">{activeNote?.title || 'Note'}</DialogTitle>
           {activeNote && (
             <>
-              {/* Header with color accent */}
+              {/* Header - always pinned */}
               <div
                 className="px-6 pt-5 pb-3 shrink-0"
-                style={{ backgroundColor: `${activeNote.color}12` }}
+                style={{ backgroundColor: `${noteColor}12` }}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <div
                         className="size-2.5 rounded-full shrink-0"
-                        style={{ backgroundColor: activeNote.color }}
+                        style={{ backgroundColor: noteColor }}
                       />
                       <span className="text-xs text-muted-foreground">
                         {new Date(activeNote.updatedAt).toLocaleDateString('en-US', {
@@ -244,7 +244,6 @@ export default function NotesPage() {
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
-                    {/* Edit / Preview toggle */}
                     <Button
                       variant={isEditing ? 'default' : 'outline'}
                       size="sm"
@@ -285,23 +284,28 @@ export default function NotesPage() {
                 </div>
               </div>
 
-              {/* Content Area - scrollable */}
-              <ScrollArea className="flex-1 min-h-0 px-6 pb-6">
-                {isEditing ? (
-                  <div className="flex flex-col gap-3">
+              {isEditing ? (
+                /* EDIT MODE: three-section layout with pinned footer */
+                <>
+                  {/* Textarea - fills remaining space, scrolls internally */}
+                  <div className="flex-1 min-h-0 px-6 py-2 overflow-y-auto">
                     <Textarea
                       value={noteContent}
                       onChange={(e) => setNoteContent(e.target.value)}
                       placeholder="Write your note in Markdown..."
-                      className="rounded-2xl bg-input border-border resize-none min-h-[200px]"
+                      className="rounded-2xl bg-input border-border resize-none h-full min-h-[120px]"
                       autoFocus
                     />
-                    <div className="flex gap-2 flex-wrap">
+                  </div>
+
+                  {/* Footer - always pinned at bottom */}
+                  <div className="shrink-0 px-6 pb-5 pt-3 border-t border-border/50 flex items-center justify-between gap-3">
+                    <div className="flex gap-1.5 flex-wrap">
                       {NOTE_COLORS.map((c) => (
                         <button
                           key={c.value}
                           className={`size-7 rounded-lg transition-all ${
-                            noteColor === c.value ? 'ring-2 ring-white ring-offset-2 ring-offset-card scale-110' : 'opacity-60 hover:opacity-100'
+                            noteColor === c.value ? 'ring-2 ring-white ring-offset-2 ring-offset-card scale-110' : 'opacity-50 hover:opacity-100'
                           }`}
                           style={{ backgroundColor: c.value }}
                           onClick={() => setNoteColor(c.value)}
@@ -309,15 +313,42 @@ export default function NotesPage() {
                         />
                       ))}
                     </div>
+                    <div className="flex gap-2 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="rounded-xl"
+                        onClick={() => {
+                          // Discard edits, revert to saved
+                          setNoteTitle(activeNote.title)
+                          setNoteContent(activeNote.content)
+                          setNoteColor(activeNote.color)
+                          setIsEditing(false)
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 gap-1.5"
+                        onClick={handleSaveNote}
+                      >
+                        <Check className="size-3.5" />
+                        Save
+                      </Button>
+                    </div>
                   </div>
-                ) : (
+                </>
+              ) : (
+                /* PREVIEW MODE: scrollable markdown */
+                <ScrollArea className="flex-1 min-h-0 px-6 pb-6">
                   <div className={`text-sm text-foreground pr-2 ${MARKDOWN_STYLES}`}>
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {activeNote.content || '*No content*'}
                     </ReactMarkdown>
                   </div>
-                )}
-              </ScrollArea>
+                </ScrollArea>
+              )}
             </>
           )}
         </DialogContent>
