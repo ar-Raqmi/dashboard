@@ -103,26 +103,34 @@ const defaultWidgets: DashboardWidget[] = [
   { type: 'files', label: 'Files', icon: 'folder', visible: true },
 ]
 
+// Max dimensions for grid widgets
+export const MAX_GRID_W = 3
+export const MAX_GRID_H = 5
+
+// Aliases for internal use
+const MAX_W = MAX_GRID_W
+const MAX_H = MAX_GRID_H
+
 // Desktop layouts: 3-column grid
 const defaultLayouts: Layout[] = [
-  { i: 'tasks', x: 0, y: 0, w: 2, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 3 },
-  { i: 'calendar', x: 2, y: 0, w: 1, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 3 },
-  { i: 'notes', x: 0, y: 2, w: 1, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 3 },
-  { i: 'verse', x: 1, y: 2, w: 1, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 3 },
-  { i: 'goals', x: 2, y: 2, w: 1, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 3 },
-  { i: 'clock', x: 0, y: 4, w: 1, h: 1, minW: 1, maxW: 3, minH: 1, maxH: 3 },
-  { i: 'files', x: 1, y: 4, w: 1, h: 1, minW: 1, maxW: 3, minH: 1, maxH: 3 },
+  { i: 'tasks', x: 0, y: 0, w: 2, h: 2, minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H },
+  { i: 'calendar', x: 2, y: 0, w: 1, h: 2, minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H },
+  { i: 'notes', x: 0, y: 2, w: 1, h: 2, minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H },
+  { i: 'verse', x: 1, y: 2, w: 1, h: 2, minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H },
+  { i: 'goals', x: 2, y: 2, w: 1, h: 2, minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H },
+  { i: 'clock', x: 0, y: 4, w: 1, h: 1, minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H },
+  { i: 'files', x: 1, y: 4, w: 1, h: 1, minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H },
 ]
 
 // Mobile layouts: 1-column stack (preserves h, forces w:1, x:0)
 const defaultMobileLayouts: Layout[] = [
-  { i: 'tasks', x: 0, y: 0, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: 3 },
-  { i: 'calendar', x: 0, y: 2, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: 3 },
-  { i: 'notes', x: 0, y: 4, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: 3 },
-  { i: 'verse', x: 0, y: 6, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: 3 },
-  { i: 'goals', x: 0, y: 8, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: 3 },
-  { i: 'clock', x: 0, y: 10, w: 1, h: 1, minW: 1, maxW: 1, minH: 1, maxH: 3 },
-  { i: 'files', x: 0, y: 12, w: 1, h: 1, minW: 1, maxW: 1, minH: 1, maxH: 3 },
+  { i: 'tasks', x: 0, y: 0, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
+  { i: 'calendar', x: 0, y: 2, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
+  { i: 'notes', x: 0, y: 4, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
+  { i: 'verse', x: 0, y: 6, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
+  { i: 'goals', x: 0, y: 8, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
+  { i: 'clock', x: 0, y: 10, w: 1, h: 1, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
+  { i: 'files', x: 0, y: 12, w: 1, h: 1, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
 ]
 
 // ===== SAMPLE DATA =====
@@ -311,10 +319,10 @@ export const useAppStore = create<AppStore>()(
       updateWidgetSize: (widgetId, w, h) =>
         set((state) => ({
           layouts: state.layouts.map((l) =>
-            l.i === widgetId ? { ...l, w: Math.min(Math.max(w, 1), 3), h: Math.min(Math.max(h, 1), 3) } : l
+            l.i === widgetId ? { ...l, w: Math.min(Math.max(w, 1), MAX_W), h: Math.min(Math.max(h, 1), MAX_H) } : l
           ),
           mobileLayouts: state.mobileLayouts.map((l) =>
-            l.i === widgetId ? { ...l, h: Math.min(Math.max(h, 1), 3) } : l
+            l.i === widgetId ? { ...l, h: Math.min(Math.max(h, 1), MAX_H) } : l
           ),
         })),
 
