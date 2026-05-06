@@ -166,3 +166,31 @@ Stage Summary:
 - New notes always appear at the top
 - Duplicate key error fixed by using crypto.randomUUID()
 - All layouts persisted across sessions
+---
+Task ID: 1
+Agent: Main
+Task: Refactor Clock Widget to Material 3 Expressive Multi-Clock & Hijri System
+
+Work Log:
+- Installed hijri-converter package
+- Added ClockConfig interface to store (id, label, timezone)
+- Replaced single timezone/setTimezone with clocks array/addClock/removeClock/updateClock
+- Added hijriVisible (boolean) and hijriOffset (-2 to +2) state
+- Added store migration (v1→v2) for timezone→clocks
+- Rewrote ClockContent with Material 3 Expressive design: large primary time in Citrus Green, seconds in Light Pink
+- Built ClockDisplay component (primary: centered large, secondary: compact row chips)
+- Built getHijriDate() using Intl.DateTimeFormat with islamic-umalqura calendar
+- Hijri shows English transliteration + Arabic month name using Noto Sans Arabic
+- Built ClockSettingsPopover with: timezone select, add/remove clocks, Hijri toggle, Hilal offset slider
+- Added headerAction prop to WidgetCard for settings gear (visible on hover)
+- Responsive scaling: 1×1=primary only, 1×2+=primary+hijri, 2×2+=full with secondary clocks
+- Updated Header, SettingsPage, ClockWidget to use new clocks API
+- Updated default clock widget height from 1 to 2 for better visibility
+- Changed widget icon from Clock to MoonStar, title from "Clock" to "World Clock"
+
+Stage Summary:
+- Clock widget fully refactored with multi-timezone support, Hijri calendar, and Material 3 Expressive design
+- Settings popover accessible via gear icon on hover in widget header
+- Store migration handles old timezone→clocks conversion for existing users
+- All lint checks pass, dev server compiles successfully
+

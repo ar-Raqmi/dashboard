@@ -13,6 +13,7 @@ interface WidgetCardProps {
   children: React.ReactNode
   onAction?: () => void
   actionIcon?: React.ReactNode
+  headerAction?: React.ReactNode
   widgetId: string
   currentW: number
   currentH: number
@@ -87,6 +88,7 @@ export function WidgetCard({
   children,
   onAction,
   actionIcon,
+  headerAction,
   widgetId,
   currentW,
   currentH,
@@ -127,6 +129,13 @@ export function WidgetCard({
             {title}
           </h3>
         </div>
+
+        {/* Custom header action (e.g. settings popover) */}
+        {headerAction && !editMode && (
+          <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+            {headerAction}
+          </div>
+        )}
 
         {/* Size picker — only visible in edit mode, uses Popover with Portal */}
         {editMode && (

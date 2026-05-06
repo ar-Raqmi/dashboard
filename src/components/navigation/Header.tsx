@@ -40,7 +40,8 @@ function getInitials(name: string): string {
 export default function Header() {
   const appLogo = useAppStore((s) => s.appLogo)
   const appTitle = useAppStore((s) => s.appTitle)
-  const timezone = useAppStore((s) => s.timezone)
+  const clocks = useAppStore((s) => s.clocks)
+  const timezone = clocks.length > 0 ? clocks[0].timezone : 'Asia/Kuala_Lumpur'
   const profilePicture = useAppStore((s) => s.profilePicture)
   const profileName = useAppStore((s) => s.profileName)
   const setSearchQuery = useAppStore((s) => s.setSearchQuery)

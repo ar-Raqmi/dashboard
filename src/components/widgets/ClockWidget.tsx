@@ -54,7 +54,8 @@ function AnimatedTime({ timeStr }: { timeStr: string }) {
 }
 
 export default function ClockWidget() {
-  const { timezone, setTimezone } = useAppStore()
+  const { clocks, updateClock } = useAppStore()
+  const timezone = clocks.length > 0 ? clocks[0].timezone : 'Asia/Kuala_Lumpur'
   const [now, setNow] = useState(new Date())
   const [showDropdown, setShowDropdown] = useState(false)
 
@@ -122,7 +123,7 @@ export default function ClockWidget() {
               <button
                 key={tz.value}
                 onClick={() => {
-                  setTimezone(tz.value)
+                  if (clocks.length > 0) updateClock(clocks[0].id, { timezone: tz.value })
                   setShowDropdown(false)
                 }}
                 className={`w-full text-left px-3 py-2 text-xs transition-colors ${

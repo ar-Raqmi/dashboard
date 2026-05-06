@@ -2,12 +2,16 @@
 
 import React, { useCallback, useMemo, useRef } from 'react'
 import { ResponsiveGridLayout, useContainerWidth } from 'react-grid-layout'
-import { CheckCircle, CalendarDays, StickyNote, BookOpen, Flag, Clock, Folder, FileText, Image as ImageIcon, Music, Film, Pencil, Check } from 'lucide-react'
+import { CheckCircle, CalendarDays, StickyNote, BookOpen, Flag, Folder, FileText, Image as ImageIcon, Music, Film, Pencil, Check, Plus, Settings2, Trash2, ChevronUp, ChevronDown, MoonStar } from 'lucide-react'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import { useAppStore, MAX_GRID_W, MAX_GRID_H } from '@/lib/store'
 import { WidgetCard } from './WidgetCard'
-import type { WidgetType, Layout, ActivePage, FileItem } from '@/lib/store'
+import type { WidgetType, Layout, ActivePage, FileItem, ClockConfig } from '@/lib/store'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
+import { Switch } from '@/components/ui/switch'
+import { Slider } from '@/components/ui/slider'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 
 // Widget icon mapping
 const widgetIcons: Record<WidgetType, React.ReactNode> = {
@@ -16,7 +20,7 @@ const widgetIcons: Record<WidgetType, React.ReactNode> = {
   notes: <StickyNote className="w-4 h-4" />,
   verse: <BookOpen className="w-4 h-4" />,
   goals: <Flag className="w-4 h-4" />,
-  clock: <Clock className="w-4 h-4" />,
+  clock: <MoonStar className="w-4 h-4" />,
   files: <Folder className="w-4 h-4" />,
 }
 
@@ -27,7 +31,7 @@ const widgetTitles: Record<WidgetType, string> = {
   notes: 'Quick Notes',
   verse: 'Daily Verse',
   goals: 'Goals',
-  clock: 'Clock',
+  clock: 'World Clock',
   files: 'Files',
 }
 
@@ -373,10 +377,64 @@ function FilesContent() {
   )
 }
 
-function ClockContent() {
-  const timezone = useAppStore((s) => s.timezone)
+// ===== Popular timezone presets for the Add Clock dialog =====
+const POPULAR_TIMEZONES = [
+  { label: 'Kuala Lumpur', timezone: 'Asia/Kuala_Lumpur', value: 'Asia/Kuala_Lumpur|KL' },
+  { label: 'Makkah', timezone: 'Asia/Riyadh', value: 'Asia/Riyadh|Makkah' },
+  { label: 'Dubai', timezone: 'Asia/Dubai', value: 'Asia/Dubai|DXB' },
+  { label: 'London', timezone: 'Europe/London', value: 'Europe/London|LDN' },
+  { label: 'New York', timezone: 'America/New_York', value: 'America/New_York|NYC' },
+  { label: 'Tokyo', timezone: 'Asia/Tokyo', value: 'Asia/Tokyo|TYO' },
+  { label: 'Jakarta', timezone: 'Asia/Jakarta', value: 'Asia/Jakarta|JKT' },
+  { label: 'Istanbul', timezone: 'Europe/Istanbul', value: 'Europe/Istanbul|IST' },
+  { label: 'Cairo', timezone: 'Africa/Cairo', value: 'Africa/Cairo|CAI' },
+  { label: 'Sydney', timezone: 'Australia/Sydney', value: 'Australia/Sydney|SYD' },
+  { label: 'Singapore', timezone: 'Asia/Singapore', value: 'Asia/Singapore|SIN' },
+  { label: 'Jeddah', timezone: 'Asia/Riyadh', value: 'Asia/Riyadh|JED' },
+  { label: 'Medina', timezone: 'Asia/Riyadh', value: 'Asia/Riyadh|MED' },
+  { label: 'Karachi', timezone: 'Asia/Karachi', value: 'Asia/Karachi|KHI' },
+  { label: 'Dhaka', timezone: 'Asia/Dhaka', value: 'Asia/Dhaka|DAC' },
+  { label: 'Los Angeles', timezone: 'America/Los_Angeles', value: 'America/Los_Angeles|LAX' },
+  { label: 'Paris', timezone: 'Europe/Paris', value: 'Europe/Paris|PAR' },
+  { label: 'Berlin', timezone: 'Europe/Berlin', value: 'Europe/Berlin|BER' },
+]
+
+// ===== Hijri Date helper using Intl.DateTimeFormat =====
+function getHijriDate(offset: number): { day: number; month: string; year: number; monthAr: string } | null {
+  try {
+    const now = new Date()
+    now.setDate(now.getDate() + offset)
+
+    const hijriFmt = new Intl.DateTimeFormat('en-US-u-ca-islamic-umalqura', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    })
+    const hijriFmtAr = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    })
+
+    const parts = hijriFmt.formatToParts(now)
+    const arParts = hijriFmtAr.formatToParts(now)
+
+    const day = parseInt(parts.find(p => p.type === 'day')?.value || '0', 10)
+    const month = parts.find(p => p.type === 'month')?.value || ''
+    const year = parseInt(parts.find(p => p.type === 'year')?.value || '0', 10)
+    const monthAr = arParts.find(p => p.type === 'month')?.value || ''
+
+    return { day, month, year, monthAr }
+  } catch {
+    return null
+  }
+}
+
+// ===== Single Clock Display =====
+function ClockDisplay({ clock, isPrimary }: { clock: ClockConfig; isPrimary: boolean }) {
   const [time, setTime] = React.useState('')
-  const [date, setDate] = React.useState('')
+  const [seconds, setSeconds] = React.useState('')
+  const [dateStr, setDateStr] = React.useState('')
   const [mounted, setMounted] = React.useState(false)
 
   React.useEffect(() => {
@@ -384,35 +442,282 @@ function ClockContent() {
     const update = () => {
       const now = new Date()
       try {
-        setTime(now.toLocaleTimeString('en-US', { timeZone: timezone, hour12: true }))
-        setDate(now.toLocaleDateString('en-US', { timeZone: timezone, weekday: 'short', month: 'short', day: 'numeric' }))
+        const timeFmt = new Intl.DateTimeFormat('en-US', {
+          timeZone: clock.timezone,
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+        })
+        const secFmt = new Intl.DateTimeFormat('en-US', {
+          timeZone: clock.timezone,
+          second: '2-digit',
+          hour12: false,
+        })
+        const dateFmt = new Intl.DateTimeFormat('en-US', {
+          timeZone: clock.timezone,
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+        })
+        setTime(timeFmt.format(now))
+        setSeconds(secFmt.format(now))
+        setDateStr(dateFmt.format(now))
       } catch {
         setTime(now.toLocaleTimeString('en-US', { hour12: true }))
-        setDate(now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }))
+        setSeconds(String(now.getSeconds()).padStart(2, '0'))
+        setDateStr(now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }))
       }
     }
     update()
     const interval = setInterval(update, 1000)
     return () => clearInterval(interval)
-  }, [timezone])
+  }, [clock.timezone])
 
   if (!mounted) {
     return (
-      <div className="flex flex-col items-center justify-center py-2">
-        <p className="text-3xl font-bold text-primary tabular-nums tracking-wider">
-          --:--:--
+      <div className="flex flex-col items-center justify-center">
+        <p className={`${isPrimary ? 'text-3xl' : 'text-lg'} font-bold text-primary/50 tabular-nums tracking-wider`}>
+          --:--
         </p>
       </div>
     )
   }
 
+  if (isPrimary) {
+    return (
+      <div className="flex flex-col items-center justify-center">
+        <div className="flex items-baseline gap-1">
+          <p className="text-3xl font-bold text-primary tabular-nums tracking-wider leading-none">
+            {time}
+          </p>
+          <span className="text-sm font-medium text-pink-300 tabular-nums leading-none">
+            :{seconds}
+          </span>
+        </div>
+        <p className="text-sm text-muted-foreground mt-1.5">{dateStr}</p>
+        <p className="text-[0.65rem] text-outline mt-0.5">{clock.label}</p>
+      </div>
+    )
+  }
+
+  // Secondary clock — compact row
   return (
-    <div className="flex flex-col items-center justify-center py-2">
-      <p className="text-3xl font-bold text-primary tabular-nums tracking-wider">
-        {time}
-      </p>
-      <p className="text-sm text-muted-foreground mt-1">{date}</p>
-      <p className="text-xs text-outline mt-0.5">{timezone}</p>
+    <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl bg-muted/50">
+      <p className="text-sm font-bold text-primary tabular-nums leading-none">{time}</p>
+      <span className="text-[0.65rem] font-medium text-pink-300 tabular-nums leading-none">:{seconds}</span>
+      <span className="flex-1" />
+      <span className="text-[0.65rem] text-muted-foreground">{clock.label}</span>
+    </div>
+  )
+}
+
+// ===== Clock Settings Popover =====
+function ClockSettingsPopover() {
+  const clocks = useAppStore((s) => s.clocks)
+  const addClock = useAppStore((s) => s.addClock)
+  const removeClock = useAppStore((s) => s.removeClock)
+  const hijriVisible = useAppStore((s) => s.hijriVisible)
+  const setHijriVisible = useAppStore((s) => s.setHijriVisible)
+  const hijriOffset = useAppStore((s) => s.hijriOffset)
+  const setHijriOffset = useAppStore((s) => s.setHijriOffset)
+  const [selectedValue, setSelectedValue] = React.useState(POPULAR_TIMEZONES[0].value)
+  const [newTz, setNewTz] = React.useState(POPULAR_TIMEZONES[0].timezone)
+  const [newLabel, setNewLabel] = React.useState(POPULAR_TIMEZONES[0].label)
+
+  const handleTzSelect = (val: string) => {
+    setSelectedValue(val)
+    const preset = POPULAR_TIMEZONES.find(t => t.value === val)
+    if (preset) {
+      setNewTz(preset.timezone)
+      setNewLabel(preset.label)
+    }
+  }
+
+  const handleAdd = () => {
+    if (clocks.length >= 5) return
+    addClock({ label: newLabel, timezone: newTz })
+  }
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          className="shrink-0 p-1.5 rounded-xl hover:bg-accent transition-colors text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 focus:opacity-100"
+          aria-label="Clock settings"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Settings2 className="w-3.5 h-3.5" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        side="bottom"
+        align="end"
+        sideOffset={8}
+        className="rounded-2xl p-4 w-72 bg-card border-border shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="space-y-4">
+          {/* Add timezone */}
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Add Clock</p>
+            <div className="flex gap-2">
+              <Select value={selectedValue} onValueChange={handleTzSelect}>
+                <SelectTrigger className="flex-1 h-8 text-xs rounded-xl bg-input border-border">
+                  <SelectValue placeholder="Select city" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl bg-card border-border">
+                  {POPULAR_TIMEZONES.map((tz) => (
+                    <SelectItem key={tz.value} value={tz.value} className="text-xs">
+                      {tz.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <button
+                onClick={handleAdd}
+                disabled={clocks.length >= 5}
+                className="shrink-0 size-8 rounded-xl bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 disabled:opacity-40 transition-colors"
+              >
+                <Plus className="size-3.5" />
+              </button>
+            </div>
+            {clocks.length >= 5 && (
+              <p className="text-[0.6rem] text-muted-foreground mt-1">Maximum 5 clocks</p>
+            )}
+          </div>
+
+          {/* Current clocks */}
+          {clocks.length > 1 && (
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Clocks</p>
+              <div className="space-y-1">
+                {clocks.map((c, i) => (
+                  <div key={c.id} className="flex items-center gap-2 px-2 py-1.5 rounded-xl bg-muted/50">
+                    <span className="text-xs text-foreground flex-1 truncate">{c.label}</span>
+                    <span className="text-[0.6rem] text-muted-foreground">{c.timezone}</span>
+                    {i > 0 && (
+                      <button
+                        onClick={() => removeClock(c.id)}
+                        className="size-5 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                      >
+                        <Trash2 className="size-3" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Hijri toggle */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <MoonStar className="size-3.5 text-primary" />
+              <span className="text-xs font-medium text-foreground">Hijri Date</span>
+            </div>
+            <Switch checked={hijriVisible} onCheckedChange={setHijriVisible} className="data-[state=checked]:bg-primary" />
+          </div>
+
+          {/* Hijri offset */}
+          {hijriVisible && (
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[0.65rem] text-muted-foreground">Hilal Adjustment</span>
+                <span className="text-xs font-semibold text-primary tabular-nums">
+                  {hijriOffset > 0 ? '+' : ''}{hijriOffset} day{Math.abs(hijriOffset) !== 1 ? 's' : ''}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setHijriOffset(hijriOffset - 1)}
+                  disabled={hijriOffset <= -2}
+                  className="size-7 rounded-lg bg-muted flex items-center justify-center hover:bg-accent transition-colors disabled:opacity-30"
+                >
+                  <ChevronDown className="size-3.5" />
+                </button>
+                <Slider
+                  value={[hijriOffset]}
+                  onValueChange={([v]) => setHijriOffset(v)}
+                  min={-2}
+                  max={2}
+                  step={1}
+                  className="flex-1"
+                />
+                <button
+                  onClick={() => setHijriOffset(hijriOffset + 1)}
+                  disabled={hijriOffset >= 2}
+                  className="size-7 rounded-lg bg-muted flex items-center justify-center hover:bg-accent transition-colors disabled:opacity-30"
+                >
+                  <ChevronUp className="size-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+function ClockContent({ w, h }: { w: number; h: number }) {
+  const clocks = useAppStore((s) => s.clocks)
+  const hijriVisible = useAppStore((s) => s.hijriVisible)
+  const hijriOffset = useAppStore((s) => s.hijriOffset)
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true))
+    return () => cancelAnimationFrame(id)
+  }, [])
+
+  const primary = clocks[0]
+  const secondary = clocks.slice(1)
+
+  // Size-adaptive: 1×1 = primary only, 1×2+ = primary + hijri, 2×2+ = full
+  const showHijri = hijriVisible && h >= 2
+  const showSecondary = secondary.length > 0 && (h >= 2 || w >= 2)
+
+  // Pre-mount placeholder
+  if (!mounted) {
+    return (
+      <div className="flex flex-col items-center justify-center py-2">
+        <p className="text-3xl font-bold text-primary/50 tabular-nums tracking-wider">
+          --:--
+        </p>
+      </div>
+    )
+  }
+
+  const hijri = showHijri ? getHijriDate(hijriOffset) : null
+
+  return (
+    <div className="flex flex-col h-full gap-2">
+      {/* Primary Clock */}
+      {primary && <ClockDisplay clock={primary} isPrimary />}
+
+      {/* Hijri Date */}
+      {hijri && (
+        <div className="flex flex-col items-center gap-0.5 mt-1">
+          <div className="flex items-center gap-1.5">
+            <MoonStar className="size-3 text-primary/70" />
+            <span className="text-xs font-semibold text-primary">
+              {hijri.day} {hijri.month} {hijri.year} AH
+            </span>
+          </div>
+          <p className="text-[0.7rem] text-muted-foreground arabic-text" style={{ fontFamily: 'var(--font-arabic)' }}>
+            {hijri.monthAr}
+          </p>
+        </div>
+      )}
+
+      {/* Secondary Clocks */}
+      {showSecondary && secondary.length > 0 && (
+        <div className="flex flex-col gap-1 mt-1">
+          {secondary.slice(0, h >= 3 ? 4 : 2).map((clock) => (
+            <ClockDisplay key={clock.id} clock={clock} isPrimary={false} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -616,6 +921,7 @@ export function DashboardGrid() {
                 onSizeChange={(nw, nh) => handleSizeChange(widget.type, nw, nh)}
                 onNavigate={widget.type !== 'clock' ? () => setActivePage(widgetPageMap[widget.type]) : undefined}
                 editMode={dashboardEditMode}
+                headerAction={widget.type === 'clock' ? <ClockSettingsPopover /> : undefined}
               >
                 <WidgetComponent w={w} h={h} />
               </WidgetCard>
