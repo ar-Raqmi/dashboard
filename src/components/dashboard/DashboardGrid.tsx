@@ -311,6 +311,9 @@ export function DashboardGrid() {
   const responsiveLayouts = useMemo(() => {
     const visibleTypes = new Set(visibleWidgets.map((w) => w.type))
 
+    // Apply static when not in edit mode to prevent any dragging
+    const applyStatic = (l: Layout) => dashboardEditMode ? l : { ...l, static: true }
+
     // Desktop: 3 columns - use dedicated desktop layouts
     const desktopLayout = layouts
       .filter((l) => visibleTypes.has(l.i))
@@ -320,6 +323,7 @@ export function DashboardGrid() {
         h: Math.min(l.h, MAX_GRID_H),
         x: Math.min(l.x, MAX_GRID_W - 1),
       }))
+      .map(applyStatic)
 
     // Mobile: 1 column - use dedicated mobile layouts
     const mobileLayout = mobileLayouts
@@ -330,13 +334,14 @@ export function DashboardGrid() {
         h: Math.min(l.h, MAX_GRID_H),
         x: 0,
       }))
+      .map(applyStatic)
 
     return {
       lg: desktopLayout,
       md: desktopLayout,
       sm: mobileLayout,
     }
-  }, [layouts, mobileLayouts, visibleWidgets])
+  }, [layouts, mobileLayouts, visibleWidgets, dashboardEditMode])
 
   // Save desktop layouts when they change (only for lg/md breakpoint)
   const handleDesktopLayoutChange = useCallback(
@@ -419,7 +424,7 @@ export function DashboardGrid() {
         width={width}
         onLayoutChange={handleLayoutChange}
         onBreakpointChange={handleBreakpointChange}
-        draggableHandle={dashboardEditMode ? '.widget-drag-handle' : undefined}
+        draggableHandle={dashboardEditMode ? '.widget-drag-handle' : '.no-drag-handle'}
         compactType="vertical"
         margin={[16, 16]}
         containerPadding={[0, 0]}
@@ -430,7 +435,7 @@ export function DashboardGrid() {
           const WidgetComponent = widgetComponents[widget.type]
           const layout = layoutMap.get(widget.type)
           return (
-            <div key={widget.type}>
+            <div key={widget.type} className="relative h-full">
               <WidgetCard
                 title={widgetTitles[widget.type]}
                 icon={widgetIcons[widget.type]}

@@ -68,10 +68,13 @@ function NoteSizePicker({ currentW, currentH, onSizeChange }: {
 }
 
 // ===== Note Card Component =====
-function NoteCard({ note, editMode, onOpen, onPin, onDelete, onCopy, copiedId }: {
+function NoteCard({ note, editMode, onOpen, onPin, onDelete, onCopy, copiedId, h }: {
   note: Note; editMode: boolean; onOpen: () => void; onPin: () => void
-  onDelete: () => void; onCopy: () => void; copiedId: string | null
+  onDelete: () => void; onCopy: () => void; copiedId: string | null; h: number
 }) {
+  // Scale content visibility based on card height
+  const contentLines = h >= 4 ? undefined : h >= 2 ? 8 : 3
+
   return (
     <div
       className={cn(
@@ -91,9 +94,9 @@ function NoteCard({ note, editMode, onOpen, onPin, onDelete, onCopy, copiedId }:
         </div>
       )}
 
-      <div className={cn('flex flex-col gap-2 px-4 pb-3 pt-3', editMode ? 'pt-1' : 'pt-2')}>
+      <div className={cn('flex flex-col gap-2 px-4 pb-3 pt-3 flex-1 min-h-0', editMode ? 'pt-1' : 'pt-2')}>
         {/* Title row */}
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start justify-between gap-2 shrink-0">
           <h3 className="font-semibold text-foreground text-sm line-clamp-1 flex-1 min-w-0">
             {note.title}
           </h3>
@@ -102,13 +105,16 @@ function NoteCard({ note, editMode, onOpen, onPin, onDelete, onCopy, copiedId }:
           </div>
         </div>
 
-        {/* Content preview */}
-        <div className={`text-xs text-muted-foreground line-clamp-3 leading-relaxed ${MARKDOWN_STYLES}`}>
+        {/* Content preview — grows to fill available space */}
+        <div
+          className={`text-xs text-muted-foreground leading-relaxed flex-1 min-h-0 overflow-y-auto ${MARKDOWN_STYLES}`}
+          style={contentLines ? { display: '-webkit-box', WebkitLineClamp: contentLines, WebkitBoxOrient: 'vertical', overflow: 'hidden' } : undefined}
+        >
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{note.content}</ReactMarkdown>
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center gap-2 mt-auto pt-1">
+        {/* Footer — always at the bottom */}
+        <div className="flex items-center gap-2 pt-1 shrink-0">
           <div className="size-2 rounded-full shrink-0" style={{ backgroundColor: note.color }} />
           <span className="text-[0.65rem] text-outline">
             {new Date(note.updatedAt).toLocaleDateString()}
@@ -176,37 +182,44 @@ function NotesGridSection({
     return { lg: desktopLayout, md: desktopLayout, sm: mobileLayout }
   }, [layouts, mobileLayouts, noteIds])
 
-  // Generate auto layouts for notes that don't have one yet
+  // Generate auto layouts for notes that don't have one yet, and apply static when not in edit mode
   const finalLayouts = useMemo(() => {
     const existingIds = new Set(
       responsiveLayouts.lg.map((l) => l.i)
     )
     const missingNotes = notes.filter((n) => !existingIds.has(n.id))
-    if (missingNotes.length === 0) return responsiveLayouts
 
-    const extraDesktop: Layout[] = []
-    const extraMobile: Layout[] = []
-    // Find max y in existing layout
-    const maxY = responsiveLayouts.lg.reduce((max, l) => Math.max(max, l.y + l.h), 0)
-    missingNotes.forEach((note, idx) => {
-      const col = idx % MAX_GRID_W
-      const row = Math.floor(idx / MAX_GRID_W)
-      extraDesktop.push({
-        i: note.id, x: col, y: maxY + row, w: 1, h: 1,
-        minW: 1, maxW: MAX_GRID_W, minH: 1, maxH: MAX_GRID_H,
+    const applyStatic = (l: Layout) => editMode ? l : { ...l, static: true }
+
+    let desktopBase = responsiveLayouts.lg
+    let mobileBase = responsiveLayouts.sm
+
+    if (missingNotes.length > 0) {
+      const extraDesktop: Layout[] = []
+      const extraMobile: Layout[] = []
+      const maxY = desktopBase.reduce((max, l) => Math.max(max, l.y + l.h), 0)
+      missingNotes.forEach((note, idx) => {
+        const col = idx % MAX_GRID_W
+        const row = Math.floor(idx / MAX_GRID_W)
+        extraDesktop.push({
+          i: note.id, x: col, y: maxY + row, w: 1, h: 1,
+          minW: 1, maxW: MAX_GRID_W, minH: 1, maxH: MAX_GRID_H,
+        })
+        extraMobile.push({
+          i: note.id, x: 0, y: maxY + idx, w: 1, h: 1,
+          minW: 1, maxW: 1, minH: 1, maxH: MAX_GRID_H,
+        })
       })
-      extraMobile.push({
-        i: note.id, x: 0, y: maxY + idx, w: 1, h: 1,
-        minW: 1, maxW: 1, minH: 1, maxH: MAX_GRID_H,
-      })
-    })
+      desktopBase = [...desktopBase, ...extraDesktop]
+      mobileBase = [...mobileBase, ...extraMobile]
+    }
 
     return {
-      lg: [...responsiveLayouts.lg, ...extraDesktop],
-      md: [...responsiveLayouts.lg, ...extraDesktop],
-      sm: [...responsiveLayouts.sm, ...extraMobile],
+      lg: desktopBase.map(applyStatic),
+      md: desktopBase.map(applyStatic),
+      sm: mobileBase.map(applyStatic),
     }
-  }, [responsiveLayouts, notes])
+  }, [responsiveLayouts, notes, editMode])
 
   const handleLayoutChange = useCallback((currentLayout: Layout[]) => {
     if (currentBreakpointRef.current === 'sm') {
@@ -274,7 +287,7 @@ function NotesGridSection({
           width={width}
           onLayoutChange={handleLayoutChange}
           onBreakpointChange={(bp) => { currentBreakpointRef.current = bp }}
-          draggableHandle={editMode ? '.note-drag-handle' : undefined}
+          draggableHandle={editMode ? '.note-drag-handle' : '.no-drag-handle'}
           compactType="vertical"
           margin={[12, 12]}
           containerPadding={[0, 0]}
@@ -284,7 +297,7 @@ function NotesGridSection({
           {notes.map((note) => {
             const size = sizeMap.get(note.id)
             return (
-              <div key={note.id} className="relative">
+              <div key={note.id} className="relative h-full">
                 {/* Size picker in edit mode */}
                 {editMode && (
                   <div className="absolute top-1 right-1 z-10">
@@ -306,6 +319,7 @@ function NotesGridSection({
                 )}
                 <NoteCard
                   note={note} editMode={editMode}
+                  h={size?.h ?? 1}
                   onOpen={() => onOpen(note.id)}
                   onPin={() => onPin(note.id)}
                   onDelete={() => onDelete(note.id)}
