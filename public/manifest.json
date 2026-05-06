@@ -1,0 +1,21 @@
+{
+  "name": "ar-Raqmi Database",
+  "short_name": "ar-Raqmi",
+  "description": "Premium PWA Personal Dashboard — Material 3 Expressive Design",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a2e1a",
+  "theme_color": "#1a2e1a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "lang": "en",
+  "dir": "ltr"
+}

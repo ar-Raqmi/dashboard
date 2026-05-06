@@ -1,0 +1,192 @@
+'use client'
+
+import { useState } from 'react'
+import { motion } from 'framer-motion'
+import { Copy, Plus, X, Check } from 'lucide-react'
+import { useAppStore } from '@/lib/store'
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
+
+export default function NotesWidget() {
+  const { notes, addNote, updateNote, setActivePage } = useAppStore()
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [newTitle, setNewTitle] = useState('')
+  const [newContent, setNewContent] = useState('')
+  const [newColor, setNewColor] = useState('#A5D6A7')
+
+  const visibleNotes = notes.slice(0, 4)
+
+  const handleCopy = async (id: string, content: string) => {
+    await navigator.clipboard.writeText(content)
+    setCopiedId(id)
+    setTimeout(() => setCopiedId(null), 2000)
+  }
+
+  const handleAddNote = () => {
+    if (!newTitle.trim()) return
+    addNote({
+      title: newTitle.trim(),
+      content: newContent.trim(),
+      color: newColor,
+    })
+    setNewTitle('')
+    setNewContent('')
+    setShowAddForm(false)
+  }
+
+  const handleUpdateNote = (id: string, updates: { title?: string; content?: string }) => {
+    updateNote(id, updates)
+    setEditingId(null)
+  }
+
+  const colorOptions = ['#A5D6A7', '#F48FB1', '#CE93D8', '#80CBC4', '#FFE082', '#FFAB91']
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Header with Add button */}
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-xs font-semibold text-[oklch(0.5_0.01_155)] uppercase tracking-wider">
+          Quick Notes
+        </h3>
+        <button
+          onClick={() => setShowAddForm(!showAddForm)}
+          className="w-6 h-6 rounded-lg bg-[oklch(0.72_0.19_142)] flex items-center justify-center text-[oklch(0.17_0.008_155)] hover:opacity-90 transition-opacity"
+        >
+          {showAddForm ? <X className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+        </button>
+      </div>
+
+      {/* Add Form */}
+      {showAddForm && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          className="mb-3 p-3 rounded-2xl bg-[oklch(0.17_0.008_155)] space-y-2"
+        >
+          <Input
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            placeholder="Note title..."
+            className="h-7 text-xs bg-[oklch(0.13_0.008_155)] border-[oklch(0.25_0.01_155)] rounded-xl placeholder:text-[oklch(0.4_0.01_155)]"
+          />
+          <Textarea
+            value={newContent}
+            onChange={(e) => setNewContent(e.target.value)}
+            placeholder="Note content..."
+            className="min-h-[50px] text-xs bg-[oklch(0.13_0.008_155)] border-[oklch(0.25_0.01_155)] rounded-xl placeholder:text-[oklch(0.4_0.01_155)] resize-none"
+          />
+          <div className="flex items-center gap-1.5">
+            {colorOptions.map((c) => (
+              <button
+                key={c}
+                onClick={() => setNewColor(c)}
+                className={`w-4 h-4 rounded-full transition-transform ${
+                  newColor === c ? 'scale-125 ring-2 ring-white/30' : ''
+                }`}
+                style={{ backgroundColor: c }}
+              />
+            ))}
+            <button
+              onClick={handleAddNote}
+              className="ml-auto text-[10px] px-2.5 py-1 rounded-xl bg-[oklch(0.72_0.19_142)] text-[oklch(0.17_0.008_155)] font-semibold hover:opacity-90 transition-opacity"
+            >
+              Add
+            </button>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Notes Grid */}
+      <div className="flex-1 grid grid-cols-2 gap-2 auto-rows-min overflow-y-auto scrollbar-thin">
+        {visibleNotes.map((note, index) => (
+          <motion.div
+            key={note.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.08, duration: 0.3 }}
+            className="relative p-3 rounded-2xl cursor-pointer group hover:ring-1 hover:ring-white/10 transition-all min-h-[80px] flex flex-col"
+            style={{ backgroundColor: note.color + '20' }}
+            onClick={() => {
+              if (editingId !== note.id) setEditingId(note.id)
+            }}
+          >
+            {/* Color bar */}
+            <div
+              className="absolute top-0 left-3 right-3 h-0.5 rounded-b-full"
+              style={{ backgroundColor: note.color }}
+            />
+
+            <div className="flex items-start justify-between gap-1 mb-1">
+              <h4
+                className="text-xs font-semibold text-[oklch(0.9_0.005_155)] truncate flex-1"
+                style={{ color: note.color }}
+              >
+                {note.title}
+              </h4>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleCopy(note.id, note.content)
+                }}
+                className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+              >
+                {copiedId === note.id ? (
+                  <Check className="w-3 h-3 text-[oklch(0.72_0.19_142)]" />
+                ) : (
+                  <Copy className="w-3 h-3 text-[oklch(0.5_0.01_155)] hover:text-[oklch(0.7_0.01_155)]" />
+                )}
+              </button>
+            </div>
+
+            {editingId === note.id ? (
+              <div className="flex-1 space-y-1" onClick={(e) => e.stopPropagation()}>
+                <Input
+                  defaultValue={note.title}
+                  onBlur={(e) => handleUpdateNote(note.id, { title: e.target.value })}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleUpdateNote(note.id, { title: (e.target as HTMLInputElement).value })
+                    }
+                  }}
+                  className="h-6 text-[10px] bg-[oklch(0.13_0.008_155)] border-[oklch(0.25_0.01_155)] rounded-lg"
+                />
+                <Textarea
+                  defaultValue={note.content}
+                  onBlur={(e) => handleUpdateNote(note.id, { content: e.target.value })}
+                  className="min-h-[40px] text-[10px] bg-[oklch(0.13_0.008_155)] border-[oklch(0.25_0.01_155)] rounded-lg resize-none"
+                  autoFocus
+                />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setEditingId(null)
+                  }}
+                  className="text-[9px] text-[oklch(0.72_0.19_142)] hover:underline"
+                >
+                  Done
+                </button>
+              </div>
+            ) : (
+              <p className="text-[10px] text-[oklch(0.6_0.01_155)] line-clamp-3 flex-1">
+                {note.content}
+              </p>
+            )}
+          </motion.div>
+        ))}
+      </div>
+
+      {/* View All */}
+      {notes.length > 4 && (
+        <button
+          onClick={() => setActivePage('notes')}
+          className="mt-2 text-[10px] text-[oklch(0.72_0.19_142)] hover:underline text-center"
+        >
+          View All Notes →
+        </button>
+      )}
+    </div>
+  )
+}
