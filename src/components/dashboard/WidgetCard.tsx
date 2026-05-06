@@ -1,9 +1,10 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import React, { useCallback } from 'react'
+import { motion } from 'framer-motion'
 import { GripVertical, Maximize2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 
 interface WidgetCardProps {
   title: string
@@ -23,19 +24,17 @@ function GridSizePicker({
   currentW,
   currentH,
   onSizeChange,
-  onClose,
 }: {
   currentW: number
   currentH: number
   onSizeChange: (w: number, h: number) => void
-  onClose: () => void
 }) {
   return (
-    <div className="p-2">
-      <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
+    <div className="space-y-3">
+      <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
         Grid Size
       </div>
-      <div className="grid grid-cols-3 gap-1" role="grid" aria-label="Select widget size">
+      <div className="grid grid-cols-3 gap-1.5" role="grid" aria-label="Select widget size">
         {Array.from({ length: 3 }, (_, row) =>
           Array.from({ length: 3 }, (_, col) => {
             const w = col + 1
@@ -45,12 +44,9 @@ function GridSizePicker({
             return (
               <button
                 key={`${w}-${h}`}
-                onClick={() => {
-                  onSizeChange(w, h)
-                  onClose()
-                }}
+                onClick={() => onSizeChange(w, h)}
                 className={cn(
-                  'w-8 h-8 rounded-lg transition-all duration-200 border-2 flex items-center justify-center',
+                  'w-10 h-10 rounded-xl transition-all duration-200 border-2 flex items-center justify-center',
                   'hover:scale-110 active:scale-95',
                   isCurrent
                     ? 'bg-primary border-primary text-primary-foreground shadow-sm'
@@ -62,7 +58,7 @@ function GridSizePicker({
                 aria-label={`${w} columns by ${h} rows`}
                 aria-pressed={isCurrent}
               >
-                <span className="text-[9px] font-bold leading-none">
+                <span className="text-[10px] font-bold leading-none">
                   {w}×{h}
                 </span>
               </button>
@@ -70,8 +66,8 @@ function GridSizePicker({
           })
         )}
       </div>
-      <div className="text-[10px] text-muted-foreground mt-2 px-1 text-center">
-        {currentW}×{currentH}
+      <div className="text-xs text-muted-foreground text-center">
+        Current: {currentW}×{currentH}
       </div>
     </div>
   )
@@ -89,8 +85,6 @@ export function WidgetCard({
   currentH,
   onSizeChange,
 }: WidgetCardProps) {
-  const [showSizePicker, setShowSizePicker] = useState(false)
-
   const handleSizeChange = useCallback(
     (w: number, h: number) => {
       onSizeChange(w, h)
@@ -128,49 +122,30 @@ export function WidgetCard({
           </h3>
         </div>
 
-        {/* Size picker button */}
-        <div className="relative">
-          <button
-            onClick={() => setShowSizePicker((prev) => !prev)}
-            className={cn(
-              'shrink-0 p-1.5 rounded-xl transition-all duration-200',
-              showSizePicker
-                ? 'bg-primary/15 text-primary'
-                : 'hover:bg-accent text-muted-foreground hover:text-primary'
-            )}
-            aria-label={`Resize ${title}`}
-            title={`${currentW}×${currentH} — click to resize`}
+        {/* Size picker — uses Popover with Portal so it renders outside the card's overflow-hidden */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              className="shrink-0 p-1.5 rounded-xl hover:bg-accent transition-colors text-muted-foreground hover:text-primary"
+              aria-label={`Resize ${title}`}
+              title={`${currentW}×${currentH} — click to resize`}
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            side="bottom"
+            align="end"
+            sideOffset={8}
+            className="rounded-2xl p-4 w-auto"
           >
-            <Maximize2 className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Size picker popover */}
-          <AnimatePresence>
-            {showSizePicker && (
-              <>
-                {/* Backdrop to close */}
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setShowSizePicker(false)}
-                />
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.85, y: -4 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.85, y: -4 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                  className="absolute right-0 top-full mt-2 z-50 rounded-2xl border border-border bg-popover shadow-lg shadow-black/10 dark:shadow-black/30"
-                >
-                  <GridSizePicker
-                    currentW={currentW}
-                    currentH={currentH}
-                    onSizeChange={handleSizeChange}
-                    onClose={() => setShowSizePicker(false)}
-                  />
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
-        </div>
+            <GridSizePicker
+              currentW={currentW}
+              currentH={currentH}
+              onSizeChange={handleSizeChange}
+            />
+          </PopoverContent>
+        </Popover>
 
         {/* Optional action */}
         {onAction && actionIcon && (
