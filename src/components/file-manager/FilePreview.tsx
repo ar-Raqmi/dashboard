@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import {
   Image as ImageIcon,
   Music,
@@ -204,15 +203,8 @@ export default function FilePreview() {
           <DialogTitle>
             <VisuallyHidden.Root>{previewFile.name}</VisuallyHidden.Root>
           </DialogTitle>
-          <AnimatePresence>
-            {previewFile && (
-              <motion.div
-                key={previewFile.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                transition={{ duration: 0.3 }}
-              >
+          {previewFile && (
+            <div key={previewFile.id}>
                 {/* Header with gradient */}
                 <div className={`bg-gradient-to-br ${getCategoryColor(previewFile.category)} px-6 pt-6 pb-4`}>
                   <div className="flex items-start justify-between">
@@ -285,9 +277,8 @@ export default function FilePreview() {
                     Delete
                   </Button>
                 </div>
-              </motion.div>
+            </div>
             )}
-          </AnimatePresence>
         </DialogContent>
       </Dialog>
 
