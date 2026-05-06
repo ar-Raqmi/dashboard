@@ -106,7 +106,7 @@ export function WidgetCard({
   return (
     <div
       className={cn(
-        'widget-card rounded-3xl border bg-card flex flex-col h-full overflow-hidden relative shadow-sm transition-shadow duration-200',
+        'widget-card group rounded-3xl border bg-card flex flex-col h-full overflow-hidden relative shadow-sm transition-shadow duration-200',
         editMode
           ? 'border-primary/40 shadow-md shadow-primary/5 ring-1 ring-primary/20'
           : 'border-border',
@@ -132,7 +132,7 @@ export function WidgetCard({
 
         {/* Custom header action (e.g. settings popover) */}
         {headerAction && !editMode && (
-          <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
             {headerAction}
           </div>
         )}

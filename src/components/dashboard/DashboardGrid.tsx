@@ -542,7 +542,7 @@ function ClockSettingsPopover() {
     <Popover>
       <PopoverTrigger asChild>
         <button
-          className="shrink-0 p-1.5 rounded-xl hover:bg-accent transition-colors text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 focus:opacity-100"
+          className="shrink-0 p-1.5 rounded-xl hover:bg-accent transition-colors text-muted-foreground hover:text-primary"
           aria-label="Clock settings"
           onClick={(e) => e.stopPropagation()}
         >
