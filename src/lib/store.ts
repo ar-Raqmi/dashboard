@@ -28,6 +28,7 @@ export interface Note {
   title: string
   content: string
   color: string
+  pinned: boolean
   createdAt: string
   updatedAt: string
 }
@@ -135,16 +136,16 @@ const defaultMobileLayouts: Layout[] = [
 
 // ===== SAMPLE DATA =====
 const sampleTasks: Task[] = [
-  { id: '1', title: 'Review project proposal', dueDate: new Date().toISOString().split('T')[0], priority: 'high', status: 'pending', createdAt: new Date().toISOString() },
-  { id: '2', title: 'Update documentation', dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], priority: 'medium', status: 'pending', createdAt: new Date().toISOString() },
-  { id: '3', title: 'Team standup meeting', dueDate: new Date().toISOString().split('T')[0], priority: 'low', status: 'completed', createdAt: new Date().toISOString() },
-  { id: '4', title: 'Fix API endpoint bug', dueDate: new Date(Date.now() + 172800000).toISOString().split('T')[0], priority: 'high', status: 'pending', createdAt: new Date().toISOString() },
-  { id: '5', title: 'Write unit tests', dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], priority: 'medium', status: 'pending', createdAt: new Date().toISOString() },
+  { id: crypto.randomUUID(), title: 'Review project proposal', dueDate: new Date().toISOString().split('T')[0], priority: 'high', status: 'pending', createdAt: new Date().toISOString() },
+  { id: crypto.randomUUID(), title: 'Update documentation', dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], priority: 'medium', status: 'pending', createdAt: new Date().toISOString() },
+  { id: crypto.randomUUID(), title: 'Team standup meeting', dueDate: new Date().toISOString().split('T')[0], priority: 'low', status: 'completed', createdAt: new Date().toISOString() },
+  { id: crypto.randomUUID(), title: 'Fix API endpoint bug', dueDate: new Date(Date.now() + 172800000).toISOString().split('T')[0], priority: 'high', status: 'pending', createdAt: new Date().toISOString() },
+  { id: crypto.randomUUID(), title: 'Write unit tests', dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], priority: 'medium', status: 'pending', createdAt: new Date().toISOString() },
 ]
 
 const sampleGoals: Goal[] = [
   {
-    id: '1', title: 'Complete ar-Raqmi Database', progress: 65,
+    id: crypto.randomUUID(), title: 'Complete ar-Raqmi Database', progress: 65,
     milestones: [
       { id: 'm1', label: 'Design Phase', completed: true },
       { id: 'm2', label: 'Core Features', completed: true },
@@ -154,7 +155,7 @@ const sampleGoals: Goal[] = [
     createdAt: new Date().toISOString(),
   },
   {
-    id: '2', title: 'Learn Arabic Calligraphy', progress: 30,
+    id: crypto.randomUUID(), title: 'Learn Arabic Calligraphy', progress: 30,
     milestones: [
       { id: 'm5', label: 'Basic Strokes', completed: true },
       { id: 'm6', label: 'Letter Forms', completed: false },
@@ -163,7 +164,7 @@ const sampleGoals: Goal[] = [
     createdAt: new Date().toISOString(),
   },
   {
-    id: '3', title: 'Read 30 Books This Year', progress: 43,
+    id: crypto.randomUUID(), title: 'Read 30 Books This Year', progress: 43,
     milestones: [
       { id: 'm8', label: '10 Books', completed: true },
       { id: 'm9', label: '20 Books', completed: false },
@@ -174,17 +175,17 @@ const sampleGoals: Goal[] = [
 ]
 
 const sampleNotes: Note[] = [
-  { id: '1', title: 'Project Ideas', content: 'Build a Quran study app with AI-powered tafsir recommendations', color: '#A5D6A7', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: '2', title: 'Meeting Notes', content: 'Discuss sprint priorities and assign tasks for next week', color: '#F48FB1', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: '3', title: 'Quick Reminder', content: 'Submit quarterly report by Friday', color: '#CE93D8', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: '4', title: 'Design Inspiration', content: 'Material 3 Expressive: bouncy animations, bold colors, rounded shapes', color: '#80CBC4', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: crypto.randomUUID(), title: 'Project Ideas', content: 'Build a Quran study app with AI-powered tafsir recommendations', color: '#A5D6A7', pinned: true, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: crypto.randomUUID(), title: 'Meeting Notes', content: 'Discuss sprint priorities and assign tasks for next week', color: '#F48FB1', pinned: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: crypto.randomUUID(), title: 'Quick Reminder', content: 'Submit quarterly report by Friday', color: '#CE93D8', pinned: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: crypto.randomUUID(), title: 'Design Inspiration', content: 'Material 3 Expressive: bouncy animations, bold colors, rounded shapes', color: '#80CBC4', pinned: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
 ]
 
 const sampleEvents: CalendarEvent[] = [
-  { id: '1', title: 'Team Meeting', date: new Date().toISOString().split('T')[0], color: '#A5D6A7' },
-  { id: '2', title: 'Project Deadline', date: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0], color: '#F48FB1' },
-  { id: '3', title: 'Design Review', date: new Date(Date.now() + 86400000 * 5).toISOString().split('T')[0], color: '#CE93D8' },
-  { id: '4', title: 'Sprint Planning', date: new Date(Date.now() + 86400000 * 7).toISOString().split('T')[0], color: '#80CBC4' },
+  { id: crypto.randomUUID(), title: 'Team Meeting', date: new Date().toISOString().split('T')[0], color: '#A5D6A7' },
+  { id: crypto.randomUUID(), title: 'Project Deadline', date: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0], color: '#F48FB1' },
+  { id: crypto.randomUUID(), title: 'Design Review', date: new Date(Date.now() + 86400000 * 5).toISOString().split('T')[0], color: '#CE93D8' },
+  { id: crypto.randomUUID(), title: 'Sprint Planning', date: new Date(Date.now() + 86400000 * 7).toISOString().split('T')[0], color: '#80CBC4' },
 ]
 
 const sampleFiles: FileItem[] = [
@@ -234,6 +235,19 @@ interface AppStore {
   addNote: (note: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => void
   updateNote: (id: string, updates: Partial<Note>) => void
   deleteNote: (id: string) => void
+  toggleNotePinned: (id: string) => void
+
+  // Note Layouts (regular notes)
+  noteLayouts: Layout[]
+  noteMobileLayouts: Layout[]
+  setNoteLayouts: (layouts: Layout[]) => void
+  setNoteMobileLayouts: (layouts: Layout[]) => void
+
+  // Note Layouts (pinned notes)
+  pinnedNoteLayouts: Layout[]
+  pinnedNoteMobileLayouts: Layout[]
+  setPinnedNoteLayouts: (layouts: Layout[]) => void
+  setPinnedNoteMobileLayouts: (layouts: Layout[]) => void
 
   // Calendar
   events: CalendarEvent[]
@@ -293,8 +307,7 @@ interface AppStore {
 }
 
 // ===== GENERATE ID =====
-let idCounter = 100
-const genId = () => String(++idCounter)
+const genId = () => crypto.randomUUID()
 
 // ===== STORE =====
 export const useAppStore = create<AppStore>()(
@@ -375,17 +388,34 @@ export const useAppStore = create<AppStore>()(
       // Notes
       notes: sampleNotes,
       addNote: (note) =>
-        set((state) => ({
-          notes: [
-            ...state.notes,
-            {
-              ...note,
-              id: genId(),
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            },
-          ],
-        })),
+        set((state) => {
+          const newId = genId()
+          const newNote = {
+            ...note,
+            id: newId,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }
+          // Add layout entry at the top of the appropriate section
+          const isPinned = note.pinned ?? false
+          const layoutEntry: Layout = {
+            i: newId, x: 0, y: 0, w: 1, h: 1,
+            minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H,
+          }
+          return {
+            // New notes go to the TOP
+            notes: [newNote, ...state.notes],
+            ...(isPinned
+              ? {
+                pinnedNoteLayouts: [layoutEntry, ...state.pinnedNoteLayouts.map((l) => ({ ...l, y: l.y + 1 }))],
+                pinnedNoteMobileLayouts: [layoutEntry, ...state.pinnedNoteMobileLayouts.map((l) => ({ ...l, y: l.y + 1 }))],
+              }
+              : {
+                noteLayouts: [layoutEntry, ...state.noteLayouts.map((l) => ({ ...l, y: l.y + 1 }))],
+                noteMobileLayouts: [layoutEntry, ...state.noteMobileLayouts.map((l) => ({ ...l, y: l.y + 1 }))],
+              }),
+          }
+        }),
       updateNote: (id, updates) =>
         set((state) => ({
           notes: state.notes.map((n) =>
@@ -393,7 +423,52 @@ export const useAppStore = create<AppStore>()(
           ),
         })),
       deleteNote: (id) =>
-        set((state) => ({ notes: state.notes.filter((n) => n.id !== id) })),
+        set((state) => ({
+          notes: state.notes.filter((n) => n.id !== id),
+          noteLayouts: state.noteLayouts.filter((l) => l.i !== id),
+          noteMobileLayouts: state.noteMobileLayouts.filter((l) => l.i !== id),
+          pinnedNoteLayouts: state.pinnedNoteLayouts.filter((l) => l.i !== id),
+          pinnedNoteMobileLayouts: state.pinnedNoteMobileLayouts.filter((l) => l.i !== id),
+        })),
+      toggleNotePinned: (id) =>
+        set((state) => {
+          const note = state.notes.find((n) => n.id === id)
+          if (!note) return state
+          const newPinned = !note.pinned
+          const layoutEntry: Layout = {
+            i: id, x: 0, y: 0, w: 1, h: 1,
+            minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H,
+          }
+          // Remove from old section, add to new section at top
+          if (newPinned) {
+            return {
+              notes: state.notes.map((n) => n.id === id ? { ...n, pinned: true } : n),
+              noteLayouts: state.noteLayouts.filter((l) => l.i !== id),
+              noteMobileLayouts: state.noteMobileLayouts.filter((l) => l.i !== id),
+              pinnedNoteLayouts: [layoutEntry, ...state.pinnedNoteLayouts.map((l) => ({ ...l, y: l.y + 1 }))],
+              pinnedNoteMobileLayouts: [layoutEntry, ...state.pinnedNoteMobileLayouts.map((l) => ({ ...l, y: l.y + 1 }))],
+            }
+          } else {
+            return {
+              notes: state.notes.map((n) => n.id === id ? { ...n, pinned: false } : n),
+              pinnedNoteLayouts: state.pinnedNoteLayouts.filter((l) => l.i !== id),
+              pinnedNoteMobileLayouts: state.pinnedNoteMobileLayouts.filter((l) => l.i !== id),
+              noteLayouts: [layoutEntry, ...state.noteLayouts.map((l) => ({ ...l, y: l.y + 1 }))],
+              noteMobileLayouts: [layoutEntry, ...state.noteMobileLayouts.map((l) => ({ ...l, y: l.y + 1 }))],
+            }
+          }
+        }),
+
+      // Note Layouts
+      noteLayouts: [],
+      noteMobileLayouts: [],
+      setNoteLayouts: (layouts) => set({ noteLayouts: layouts }),
+      setNoteMobileLayouts: (layouts) => set({ noteMobileLayouts: layouts }),
+
+      pinnedNoteLayouts: [],
+      pinnedNoteMobileLayouts: [],
+      setPinnedNoteLayouts: (layouts) => set({ pinnedNoteLayouts: layouts }),
+      setPinnedNoteMobileLayouts: (layouts) => set({ pinnedNoteMobileLayouts: layouts }),
 
       // Calendar
       events: sampleEvents,
@@ -509,6 +584,10 @@ export const useAppStore = create<AppStore>()(
         appTitle: state.appTitle,
         appLogo: state.appLogo,
         background: state.background,
+        noteLayouts: state.noteLayouts,
+        noteMobileLayouts: state.noteMobileLayouts,
+        pinnedNoteLayouts: state.pinnedNoteLayouts,
+        pinnedNoteMobileLayouts: state.pinnedNoteMobileLayouts,
       }),
     }
   )
