@@ -201,10 +201,23 @@ const widgetComponents: Record<WidgetType, React.ComponentType> = {
   clock: ClockContent,
 }
 
+// Stable selector: only re-renders when the set of visible widget types actually changes
+const getVisibleWidgetTypes = (s: { widgets: { type: string; visible: boolean }[] }) => {
+  const types = s.widgets.filter((w) => w.visible).map((w) => w.type)
+  return types.join(',')
+}
+
 export function DashboardGrid() {
   const layouts = useAppStore((s) => s.layouts)
   const setLayouts = useAppStore((s) => s.setLayouts)
-  const visibleWidgets = useAppStore((s) => s.widgets.filter((w) => w.visible))
+  const widgets = useAppStore((s) => s.widgets)
+  // Use the stable selector for re-render decisions, then derive visibleWidgets via useMemo
+  const visibleWidgetTypesKey = useAppStore(getVisibleWidgetTypes)
+
+  const visibleWidgets = useMemo(
+    () => widgets.filter((w) => w.visible),
+    [widgets, visibleWidgetTypesKey]
+  )
 
   const containerRef = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(1200)
@@ -226,9 +239,8 @@ export function DashboardGrid() {
 
   // Build responsive layouts from the single layout array
   const responsiveLayouts = useMemo(() => {
-    const currentLayout = layouts.filter((l) =>
-      visibleWidgets.some((w) => w.type === l.i)
-    )
+    const visibleTypes = new Set(visibleWidgets.map((w) => w.type))
+    const currentLayout = layouts.filter((l) => visibleTypes.has(l.i))
     return {
       lg: currentLayout,
       md: currentLayout.map((l) => ({ ...l, w: Math.min(l.w, 5), x: Math.min(l.x, 5) })),
@@ -239,9 +251,10 @@ export function DashboardGrid() {
 
   const handleLayoutChange = useCallback(
     (currentLayout: Layout[]) => {
+      const visibleTypes = new Set(visibleWidgets.map((w) => w.type))
       // Merge with existing layouts to preserve hidden widget layouts
       const hiddenLayouts = layouts.filter(
-        (l) => !visibleWidgets.some((w) => w.type === l.i)
+        (l) => !visibleTypes.has(l.i)
       )
       setLayouts([...hiddenLayouts, ...currentLayout])
     },
