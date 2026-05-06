@@ -92,6 +92,7 @@ const defaultWidgets: DashboardWidget[] = [
   { type: 'clock', label: 'GMT Clock', icon: 'schedule', visible: true },
 ]
 
+// Desktop layouts: 3-column grid
 const defaultLayouts: Layout[] = [
   { i: 'tasks', x: 0, y: 0, w: 2, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 3 },
   { i: 'calendar', x: 2, y: 0, w: 1, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 3 },
@@ -99,6 +100,16 @@ const defaultLayouts: Layout[] = [
   { i: 'verse', x: 1, y: 2, w: 1, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 3 },
   { i: 'goals', x: 2, y: 2, w: 1, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 3 },
   { i: 'clock', x: 0, y: 4, w: 1, h: 1, minW: 1, maxW: 3, minH: 1, maxH: 3 },
+]
+
+// Mobile layouts: 1-column stack (preserves h, forces w:1, x:0)
+const defaultMobileLayouts: Layout[] = [
+  { i: 'tasks', x: 0, y: 0, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: 3 },
+  { i: 'calendar', x: 0, y: 2, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: 3 },
+  { i: 'notes', x: 0, y: 4, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: 3 },
+  { i: 'verse', x: 0, y: 6, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: 3 },
+  { i: 'goals', x: 0, y: 8, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: 3 },
+  { i: 'clock', x: 0, y: 10, w: 1, h: 1, minW: 1, maxW: 1, minH: 1, maxH: 3 },
 ]
 
 // ===== SAMPLE DATA =====
@@ -177,7 +188,9 @@ interface AppStore {
   // Dashboard
   widgets: DashboardWidget[]
   layouts: Layout[]
+  mobileLayouts: Layout[]
   setLayouts: (layouts: Layout[]) => void
+  setMobileLayouts: (layouts: Layout[]) => void
   toggleWidgetVisibility: (type: WidgetType) => void
   updateWidgetSize: (widgetId: string, w: number, h: number) => void
 
@@ -265,7 +278,9 @@ export const useAppStore = create<AppStore>()(
       // Dashboard
       widgets: defaultWidgets,
       layouts: defaultLayouts,
+      mobileLayouts: defaultMobileLayouts,
       setLayouts: (layouts) => set({ layouts }),
+      setMobileLayouts: (layouts) => set({ mobileLayouts: layouts }),
       toggleWidgetVisibility: (type) =>
         set((state) => ({
           widgets: state.widgets.map((w) =>
@@ -276,6 +291,9 @@ export const useAppStore = create<AppStore>()(
         set((state) => ({
           layouts: state.layouts.map((l) =>
             l.i === widgetId ? { ...l, w: Math.min(Math.max(w, 1), 3), h: Math.min(Math.max(h, 1), 3) } : l
+          ),
+          mobileLayouts: state.mobileLayouts.map((l) =>
+            l.i === widgetId ? { ...l, h: Math.min(Math.max(h, 1), 3) } : l
           ),
         })),
 
@@ -433,6 +451,7 @@ export const useAppStore = create<AppStore>()(
       partialize: (state) => ({
         widgets: state.widgets,
         layouts: state.layouts,
+        mobileLayouts: state.mobileLayouts,
         tasks: state.tasks,
         goals: state.goals,
         notes: state.notes,
