@@ -24,6 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog'
@@ -121,7 +122,7 @@ function PreviewContent({ file }: { file: FileItem }) {
               <span>3:45</span>
             </div>
             <audio controls className="w-full opacity-80" style={{ filter: 'hue-rotate(200deg)' }}>
-              <source src={file.content || ''} type="audio/mpeg" />
+              {file.content && <source src={file.content} type="audio/mpeg" />}
             </audio>
           </div>
         </div>
@@ -200,6 +201,9 @@ export default function FilePreview() {
           className="bg-card border-border text-foreground sm:max-w-2xl rounded-3xl p-0 overflow-hidden"
           showCloseButton={false}
         >
+          <DialogTitle>
+            <VisuallyHidden.Root>{previewFile.name}</VisuallyHidden.Root>
+          </DialogTitle>
           <AnimatePresence>
             {previewFile && (
               <motion.div

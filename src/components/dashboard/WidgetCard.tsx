@@ -17,6 +17,7 @@ interface WidgetCardProps {
   currentW: number
   currentH: number
   onSizeChange: (w: number, h: number) => void
+  onNavigate?: () => void
 }
 
 // Grid size picker: shows a 3×3 visual grid where user clicks to select size
@@ -84,6 +85,7 @@ export function WidgetCard({
   currentW,
   currentH,
   onSizeChange,
+  onNavigate,
 }: WidgetCardProps) {
   const handleSizeChange = useCallback(
     (w: number, h: number) => {
@@ -160,7 +162,16 @@ export function WidgetCard({
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-4">
+      <div
+        className={cn(
+          'flex-1 overflow-y-auto custom-scrollbar p-4',
+          onNavigate && 'cursor-pointer'
+        )}
+        onClick={onNavigate}
+        role={onNavigate ? 'button' : undefined}
+        tabIndex={onNavigate ? 0 : undefined}
+        onKeyDown={onNavigate ? (e) => { if (e.key === 'Enter' || e.key === ' ') onNavigate() } : undefined}
+      >
         {children}
       </div>
     </motion.div>

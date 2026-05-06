@@ -71,7 +71,7 @@ export interface HadithData {
   grade: string
 }
 
-export type WidgetType = 'tasks' | 'calendar' | 'notes' | 'verse' | 'goals' | 'clock'
+export type WidgetType = 'tasks' | 'calendar' | 'notes' | 'verse' | 'goals' | 'clock' | 'files'
 
 export interface DashboardWidget {
   type: WidgetType
@@ -90,6 +90,7 @@ const defaultWidgets: DashboardWidget[] = [
   { type: 'verse', label: 'Daily Verse', icon: 'auto_stories', visible: true },
   { type: 'goals', label: 'Goals', icon: 'flag', visible: true },
   { type: 'clock', label: 'GMT Clock', icon: 'schedule', visible: true },
+  { type: 'files', label: 'Files', icon: 'folder', visible: true },
 ]
 
 // Desktop layouts: 3-column grid
@@ -100,6 +101,7 @@ const defaultLayouts: Layout[] = [
   { i: 'verse', x: 1, y: 2, w: 1, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 3 },
   { i: 'goals', x: 2, y: 2, w: 1, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 3 },
   { i: 'clock', x: 0, y: 4, w: 1, h: 1, minW: 1, maxW: 3, minH: 1, maxH: 3 },
+  { i: 'files', x: 1, y: 4, w: 1, h: 1, minW: 1, maxW: 3, minH: 1, maxH: 3 },
 ]
 
 // Mobile layouts: 1-column stack (preserves h, forces w:1, x:0)
@@ -110,6 +112,7 @@ const defaultMobileLayouts: Layout[] = [
   { i: 'verse', x: 0, y: 6, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: 3 },
   { i: 'goals', x: 0, y: 8, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: 3 },
   { i: 'clock', x: 0, y: 10, w: 1, h: 1, minW: 1, maxW: 1, minH: 1, maxH: 3 },
+  { i: 'files', x: 0, y: 12, w: 1, h: 1, minW: 1, maxW: 1, minH: 1, maxH: 3 },
 ]
 
 // ===== SAMPLE DATA =====
