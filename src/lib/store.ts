@@ -83,6 +83,12 @@ export interface DashboardWidget {
 
 export type ActivePage = 'dashboard' | 'tasks' | 'calendar' | 'notes' | 'files' | 'spiritual' | 'goals' | 'settings'
 
+export interface ClockConfig {
+  id: string
+  label: string
+  timezone: string // IANA timezone string, e.g. 'Asia/Kuala_Lumpur'
+}
+
 export type BackgroundType = 'default' | 'color' | 'gradient' | 'image'
 
 export interface BackgroundSettings {
@@ -100,7 +106,7 @@ const defaultWidgets: DashboardWidget[] = [
   { type: 'notes', label: 'Quick Notes', icon: 'sticky_note_2', visible: true },
   { type: 'verse', label: 'Daily Verse', icon: 'auto_stories', visible: true },
   { type: 'goals', label: 'Goals', icon: 'flag', visible: true },
-  { type: 'clock', label: 'GMT Clock', icon: 'schedule', visible: true },
+  { type: 'clock', label: 'World Clock', icon: 'schedule', visible: true },
   { type: 'files', label: 'Files', icon: 'folder', visible: true },
 ]
 
@@ -119,7 +125,7 @@ const defaultLayouts: Layout[] = [
   { i: 'notes', x: 0, y: 2, w: 1, h: 2, minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H },
   { i: 'verse', x: 1, y: 2, w: 1, h: 2, minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H },
   { i: 'goals', x: 2, y: 2, w: 1, h: 2, minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H },
-  { i: 'clock', x: 0, y: 4, w: 1, h: 1, minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H },
+  { i: 'clock', x: 0, y: 4, w: 1, h: 2, minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H },
   { i: 'files', x: 1, y: 4, w: 1, h: 1, minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H },
 ]
 
@@ -130,7 +136,7 @@ const defaultMobileLayouts: Layout[] = [
   { i: 'notes', x: 0, y: 4, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
   { i: 'verse', x: 0, y: 6, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
   { i: 'goals', x: 0, y: 8, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
-  { i: 'clock', x: 0, y: 10, w: 1, h: 1, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
+  { i: 'clock', x: 0, y: 10, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
   { i: 'files', x: 0, y: 12, w: 1, h: 1, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
 ]
 
@@ -284,8 +290,14 @@ interface AppStore {
   setHadithLoading: (loading: boolean) => void
 
   // Clock
-  timezone: string
-  setTimezone: (tz: string) => void
+  clocks: ClockConfig[]
+  addClock: (clock: Omit<ClockConfig, 'id'>) => void
+  removeClock: (id: string) => void
+  updateClock: (id: string, updates: Partial<ClockConfig>) => void
+  hijriVisible: boolean
+  setHijriVisible: (visible: boolean) => void
+  hijriOffset: number // -2 to +2 days
+  setHijriOffset: (offset: number) => void
 
   // Settings
   profileName: string
@@ -537,8 +549,25 @@ export const useAppStore = create<AppStore>()(
       setHadithLoading: (loading) => set({ hadithLoading: loading }),
 
       // Clock
-      timezone: 'Asia/Kuala_Lumpur',
-      setTimezone: (tz) => set({ timezone: tz }),
+      clocks: [
+        { id: 'clock-1', label: 'Kuala Lumpur', timezone: 'Asia/Kuala_Lumpur' },
+      ],
+      addClock: (clock) =>
+        set((state) => ({
+          clocks: [...state.clocks, { ...clock, id: genId() }],
+        })),
+      removeClock: (id) =>
+        set((state) => ({
+          clocks: state.clocks.filter((c) => c.id !== id),
+        })),
+      updateClock: (id, updates) =>
+        set((state) => ({
+          clocks: state.clocks.map((c) => (c.id === id ? { ...c, ...updates } : c)),
+        })),
+      hijriVisible: true,
+      setHijriVisible: (visible) => set({ hijriVisible: visible }),
+      hijriOffset: 0,
+      setHijriOffset: (offset) => set({ hijriOffset: Math.max(-2, Math.min(2, offset)) }),
 
       // Settings
       profileName: 'User',
@@ -577,6 +606,22 @@ export const useAppStore = create<AppStore>()(
     }),
     {
       name: 'ar-raqmi-store',
+      version: 2,
+      migrate: (persistedState: Record<string, unknown>, version: number) => {
+        // Migration v1 → v2: Replace single timezone with clocks array
+        if (version < 2) {
+          const oldTimezone = (persistedState as Record<string, unknown>).timezone as string | undefined
+          const tz = oldTimezone || 'Asia/Kuala_Lumpur'
+          const label = tz.split('/').pop()?.replace(/_/g, ' ') || 'Local'
+          ;(persistedState as Record<string, unknown>).clocks = [
+            { id: 'clock-1', label, timezone: tz },
+          ]
+          delete (persistedState as Record<string, unknown>).timezone
+          ;(persistedState as Record<string, unknown>).hijriVisible = true
+          ;(persistedState as Record<string, unknown>).hijriOffset = 0
+        }
+        return persistedState
+      },
       partialize: (state) => ({
         widgets: state.widgets,
         layouts: state.layouts,
@@ -586,7 +631,9 @@ export const useAppStore = create<AppStore>()(
         notes: state.notes,
         events: state.events,
         files: state.files,
-        timezone: state.timezone,
+        clocks: state.clocks,
+        hijriVisible: state.hijriVisible,
+        hijriOffset: state.hijriOffset,
         profileName: state.profileName,
         profilePicture: state.profilePicture,
         appTitle: state.appTitle,

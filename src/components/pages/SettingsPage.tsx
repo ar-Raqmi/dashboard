@@ -74,13 +74,13 @@ export default function SettingsPage() {
     profilePicture, setProfilePicture,
     appTitle, setAppTitle,
     appLogo, setAppLogo,
-    timezone, setTimezone,
+    clocks, updateClock,
     background, setBackground,
   } = useAppStore()
 
   const [localName, setLocalName] = useState(profileName)
   const [localAppTitle, setLocalAppTitle] = useState(appTitle)
-  const [localTimezone, setLocalTimezone] = useState(timezone)
+  const [localTimezone, setLocalTimezone] = useState(clocks.length > 0 ? clocks[0].timezone : 'Asia/Kuala_Lumpur')
   const [saved, setSaved] = useState(false)
 
   const avatarInputRef = useRef<HTMLInputElement>(null)
@@ -111,7 +111,7 @@ export default function SettingsPage() {
   const handleSave = () => {
     setProfileName(localName)
     setAppTitle(localAppTitle)
-    setTimezone(localTimezone)
+    if (clocks.length > 0) updateClock(clocks[0].id, { timezone: localTimezone })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
