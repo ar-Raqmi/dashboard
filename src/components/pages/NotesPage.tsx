@@ -208,7 +208,7 @@ export default function NotesPage() {
 
       {/* Note View / Edit Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={handleViewDialogClose}>
-        <DialogContent className={`bg-card border-border rounded-3xl flex flex-col p-0 gap-0 overflow-hidden ${isEditing ? 'sm:max-w-2xl h-[90vh]' : 'max-h-[90vh]'}`}>
+        <DialogContent className={`bg-card border-border rounded-3xl flex flex-col p-0 gap-0 overflow-hidden h-[90vh] sm:max-h-[90vh] ${isEditing ? 'sm:max-w-2xl' : 'sm:max-w-lg'}`}>
           <DialogTitle className="sr-only">{activeNote?.title || 'Note'}</DialogTitle>
           {activeNote && (
             <>
