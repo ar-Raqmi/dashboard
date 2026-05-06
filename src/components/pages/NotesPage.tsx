@@ -2,7 +2,9 @@
 
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Trash2, StickyNote, Copy, Pencil, Search, Check } from 'lucide-react'
+import { Plus, Trash2, StickyNote, Copy, Pencil, Search, Check, Eye, Edit3 } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { useAppStore } from '@/lib/store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -36,6 +38,7 @@ export default function NotesPage() {
   const [noteColor, setNoteColor] = useState(NOTE_COLORS[0].value)
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [previewMode, setPreviewMode] = useState(false)
 
   const filteredNotes = useMemo(() => {
     if (!searchQuery.trim()) return notes
@@ -93,6 +96,7 @@ export default function NotesPage() {
     setNoteContent('')
     setNoteColor(NOTE_COLORS[0].value)
     setEditingNoteId(null)
+    setPreviewMode(false)
   }
 
   const containerVariants = {
@@ -145,14 +149,40 @@ export default function NotesPage() {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-sm text-on-surface-variant">Content</label>
-                <Textarea
-                  value={noteContent}
-                  onChange={(e) => setNoteContent(e.target.value)}
-                  placeholder="Write your note..."
-                  rows={4}
-                  className="rounded-2xl bg-input border-border resize-none"
-                />
+                <div className="flex items-center justify-between">
+                  <label className="text-sm text-on-surface-variant">Content</label>
+                  <div className="flex gap-1 rounded-2xl bg-muted p-1">
+                    <button
+                      type="button"
+                      className={`flex items-center gap-1 px-3 py-1 text-xs rounded-2xl transition-all ${!previewMode ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                      onClick={() => setPreviewMode(false)}
+                    >
+                      <Edit3 className="size-3" />
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      className={`flex items-center gap-1 px-3 py-1 text-xs rounded-2xl transition-all ${previewMode ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                      onClick={() => setPreviewMode(true)}
+                    >
+                      <Eye className="size-3" />
+                      Preview
+                    </button>
+                  </div>
+                </div>
+                {previewMode ? (
+                  <div className="min-h-[200px] max-h-[400px] overflow-y-auto rounded-2xl bg-muted/50 p-4 text-sm text-foreground [&_h1]:text-xl [&_h1]:font-bold [&_h1]:mb-2 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:mb-2 [&_h3]:text-base [&_h3]:font-bold [&_h3]:mb-1 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:ml-4 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:ml-4 [&_ol]:mb-2 [&_li]:mb-1 [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:rounded-xl [&_pre]:overflow-x-auto [&_blockquote]:border-l-3 [&_blockquote]:border-primary [&_blockquote]:pl-3 [&_blockquote]:italic [&_strong]:font-bold [&_a]:text-primary [&_a]:underline [&_hr]:border-border [&_hr]:my-2">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{noteContent}</ReactMarkdown>
+                  </div>
+                ) : (
+                  <Textarea
+                    value={noteContent}
+                    onChange={(e) => setNoteContent(e.target.value)}
+                    placeholder="Write your note in Markdown..."
+                    rows={4}
+                    className="rounded-2xl bg-input border-border resize-none"
+                  />
+                )}
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-sm text-on-surface-variant">Color</label>
@@ -219,13 +249,40 @@ export default function NotesPage() {
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-sm text-on-surface-variant">Content</label>
-              <Textarea
-                value={noteContent}
-                onChange={(e) => setNoteContent(e.target.value)}
-                rows={4}
-                className="rounded-2xl bg-input border-border resize-none"
-              />
+              <div className="flex items-center justify-between">
+                <label className="text-sm text-on-surface-variant">Content</label>
+                <div className="flex gap-1 rounded-2xl bg-muted p-1">
+                  <button
+                    type="button"
+                    className={`flex items-center gap-1 px-3 py-1 text-xs rounded-2xl transition-all ${!previewMode ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                    onClick={() => setPreviewMode(false)}
+                  >
+                    <Edit3 className="size-3" />
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className={`flex items-center gap-1 px-3 py-1 text-xs rounded-2xl transition-all ${previewMode ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                    onClick={() => setPreviewMode(true)}
+                  >
+                    <Eye className="size-3" />
+                    Preview
+                  </button>
+                </div>
+              </div>
+              {previewMode ? (
+                <div className="min-h-[200px] max-h-[400px] overflow-y-auto rounded-2xl bg-muted/50 p-4 text-sm text-foreground [&_h1]:text-xl [&_h1]:font-bold [&_h1]:mb-2 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:mb-2 [&_h3]:text-base [&_h3]:font-bold [&_h3]:mb-1 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:ml-4 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:ml-4 [&_ol]:mb-2 [&_li]:mb-1 [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:rounded-xl [&_pre]:overflow-x-auto [&_blockquote]:border-l-3 [&_blockquote]:border-primary [&_blockquote]:pl-3 [&_blockquote]:italic [&_strong]:font-bold [&_a]:text-primary [&_a]:underline [&_hr]:border-border [&_hr]:my-2">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{noteContent}</ReactMarkdown>
+                </div>
+              ) : (
+                <Textarea
+                  value={noteContent}
+                  onChange={(e) => setNoteContent(e.target.value)}
+                  placeholder="Write your note in Markdown..."
+                  rows={4}
+                  className="rounded-2xl bg-input border-border resize-none"
+                />
+              )}
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-sm text-on-surface-variant">Color</label>
@@ -330,9 +387,9 @@ export default function NotesPage() {
                     </Button>
                   </div>
                 </div>
-                <p className="text-xs text-on-surface-variant line-clamp-4 leading-relaxed">
-                  {note.content}
-                </p>
+                <div className="text-xs text-on-surface-variant line-clamp-4 leading-relaxed prose-sm [&_h1]:text-sm [&_h2]:text-sm [&_h3]:text-xs [&_p]:mb-1 [&_ul]:list-disc [&_ol]:list-decimal [&_li]:ml-4 [&_code]:bg-muted [&_code]:px-1 [&_code]:rounded [&_pre]:bg-muted [&_pre]:p-2 [&_pre]:rounded-xl [&_blockquote]:border-l-2 [&_blockquote]:border-primary [&_blockquote]:pl-2 [&_strong]:font-bold">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{note.content}</ReactMarkdown>
+                </div>
                 <div className="flex items-center gap-2 mt-auto pt-2">
                   <div
                     className="size-2 rounded-full"

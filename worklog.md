@@ -80,3 +80,29 @@ Stage Summary:
 - Navigation is now a horizontal tab bar instead of a vertical sidebar/nav rail
 - Full-width content area with no left margin offset
 - All lint checks pass, page loads with 200
+---
+Task ID: 3
+Agent: main
+Task: Fix errors, Calendar redesign, add Files widget, clickable widgets, Markdown notes, Files page redesign
+
+Work Log:
+- Fixed FilePreview.tsx: conditional source rendering (no empty src), added VisuallyHidden DialogTitle
+- Fixed Calendar: cell size 8→10 (40px hitbox), selected date uses border outline instead of fill
+- Added 'files' to WidgetType, defaultWidgets, defaultLayouts, defaultMobileLayouts in store
+- Added FilesContent component to DashboardGrid showing root-level files
+- Made all dashboard widget content areas clickable → navigates to full page
+- Added onNavigate prop to WidgetCard with cursor-pointer, keyboard support
+- Installed react-markdown + remark-gfm packages
+- Added Edit/Preview toggle to Notes dialogs (both Add and Edit)
+- Notes cards now render Markdown content inline with compact prose styling
+- Complete FileManager.tsx redesign: Grid view (enhanced with folder tabs) + List view (table-like)
+- View mode toggle (LayoutGrid/List segmented button)
+- Enhanced breadcrumbs (chip-style), improved toolbar layout
+- M3 Expressive styling throughout with gradients, colored badges, smooth animations
+
+Stage Summary:
+- All 6 tasks completed: bug fixes, Calendar UX, Files widget, clickable navigation, Markdown notes, Files redesign
+- Zero lint errors, clean compilation, 200 response
+- Files page now has Grid + List view toggle, Drive/Explorer-like design
+- Notes support full Markdown with GFM (tables, strikethrough, etc.)
+- All dashboard widgets navigate to full pages when clicked

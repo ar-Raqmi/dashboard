@@ -2,12 +2,12 @@
 
 import React, { useCallback, useMemo, useRef } from 'react'
 import { ResponsiveGridLayout, useContainerWidth } from 'react-grid-layout'
-import { CheckCircle, CalendarDays, StickyNote, BookOpen, Flag, Clock } from 'lucide-react'
+import { CheckCircle, CalendarDays, StickyNote, BookOpen, Flag, Clock, Folder, FileText, Image as ImageIcon, Music, Film } from 'lucide-react'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import { useAppStore } from '@/lib/store'
 import { WidgetCard } from './WidgetCard'
-import type { WidgetType, Layout } from '@/lib/store'
+import type { WidgetType, Layout, ActivePage, FileItem } from '@/lib/store'
 
 // Widget icon mapping
 const widgetIcons: Record<WidgetType, React.ReactNode> = {
@@ -17,6 +17,7 @@ const widgetIcons: Record<WidgetType, React.ReactNode> = {
   verse: <BookOpen className="w-4 h-4" />,
   goals: <Flag className="w-4 h-4" />,
   clock: <Clock className="w-4 h-4" />,
+  files: <Folder className="w-4 h-4" />,
 }
 
 // Widget title mapping
@@ -27,6 +28,39 @@ const widgetTitles: Record<WidgetType, string> = {
   verse: 'Daily Verse',
   goals: 'Goals',
   clock: 'Clock',
+  files: 'Files',
+}
+
+// Widget navigation mapping
+const widgetPageMap: Record<WidgetType, ActivePage> = {
+  tasks: 'tasks',
+  calendar: 'calendar',
+  notes: 'notes',
+  verse: 'spiritual',
+  goals: 'goals',
+  clock: 'dashboard',
+  files: 'files',
+}
+
+// Helper to format file size
+function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '—'
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+// Helper to get file icon based on category
+function getFileIcon(category: FileItem['category']) {
+  switch (category) {
+    case 'folder': return <Folder className="w-4 h-4 text-primary" />
+    case 'pdf': return <FileText className="w-4 h-4 text-red-500" />
+    case 'doc': return <FileText className="w-4 h-4 text-blue-500" />
+    case 'image': return <ImageIcon className="w-4 h-4 text-green-500" />
+    case 'audio': return <Music className="w-4 h-4 text-purple-500" />
+    case 'video': return <Film className="w-4 h-4 text-orange-500" />
+    default: return <FileText className="w-4 h-4 text-muted-foreground" />
+  }
 }
 
 // ===== Widget Content Components =====
@@ -40,7 +74,7 @@ function DailyTasksContent() {
         <div
           key={task.id}
           className="flex items-center gap-3 p-2 rounded-xl hover:bg-accent transition-colors cursor-pointer"
-          onClick={() => toggleTaskStatus(task.id)}
+          onClick={(e) => { e.stopPropagation(); toggleTaskStatus(task.id) }}
         >
           <div
             className={
@@ -159,6 +193,27 @@ function GoalsContent() {
   )
 }
 
+function FilesContent() {
+  const files = useAppStore((s) => s.files)
+  const rootFiles = files.filter((f) => f.parentId === null).slice(0, 5)
+  return (
+    <div className="space-y-2">
+      {rootFiles.map((file) => (
+        <div key={file.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-accent transition-colors">
+          {getFileIcon(file.category)}
+          <div className="min-w-0 flex-1">
+            <p className="text-sm text-foreground truncate">{file.name}</p>
+          </div>
+          <span className="text-xs text-muted-foreground shrink-0">{formatFileSize(file.size)}</span>
+        </div>
+      ))}
+      {rootFiles.length === 0 && (
+        <p className="text-sm text-muted-foreground text-center py-2">No files yet</p>
+      )}
+    </div>
+  )
+}
+
 function ClockContent() {
   const timezone = useAppStore((s) => s.timezone)
   const [time, setTime] = React.useState('')
@@ -211,6 +266,7 @@ const widgetComponents: Record<WidgetType, React.ComponentType> = {
   verse: VerseContent,
   goals: GoalsContent,
   clock: ClockContent,
+  files: FilesContent,
 }
 
 export function DashboardGrid() {
@@ -220,6 +276,7 @@ export function DashboardGrid() {
   const setMobileLayouts = useAppStore((s) => s.setMobileLayouts)
   const updateWidgetSize = useAppStore((s) => s.updateWidgetSize)
   const widgets = useAppStore((s) => s.widgets)
+  const setActivePage = useAppStore((s) => s.setActivePage)
 
   // Stable selector: only re-renders when the set of visible widget types actually changes
   const visibleWidgetTypesKey = useAppStore(
@@ -353,6 +410,7 @@ export function DashboardGrid() {
                 currentW={layout?.w ?? 1}
                 currentH={layout?.h ?? 1}
                 onSizeChange={(w, h) => handleSizeChange(widget.type, w, h)}
+                onNavigate={widget.type !== 'clock' ? () => setActivePage(widgetPageMap[widget.type]) : undefined}
               >
                 <WidgetComponent />
               </WidgetCard>

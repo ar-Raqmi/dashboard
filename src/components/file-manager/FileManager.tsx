@@ -22,6 +22,11 @@ import {
   FolderOpen,
   Move,
   MoreVertical,
+  LayoutGrid,
+  List,
+  ArrowUpDown,
+  Clock,
+  HardDrive,
 } from 'lucide-react'
 import { useAppStore, type FileItem, type FileCategory } from '@/lib/store'
 import { Button } from '@/components/ui/button'
@@ -66,6 +71,11 @@ const formatDate = (iso: string): string => {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
+const formatDateShort = (iso: string): string => {
+  const d = new Date(iso)
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
 const getCategoryIcon = (category: FileCategory, className?: string) => {
   const cn = className || 'size-6'
   switch (category) {
@@ -81,13 +91,49 @@ const getCategoryIcon = (category: FileCategory, className?: string) => {
 
 const getCategoryColor = (category: FileCategory): string => {
   switch (category) {
-    case 'image': return 'bg-blue-500/20 text-blue-400'
-    case 'audio': return 'bg-purple-500/20 text-purple-400'
-    case 'pdf': return 'bg-red-500/20 text-red-400'
-    case 'doc': return 'bg-amber-500/20 text-amber-400'
-    case 'video': return 'bg-pink-500/20 text-pink-400'
-    case 'folder': return 'bg-primary/20 text-primary'
-    default: return 'bg-gray-500/20 text-gray-400'
+    case 'image': return 'bg-blue-500/15 text-blue-400'
+    case 'audio': return 'bg-purple-500/15 text-purple-400'
+    case 'pdf': return 'bg-red-500/15 text-red-400'
+    case 'doc': return 'bg-amber-500/15 text-amber-400'
+    case 'video': return 'bg-pink-500/15 text-pink-400'
+    case 'folder': return 'bg-primary/15 text-primary'
+    default: return 'bg-gray-500/15 text-gray-400'
+  }
+}
+
+const getCategoryGradient = (category: FileCategory): string => {
+  switch (category) {
+    case 'image': return 'from-blue-500/25 via-blue-400/10 to-blue-600/5'
+    case 'audio': return 'from-purple-500/25 via-purple-400/10 to-purple-600/5'
+    case 'pdf': return 'from-red-500/25 via-red-400/10 to-red-600/5'
+    case 'doc': return 'from-amber-500/25 via-amber-400/10 to-amber-600/5'
+    case 'video': return 'from-pink-500/25 via-pink-400/10 to-pink-600/5'
+    case 'folder': return 'from-primary/25 via-primary/10 to-primary/5'
+    default: return 'from-gray-500/25 via-gray-400/10 to-gray-600/5'
+  }
+}
+
+const getCategoryBadgeColor = (category: FileCategory): string => {
+  switch (category) {
+    case 'image': return 'bg-blue-500/15 text-blue-400 border-blue-500/20'
+    case 'audio': return 'bg-purple-500/15 text-purple-400 border-purple-500/20'
+    case 'pdf': return 'bg-red-500/15 text-red-400 border-red-500/20'
+    case 'doc': return 'bg-amber-500/15 text-amber-400 border-amber-500/20'
+    case 'video': return 'bg-pink-500/15 text-pink-400 border-pink-500/20'
+    case 'folder': return 'bg-primary/15 text-primary border-primary/20'
+    default: return 'bg-gray-500/15 text-gray-400 border-gray-500/20'
+  }
+}
+
+const getCategoryLabel = (category: FileCategory): string => {
+  switch (category) {
+    case 'image': return 'Image'
+    case 'audio': return 'Audio'
+    case 'pdf': return 'PDF'
+    case 'doc': return 'Doc'
+    case 'video': return 'Video'
+    case 'folder': return 'Folder'
+    default: return 'File'
   }
 }
 
@@ -112,16 +158,21 @@ function BreadcrumbNav() {
   }, [files, currentFolderId])
 
   return (
-    <nav aria-label="File breadcrumb" className="flex items-center gap-1 text-sm px-1 py-2 overflow-x-auto">
+    <nav aria-label="File breadcrumb" className="flex items-center gap-1.5 overflow-x-auto py-1">
       {breadcrumbs.map((crumb, i) => (
         <React.Fragment key={crumb.id ?? 'home'}>
-          {i > 0 && <ChevronRight className="size-3.5 text-outline shrink-0" />}
+          {i > 0 && (
+            <ChevronRight className="size-3.5 text-muted-foreground/50 shrink-0" />
+          )}
           {i === breadcrumbs.length - 1 ? (
-            <span className="text-foreground font-medium truncate max-w-48">{crumb.name}</span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-primary/15 text-primary text-sm font-medium truncate max-w-48">
+              {i === 0 && <Home className="size-3.5" />}
+              {crumb.name}
+            </span>
           ) : (
             <button
               onClick={() => setCurrentFolderId(crumb.id)}
-              className="text-muted-foreground hover:text-foreground transition-colors truncate max-w-32"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all text-sm truncate max-w-32"
             >
               {i === 0 ? <Home className="size-3.5" /> : crumb.name}
             </button>
@@ -145,10 +196,8 @@ function MoveToFolderModal({
   const { files, moveFile } = useAppStore()
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
 
-  // Get all folders
   const folders = useMemo(() => files.filter(f => f.type === 'folder'), [files])
 
-  // Get descendants of the files being moved (to prevent moving into own subtree)
   const descendantIds = useMemo(() => {
     const ids = new Set<string>()
     const collectChildren = (parentId: string) => {
@@ -164,7 +213,6 @@ function MoveToFolderModal({
     return ids
   }, [files, fileIds])
 
-  // Build folder tree
   const rootFolders = folders.filter(f => f.parentId === null && !descendantIds.has(f.id))
 
   const renderFolderTree = (parentId: string | null, depth: number = 0) => {
@@ -175,9 +223,9 @@ function MoveToFolderModal({
       <div key={folder.id}>
         <button
           onClick={() => setSelectedFolderId(folder.id)}
-          className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors ${
+          className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-2xl text-sm transition-all ${
             selectedFolderId === folder.id
-              ? 'bg-primary/20 text-primary'
+              ? 'bg-primary/15 text-primary font-medium'
               : 'text-foreground/70 hover:bg-muted/50 hover:text-foreground'
           }`}
           style={{ paddingLeft: `${depth * 20 + 12}px` }}
@@ -208,9 +256,9 @@ function MoveToFolderModal({
         <div className="space-y-1">
           <button
             onClick={() => setSelectedFolderId(null)}
-            className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors ${
+            className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-2xl text-sm transition-all ${
               selectedFolderId === null
-                ? 'bg-primary/20 text-primary'
+                ? 'bg-primary/15 text-primary font-medium'
                 : 'text-foreground/70 hover:bg-muted/50 hover:text-foreground'
             }`}
           >
@@ -242,7 +290,7 @@ function MoveToFolderModal({
   )
 }
 
-// ===== FILE CARD =====
+// ===== FILE CARD (GRID VIEW) =====
 function FileCard({
   file,
   onNavigate,
@@ -285,24 +333,32 @@ function FileCard({
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, scale: 0.9 }}
+      initial={{ opacity: 0, scale: 0.92 }}
       animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ duration: 0.2 }}
-      className={`group relative rounded-3xl p-4 cursor-pointer transition-all border ${
+      exit={{ opacity: 0, scale: 0.92 }}
+      transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+      className={`group relative rounded-3xl cursor-pointer transition-all duration-200 overflow-hidden ${
         selected
-          ? 'bg-primary/15 border-primary/30'
-          : 'bg-card border-border/50 hover:border-border hover:bg-accent'
+          ? 'ring-2 ring-primary/40 bg-primary/5 shadow-lg shadow-primary/5'
+          : 'bg-card hover:shadow-md hover:shadow-black/5 border border-border/40 hover:border-border/70'
       }`}
       onClick={handleClick}
     >
+      {/* Folder tab visual */}
+      {isFolder && (
+        <div className="relative">
+          <div className={`h-6 rounded-t-3xl ${selected ? 'bg-primary/20' : 'bg-primary/10'}`} />
+          <div className="absolute -bottom-1 left-4 w-16 h-3 rounded-t-lg bg-primary/15" />
+        </div>
+      )}
+
       {/* Selection checkbox */}
       <button
         onClick={(e) => { e.stopPropagation(); onToggleSelect(file.id) }}
         className={`absolute top-3 left-3 size-5 rounded-full border-2 flex items-center justify-center transition-all z-10 ${
           selected
-            ? 'bg-primary border-primary'
-            : 'border-border/50 opacity-0 group-hover:opacity-100 hover:border-border'
+            ? 'bg-primary border-primary scale-100'
+            : 'border-border/40 opacity-0 group-hover:opacity-100 hover:border-border scale-90 group-hover:scale-100'
         }`}
       >
         {selected && <Check className="size-3 text-primary-foreground" />}
@@ -312,26 +368,26 @@ function FileCard({
       <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
         <DropdownMenu>
           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-            <Button variant="ghost" size="icon" className="size-7 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent">
+            <Button variant="ghost" size="icon" className="size-7 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent/80 backdrop-blur-sm">
               <MoreVertical className="size-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="bg-card border-border text-foreground rounded-2xl" align="end">
             <DropdownMenuItem
-              className="gap-2 focus:bg-accent focus:text-foreground cursor-pointer"
+              className="gap-2 focus:bg-accent focus:text-foreground cursor-pointer rounded-xl"
               onClick={(e) => { e.stopPropagation(); onRename(file); setRenaming(true); setRenameValue(file.name) }}
             >
               <Pencil className="size-4" /> Rename
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="gap-2 focus:bg-accent focus:text-foreground cursor-pointer"
+              className="gap-2 focus:bg-accent focus:text-foreground cursor-pointer rounded-xl"
               onClick={(e) => { e.stopPropagation(); onMove(file) }}
             >
               <Move className="size-4" /> Move
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-border" />
             <DropdownMenuItem
-              className="gap-2 focus:bg-red-500/20 focus:text-red-400 cursor-pointer text-red-400"
+              className="gap-2 focus:bg-red-500/20 focus:text-red-400 cursor-pointer text-red-400 rounded-xl"
               onClick={(e) => { e.stopPropagation(); onDelete(file) }}
             >
               <Trash2 className="size-4" /> Delete
@@ -340,43 +396,204 @@ function FileCard({
         </DropdownMenu>
       </div>
 
-      {/* Icon */}
-      <div className="flex justify-center mb-3 mt-2">
-        <div className={`size-14 rounded-2xl flex items-center justify-center ${getCategoryColor(file.category)}`}>
-          {getCategoryIcon(file.category)}
-        </div>
+      {/* Icon area */}
+      <div className="flex justify-center mb-3 mt-2 px-4">
+        {isFolder ? (
+          <div className={`size-14 rounded-2xl flex items-center justify-center bg-gradient-to-br ${getCategoryGradient(file.category)}`}>
+            {getCategoryIcon(file.category)}
+          </div>
+        ) : (
+          <div className={`w-full h-20 rounded-2xl flex items-center justify-center bg-gradient-to-br ${getCategoryGradient(file.category)}`}>
+            {getCategoryIcon(file.category, 'size-8')}
+          </div>
+        )}
       </div>
 
       {/* Name */}
-      {renaming ? (
-        <div onClick={(e) => e.stopPropagation()} className="mb-2">
-          <Input
-            value={renameValue}
-            onChange={(e) => setRenameValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleRename()
-              if (e.key === 'Escape') setRenaming(false)
-            }}
-            onBlur={handleRename}
-            autoFocus
-            className="h-7 text-xs text-center bg-input border-border/50 text-foreground rounded-xl"
-          />
-        </div>
-      ) : (
-        <p className="text-sm font-medium text-foreground truncate text-center mb-1">{file.name}</p>
-      )}
+      <div className="px-3 pb-3">
+        {renaming ? (
+          <div onClick={(e) => e.stopPropagation()} className="mb-1">
+            <Input
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleRename()
+                if (e.key === 'Escape') setRenaming(false)
+              }}
+              onBlur={handleRename}
+              autoFocus
+              className="h-7 text-xs text-center bg-input border-border/50 text-foreground rounded-xl"
+            />
+          </div>
+        ) : (
+          <p className="text-sm font-medium text-foreground truncate text-center">{file.name}</p>
+        )}
 
-      {/* Meta */}
+        {/* Meta */}
+        {!isFolder && (
+          <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground mt-1">
+            <span>{formatSize(file.size)}</span>
+            <span className="size-0.5 rounded-full bg-border" />
+            <span>{formatDateShort(file.createdAt)}</span>
+          </div>
+        )}
+        {isFolder && (
+          <p className="text-xs text-muted-foreground text-center mt-0.5">Folder</p>
+        )}
+      </div>
+    </motion.div>
+  )
+}
+
+// ===== FILE LIST ROW (LIST VIEW) =====
+function FileListRow({
+  file,
+  onNavigate,
+  onPreview,
+  onRename,
+  onDelete,
+  onMove,
+  selected,
+  onToggleSelect,
+}: {
+  file: FileItem
+  onNavigate: (id: string) => void
+  onPreview: (file: FileItem) => void
+  onRename: (file: FileItem) => void
+  onDelete: (file: FileItem) => void
+  onMove: (file: FileItem) => void
+  selected: boolean
+  onToggleSelect: (id: string) => void
+}) {
+  const isFolder = file.type === 'folder'
+  const [renaming, setRenaming] = useState(false)
+  const [renameValue, setRenameValue] = useState(file.name)
+  const { renameFile } = useAppStore()
+
+  const handleClick = () => {
+    if (isFolder) {
+      onNavigate(file.id)
+    } else {
+      onPreview(file)
+    }
+  }
+
+  const handleRename = () => {
+    if (renameValue.trim() && renameValue !== file.name) {
+      renameFile(file.id, renameValue.trim())
+    }
+    setRenaming(false)
+  }
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -10 }}
+      transition={{ duration: 0.15 }}
+      className={`group flex items-center gap-3 px-3 sm:px-4 py-2.5 rounded-2xl cursor-pointer transition-all duration-150 ${
+        selected
+          ? 'bg-primary/10 ring-1 ring-primary/30'
+          : 'hover:bg-accent/60'
+      }`}
+      onClick={handleClick}
+    >
+      {/* Selection checkbox */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onToggleSelect(file.id) }}
+        className={`shrink-0 size-5 rounded-md border-2 flex items-center justify-center transition-all ${
+          selected
+            ? 'bg-primary border-primary'
+            : 'border-border/40 opacity-0 group-hover:opacity-100 hover:border-border'
+        }`}
+      >
+        {selected && <Check className="size-3 text-primary-foreground" />}
+      </button>
+
+      {/* Icon */}
+      <div className={`shrink-0 size-9 rounded-xl flex items-center justify-center ${getCategoryColor(file.category)}`}>
+        {getCategoryIcon(file.category, 'size-4.5')}
+      </div>
+
+      {/* Name */}
+      <div className="flex-1 min-w-0">
+        {renaming ? (
+          <div onClick={(e) => e.stopPropagation()}>
+            <Input
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleRename()
+                if (e.key === 'Escape') setRenaming(false)
+              }}
+              onBlur={handleRename}
+              autoFocus
+              className="h-7 text-sm bg-input border-border/50 text-foreground rounded-xl"
+            />
+          </div>
+        ) : (
+          <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
+        )}
+      </div>
+
+      {/* Size - hidden on mobile */}
       {!isFolder && (
-        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+        <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground shrink-0 w-20 justify-end">
+          <HardDrive className="size-3" />
           <span>{formatSize(file.size)}</span>
-          <span className="size-1 rounded-full bg-border/50" />
-          <span>{formatDate(file.createdAt)}</span>
         </div>
       )}
       {isFolder && (
-        <p className="text-xs text-outline text-center">Folder</p>
+        <div className="hidden sm:block text-xs text-muted-foreground shrink-0 w-20 text-right">
+          —
+        </div>
       )}
+
+      {/* Type badge - hidden on small mobile */}
+      <div className="hidden md:block shrink-0">
+        <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium border ${getCategoryBadgeColor(file.category)}`}>
+          {getCategoryLabel(file.category)}
+        </span>
+      </div>
+
+      {/* Date - hidden on small screens */}
+      <div className="hidden lg:flex items-center gap-1.5 text-xs text-muted-foreground shrink-0 w-28 justify-end">
+        <Clock className="size-3" />
+        <span>{formatDateShort(file.createdAt)}</span>
+      </div>
+
+      {/* Actions */}
+      <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+            <Button variant="ghost" size="icon" className="size-7 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent">
+              <MoreVertical className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="bg-card border-border text-foreground rounded-2xl" align="end">
+            <DropdownMenuItem
+              className="gap-2 focus:bg-accent focus:text-foreground cursor-pointer rounded-xl"
+              onClick={(e) => { e.stopPropagation(); onRename(file); setRenaming(true); setRenameValue(file.name) }}
+            >
+              <Pencil className="size-4" /> Rename
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="gap-2 focus:bg-accent focus:text-foreground cursor-pointer rounded-xl"
+              onClick={(e) => { e.stopPropagation(); onMove(file) }}
+            >
+              <Move className="size-4" /> Move
+            </DropdownMenuItem>
+            <DropdownMenuSeparator className="bg-border" />
+            <DropdownMenuItem
+              className="gap-2 focus:bg-red-500/20 focus:text-red-400 cursor-pointer text-red-400 rounded-xl"
+              onClick={(e) => { e.stopPropagation(); onDelete(file) }}
+            >
+              <Trash2 className="size-4" /> Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </motion.div>
   )
 }
@@ -389,12 +606,66 @@ function EmptyState() {
       animate={{ opacity: 1, y: 0 }}
       className="flex flex-col items-center justify-center py-20 text-outline"
     >
-      <div className="size-24 rounded-3xl bg-muted/50 flex items-center justify-center mb-4">
-        <FolderOpen className="size-12 text-outline" />
+      <div className="size-24 rounded-3xl bg-gradient-to-br from-muted/60 to-muted/20 flex items-center justify-center mb-4 shadow-sm">
+        <FolderOpen className="size-12 text-muted-foreground/60" />
       </div>
       <p className="text-lg font-medium text-muted-foreground">This folder is empty</p>
       <p className="text-sm text-outline mt-1">Create a new folder or upload a file to get started</p>
     </motion.div>
+  )
+}
+
+// ===== VIEW TOGGLE =====
+function ViewToggle({ viewMode, setViewMode }: { viewMode: 'grid' | 'list'; setViewMode: (v: 'grid' | 'list') => void }) {
+  return (
+    <div className="inline-flex items-center rounded-2xl bg-muted/50 border border-border/30 p-0.5">
+      <button
+        onClick={() => setViewMode('grid')}
+        className={`inline-flex items-center justify-center size-8 rounded-xl transition-all duration-200 ${
+          viewMode === 'grid'
+            ? 'bg-card text-foreground shadow-sm border border-border/50'
+            : 'text-muted-foreground hover:text-foreground'
+        }`}
+        aria-label="Grid view"
+        title="Grid view"
+      >
+        <LayoutGrid className="size-4" />
+      </button>
+      <button
+        onClick={() => setViewMode('list')}
+        className={`inline-flex items-center justify-center size-8 rounded-xl transition-all duration-200 ${
+          viewMode === 'list'
+            ? 'bg-card text-foreground shadow-sm border border-border/50'
+            : 'text-muted-foreground hover:text-foreground'
+        }`}
+        aria-label="List view"
+        title="List view"
+      >
+        <List className="size-4" />
+      </button>
+    </div>
+  )
+}
+
+// ===== LIST HEADER =====
+function ListHeader() {
+  return (
+    <div className="flex items-center gap-3 px-3 sm:px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+      <div className="shrink-0 size-5" /> {/* checkbox spacer */}
+      <div className="shrink-0 size-9" /> {/* icon spacer */}
+      <div className="flex-1 min-w-0 flex items-center gap-1">
+        <ArrowUpDown className="size-3" />
+        <span>Name</span>
+      </div>
+      <div className="hidden sm:block shrink-0 w-20 text-right flex items-center gap-1 justify-end">
+        <span>Size</span>
+      </div>
+      <div className="hidden md:block shrink-0">
+        <span className="px-2">Type</span>
+      </div>
+      <div className="hidden lg:block shrink-0 w-28 text-right">Modified</div>
+      <div className="shrink-0 size-7" /> {/* actions spacer */}
+    </div>
   )
 }
 
@@ -409,6 +680,7 @@ export default function FileManager() {
     setPreviewFile,
   } = useAppStore()
 
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [deleteTarget, setDeleteTarget] = useState<FileItem | null>(null)
   const [moveTargetIds, setMoveTargetIds] = useState<string[]>([])
@@ -503,7 +775,7 @@ export default function FileManager() {
   return (
     <div className="flex flex-col h-full">
       {/* Toolbar */}
-      <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+      <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
         <BreadcrumbNav />
 
         <div className="flex items-center gap-2">
@@ -513,7 +785,7 @@ export default function FileManager() {
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center gap-2"
             >
-              <Badge className="bg-primary/20 text-primary border-0 rounded-2xl">
+              <Badge className="bg-primary/15 text-primary border-0 rounded-2xl font-medium">
                 {selectedIds.size} selected
               </Badge>
               <Button
@@ -523,7 +795,7 @@ export default function FileManager() {
                 className="rounded-2xl text-foreground/70 hover:text-foreground hover:bg-accent"
               >
                 <Move className="size-4" />
-                Move
+                <span className="hidden sm:inline">Move</span>
               </Button>
               <Button
                 variant="ghost"
@@ -547,10 +819,13 @@ export default function FileManager() {
             </motion.div>
           )}
 
+          {/* View toggle */}
+          <ViewToggle viewMode={viewMode} setViewMode={setViewMode} />
+
           <Button
             onClick={() => setShowNewFolder(true)}
             size="sm"
-            className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 gap-1.5"
+            className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 gap-1.5 shadow-sm shadow-primary/10"
           >
             <FolderPlus className="size-4" />
             <span className="hidden sm:inline">New Folder</span>
@@ -558,7 +833,8 @@ export default function FileManager() {
           <Button
             onClick={() => setShowUpload(true)}
             size="sm"
-            className="rounded-2xl bg-secondary text-secondary-foreground hover:bg-secondary/90 gap-1.5"
+            variant="outline"
+            className="rounded-2xl border-border/60 text-foreground hover:bg-accent gap-1.5"
           >
             <Upload className="size-4" />
             <span className="hidden sm:inline">Upload</span>
@@ -573,10 +849,10 @@ export default function FileManager() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="mb-4 overflow-hidden"
+            className="mb-3 overflow-hidden"
           >
-            <div className="flex items-center gap-2 p-3 rounded-2xl bg-card border border-primary/20">
-              <FolderPlus className="size-5 text-primary" />
+            <div className="flex items-center gap-2 p-3 rounded-2xl bg-primary/5 border border-primary/20">
+              <FolderPlus className="size-5 text-primary shrink-0" />
               <Input
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
@@ -588,10 +864,10 @@ export default function FileManager() {
                 autoFocus
                 className="h-8 bg-input border-border text-foreground rounded-xl text-sm"
               />
-              <Button size="sm" onClick={handleCreateFolder} className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 size-8">
+              <Button size="sm" onClick={handleCreateFolder} className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 size-8 shrink-0">
                 <Check className="size-4" />
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => { setShowNewFolder(false); setNewFolderName('') }} className="rounded-2xl text-muted-foreground hover:text-foreground hover:bg-accent size-8">
+              <Button size="sm" variant="ghost" onClick={() => { setShowNewFolder(false); setNewFolderName('') }} className="rounded-2xl text-muted-foreground hover:text-foreground hover:bg-accent size-8 shrink-0">
                 <X className="size-4" />
               </Button>
             </div>
@@ -606,10 +882,10 @@ export default function FileManager() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="mb-4 overflow-hidden"
+            className="mb-3 overflow-hidden"
           >
-            <div className="flex items-center gap-2 p-3 rounded-2xl bg-card border border-secondary/20">
-              <Upload className="size-5 text-secondary" />
+            <div className="flex items-center gap-2 p-3 rounded-2xl bg-muted/30 border border-border/40">
+              <Upload className="size-5 text-muted-foreground shrink-0" />
               <Input
                 value={uploadFileName}
                 onChange={(e) => setUploadFileName(e.target.value)}
@@ -621,10 +897,10 @@ export default function FileManager() {
                 autoFocus
                 className="h-8 bg-input border-border text-foreground rounded-xl text-sm"
               />
-              <Button size="sm" onClick={handleUploadFile} className="rounded-2xl bg-secondary text-secondary-foreground hover:bg-secondary/90 size-8">
+              <Button size="sm" onClick={handleUploadFile} className="rounded-2xl bg-secondary text-secondary-foreground hover:bg-secondary/90 size-8 shrink-0">
                 <Check className="size-4" />
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => { setShowUpload(false); setUploadFileName('') }} className="rounded-2xl text-muted-foreground hover:text-foreground hover:bg-accent size-8">
+              <Button size="sm" variant="ghost" onClick={() => { setShowUpload(false); setUploadFileName('') }} className="rounded-2xl text-muted-foreground hover:text-foreground hover:bg-accent size-8 shrink-0">
                 <X className="size-4" />
               </Button>
             </div>
@@ -632,14 +908,15 @@ export default function FileManager() {
         )}
       </AnimatePresence>
 
-      {/* File Grid */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Content Area */}
+      <div className="flex-1 overflow-y-auto min-h-0">
         {sortedItems.length === 0 ? (
           <EmptyState />
-        ) : (
+        ) : viewMode === 'grid' ? (
+          /* Grid View */
           <motion.div
             layout
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3"
           >
             <AnimatePresence mode="popLayout">
               {sortedItems.map(file => (
@@ -657,6 +934,26 @@ export default function FileManager() {
               ))}
             </AnimatePresence>
           </motion.div>
+        ) : (
+          /* List View */
+          <div className="space-y-0.5">
+            <ListHeader />
+            <AnimatePresence mode="popLayout">
+              {sortedItems.map(file => (
+                <FileListRow
+                  key={file.id}
+                  file={file}
+                  onNavigate={handleNavigate}
+                  onPreview={setPreviewFile}
+                  onRename={() => {}}
+                  onDelete={setDeleteTarget}
+                  onMove={(f) => setMoveTargetIds([f.id])}
+                  selected={selectedIds.has(file.id)}
+                  onToggleSelect={toggleSelect}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
         )}
       </div>
 
