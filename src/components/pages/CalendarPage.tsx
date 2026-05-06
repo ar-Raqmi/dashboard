@@ -88,8 +88,18 @@ export default function CalendarPage() {
     return map
   }, [events])
 
-  // Upcoming events (today + future, excluding selected date) — client-only to avoid hydration mismatch
+  // Today's events — client-only to avoid hydration mismatch
   const todayStr = mounted ? toLocalDateString(new Date()) : ''
+  const isViewingToday = selectedDateStr === todayStr
+
+  const todayEvents = useMemo(() => {
+    if (!mounted || !todayStr) return []
+    // When already viewing today, events show in the main section — don't duplicate
+    if (isViewingToday) return []
+    return events.filter((e) => e.date === todayStr)
+  }, [events, todayStr, isViewingToday, mounted])
+
+  // Upcoming events (strictly AFTER today, excluding selected date) — client-only
   const upcomingEvents = useMemo(() => {
     if (!mounted) return []
     const todayDate = new Date()
@@ -97,13 +107,14 @@ export default function CalendarPage() {
     return events
       .filter((e) => {
         if (e.date === selectedDateStr) return false
+        if (e.date === todayStr) return false // today's events go in the Today section
         const eventDate = parseEventDate(e.date)
         eventDate.setHours(0, 0, 0, 0)
-        return eventDate >= todayDate
+        return eventDate > todayDate
       })
       .sort((a, b) => a.date.localeCompare(b.date))
       .slice(0, 8)
-  }, [events, selectedDateStr, mounted])
+  }, [events, selectedDateStr, todayStr, mounted])
 
   // All events for selected month (for the mini month summary)
   const selectedMonthEvents = useMemo(() => {
@@ -351,11 +362,39 @@ export default function CalendarPage() {
             </div>
           </ScrollArea>
 
+          {/* Today section (only when not viewing today) */}
+          {todayEvents.length > 0 && (
+            <>
+              <div className="border-t border-border/50" />
+              <div>
+                <div className="flex items-center gap-2 mb-2.5">
+                  <div className="size-2 rounded-full bg-primary animate-pulse" />
+                  <span className="text-xs font-semibold text-primary uppercase tracking-wider">Today</span>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  {todayEvents.map((event) => (
+                    <div
+                      key={event.id}
+                      className="flex items-center gap-2.5 p-2 rounded-xl bg-primary/5 hover:bg-primary/10 cursor-pointer transition-colors"
+                      onClick={() => setSelectedDate(new Date())}
+                    >
+                      <div
+                        className="size-2 rounded-full shrink-0"
+                        style={{ backgroundColor: event.color || EVENT_COLORS[0].value }}
+                      />
+                      <span className="text-xs text-foreground truncate flex-1 min-w-0 font-medium">{event.title}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
           {/* Divider + Upcoming Events */}
           {upcomingEvents.length > 0 && (
             <>
-              <div className="border-t border-border/50 mt-2" />
-              <div className="mt-2">
+              <div className="border-t border-border/50 mt-1" />
+              <div className="mt-1">
                 <div className="flex items-center gap-2 mb-2.5">
                   <Clock className="size-3.5 text-muted-foreground" />
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Upcoming</span>
