@@ -93,12 +93,12 @@ const defaultWidgets: DashboardWidget[] = [
 ]
 
 const defaultLayouts: Layout[] = [
-  { i: 'tasks', x: 0, y: 0, w: 6, h: 4, minW: 3, minH: 3 },
-  { i: 'calendar', x: 6, y: 0, w: 6, h: 4, minW: 3, minH: 3 },
-  { i: 'notes', x: 0, y: 4, w: 4, h: 4, minW: 3, minH: 3 },
-  { i: 'verse', x: 4, y: 4, w: 4, h: 4, minW: 3, minH: 3 },
-  { i: 'goals', x: 8, y: 4, w: 4, h: 4, minW: 3, minH: 3 },
-  { i: 'clock', x: 0, y: 8, w: 3, h: 3, minW: 2, minH: 2 },
+  { i: 'tasks', x: 0, y: 0, w: 2, h: 4, minW: 1, minH: 2 },
+  { i: 'calendar', x: 2, y: 0, w: 1, h: 4, minW: 1, minH: 2 },
+  { i: 'notes', x: 0, y: 4, w: 1, h: 3, minW: 1, minH: 2 },
+  { i: 'verse', x: 1, y: 4, w: 1, h: 3, minW: 1, minH: 2 },
+  { i: 'goals', x: 2, y: 4, w: 1, h: 3, minW: 1, minH: 2 },
+  { i: 'clock', x: 0, y: 7, w: 1, h: 2, minW: 1, minH: 1 },
 ]
 
 // ===== SAMPLE DATA =====

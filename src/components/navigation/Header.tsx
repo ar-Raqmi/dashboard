@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Search, LayoutGrid } from 'lucide-react'
+import { Search, LayoutGrid, Sun, Moon } from 'lucide-react'
+import { useTheme } from 'next-themes'
 import { useAppStore } from '@/lib/store'
 
 function formatTimeInZone(timezone: string): string {
@@ -18,7 +19,6 @@ function formatTimeInZone(timezone: string): string {
     })
     return formatter.format(now)
   } catch {
-    // Fallback if timezone is invalid
     const now = new Date()
     const h = String(now.getUTCHours()).padStart(2, '0')
     const m = String(now.getUTCMinutes()).padStart(2, '0')
@@ -47,19 +47,26 @@ export default function Header() {
   const showDashboardManager = useAppStore((s) => s.showDashboardManager)
   const setShowDashboardManager = useAppStore((s) => s.setShowDashboardManager)
 
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
   const [tick, setTick] = useState(0)
   const [searchOpen, setSearchOpen] = useState(false)
 
   const updateTime = useCallback(() => setTick((t) => t + 1), [])
 
+  // Set mounted on next tick to avoid hydration mismatch
   useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true))
     const interval = setInterval(updateTime, 1000)
-    return () => clearInterval(interval)
+    return () => {
+      cancelAnimationFrame(id)
+      clearInterval(interval)
+    }
   }, [updateTime])
 
   // Suppress unused variable warning - tick drives re-renders
   void tick
-  const time = formatTimeInZone(timezone)
+  const time = mounted ? formatTimeInZone(timezone) : ''
 
   return (
     <motion.header
@@ -67,13 +74,13 @@ export default function Header() {
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30, delay: 0.1 }}
       className="fixed top-0 left-0 right-0 z-50 h-16
-        bg-[oklch(0.13_0.005_155)]/80 backdrop-blur-xl
-        border-b border-white/[0.06]
+        bg-background/80 backdrop-blur-xl
+        border-b border-border
         flex items-center justify-between px-4 md:px-6"
     >
       {/* Left: Logo + Title */}
       <div className="flex items-center gap-3 min-w-0">
-        <div className="w-9 h-9 rounded-2xl bg-[oklch(0.72_0.19_142)]/15 flex items-center justify-center flex-shrink-0 overflow-hidden">
+        <div className="w-9 h-9 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
           {appLogo ? (
             <img
               src={appLogo}
@@ -86,26 +93,25 @@ export default function Header() {
               alt={`${appTitle} logo`}
               className="w-5 h-5"
               onError={(e) => {
-                // Fallback: hide broken image, show text
                 const target = e.currentTarget as HTMLImageElement
                 target.style.display = 'none'
                 const parent = target.parentElement
                 if (parent) {
-                  parent.innerHTML = `<span class="text-[oklch(0.72_0.19_142)] font-bold text-sm">R</span>`
+                  parent.innerHTML = `<span class="text-primary font-bold text-sm">R</span>`
                 }
               }}
             />
           )}
         </div>
-        <h1 className="text-white/90 font-semibold text-sm md:text-base truncate">
+        <h1 className="text-foreground font-semibold text-sm md:text-base truncate">
           {appTitle}
         </h1>
       </div>
 
-      {/* Center: GMT Clock */}
+      {/* Center: Clock */}
       <div className="hidden sm:flex items-center justify-center absolute left-1/2 -translate-x-1/2">
-        <div className="flex items-center gap-2 px-4 py-1.5 rounded-2xl bg-white/[0.04] border border-white/[0.06]">
-          <span className="text-[oklch(0.72_0.19_142)] text-xs font-medium tracking-wide">
+        <div className="flex items-center gap-2 px-4 py-1.5 rounded-2xl bg-muted border border-border">
+          <span className="text-primary text-xs font-medium tracking-wide">
             {time}
           </span>
         </div>
@@ -113,6 +119,24 @@ export default function Header() {
 
       {/* Right: Actions + Avatar */}
       <div className="flex items-center gap-2">
+        {/* Theme Toggle */}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="w-9 h-9 rounded-2xl flex items-center justify-center
+            bg-muted border border-border
+            text-muted-foreground hover:text-foreground hover:bg-accent
+            transition-colors"
+          aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {mounted && (theme === 'dark' ? (
+            <Sun className="h-4 w-4" />
+          ) : (
+            <Moon className="h-4 w-4" />
+          ))}
+        </motion.button>
+
         {/* Search Button */}
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -124,8 +148,8 @@ export default function Header() {
             }
           }}
           className="w-9 h-9 rounded-2xl flex items-center justify-center
-            bg-white/[0.04] border border-white/[0.06]
-            text-white/60 hover:text-white/90 hover:bg-white/[0.08]
+            bg-muted border border-border
+            text-muted-foreground hover:text-foreground hover:bg-accent
             transition-colors"
           aria-label={searchOpen ? 'Close search' : 'Open search'}
         >
@@ -141,8 +165,8 @@ export default function Header() {
             border transition-colors
             ${
               showDashboardManager
-                ? 'bg-[oklch(0.72_0.19_142)]/15 border-[oklch(0.72_0.19_142)]/30 text-[oklch(0.72_0.19_142)]'
-                : 'bg-white/[0.04] border-white/[0.06] text-white/60 hover:text-white/90 hover:bg-white/[0.08]'
+                ? 'bg-primary/10 border-primary/30 text-primary'
+                : 'bg-muted border-border text-muted-foreground hover:text-foreground hover:bg-accent'
             }`}
           aria-label="Toggle dashboard manager"
         >
@@ -150,7 +174,7 @@ export default function Header() {
         </motion.button>
 
         {/* Profile Avatar */}
-        <div className="w-9 h-9 rounded-2xl overflow-hidden flex items-center justify-center bg-[oklch(0.8_0.08_350)]/20 border border-[oklch(0.8_0.08_350)]/30 flex-shrink-0">
+        <div className="w-9 h-9 rounded-2xl overflow-hidden flex items-center justify-center bg-secondary/20 border border-secondary/30 flex-shrink-0">
           {profilePicture ? (
             <img
               src={profilePicture}
@@ -158,7 +182,7 @@ export default function Header() {
               className="w-full h-full object-cover"
             />
           ) : (
-            <span className="text-[oklch(0.8_0.08_350)] text-xs font-semibold">
+            <span className="text-secondary-foreground text-xs font-semibold">
               {getInitials(profileName)}
             </span>
           )}
@@ -167,8 +191,8 @@ export default function Header() {
 
       {/* Mobile Clock (shown below header on small screens) */}
       <div className="sm:hidden absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2">
-        <div className="flex items-center gap-2 px-3 py-1 rounded-2xl bg-[oklch(0.13_0.005_155)]/90 backdrop-blur-xl border border-white/[0.06]">
-          <span className="text-[oklch(0.72_0.19_142)] text-[10px] font-medium tracking-wide">
+        <div className="flex items-center gap-2 px-3 py-1 rounded-2xl bg-background/90 backdrop-blur-xl border border-border">
+          <span className="text-primary text-[10px] font-medium tracking-wide">
             {time}
           </span>
         </div>

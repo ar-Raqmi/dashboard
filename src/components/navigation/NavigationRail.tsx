@@ -39,7 +39,7 @@ export default function NavigationRail() {
       {/* Desktop: Vertical Navigation Rail */}
       <nav
         className="hidden md:flex fixed left-3 top-20 bottom-3 z-40 w-[72px] flex-col items-center gap-1 rounded-3xl py-4 px-1.5
-          bg-[oklch(0.13_0.005_155)]/80 backdrop-blur-xl border border-white/[0.06]"
+          bg-background/80 backdrop-blur-xl border border-border shadow-sm"
         aria-label="Main navigation"
       >
         {navItems.map((item) => {
@@ -57,7 +57,7 @@ export default function NavigationRail() {
               {isActive && (
                 <motion.div
                   layoutId="nav-pill-desktop"
-                  className="absolute inset-x-1.5 inset-y-0.5 rounded-2xl bg-[oklch(0.72_0.19_142)]/15"
+                  className="absolute inset-x-1.5 inset-y-0.5 rounded-2xl bg-primary/10"
                   transition={{
                     type: 'spring',
                     stiffness: 350,
@@ -69,16 +69,16 @@ export default function NavigationRail() {
                 <Icon
                   className={`h-5 w-5 transition-colors ${
                     isActive
-                      ? 'text-[oklch(0.72_0.19_142)]'
-                      : 'text-white/50 group-hover:text-white/80'
+                      ? 'text-primary'
+                      : 'text-muted-foreground group-hover:text-foreground'
                   }`}
                 />
               </span>
               <span
                 className={`relative z-10 text-[10px] font-medium leading-tight transition-colors ${
                   isActive
-                    ? 'text-[oklch(0.72_0.19_142)]'
-                    : 'text-white/40 group-hover:text-white/70'
+                    ? 'text-primary'
+                    : 'text-muted-foreground group-hover:text-foreground'
                 }`}
               >
                 {item.label}
@@ -91,7 +91,7 @@ export default function NavigationRail() {
       {/* Mobile: Bottom Navigation Bar */}
       <nav
         className="md:hidden fixed bottom-0 left-0 right-0 z-40 h-16
-          bg-[oklch(0.13_0.005_155)]/90 backdrop-blur-xl border-t border-white/[0.06]
+          bg-background/90 backdrop-blur-xl border-t border-border
           flex items-center justify-around px-2"
         aria-label="Main navigation"
       >
@@ -110,7 +110,7 @@ export default function NavigationRail() {
               {isActive && (
                 <motion.div
                   layoutId="nav-pill-mobile"
-                  className="absolute inset-x-0.5 -inset-y-0.5 rounded-2xl bg-[oklch(0.72_0.19_142)]/15"
+                  className="absolute inset-x-0.5 -inset-y-0.5 rounded-2xl bg-primary/10"
                   transition={{
                     type: 'spring',
                     stiffness: 350,
@@ -122,16 +122,16 @@ export default function NavigationRail() {
                 <Icon
                   className={`h-5 w-5 transition-colors ${
                     isActive
-                      ? 'text-[oklch(0.72_0.19_142)]'
-                      : 'text-white/50'
+                      ? 'text-primary'
+                      : 'text-muted-foreground'
                   }`}
                 />
               </span>
               <span
                 className={`relative z-10 text-[10px] font-medium leading-tight transition-colors ${
                   isActive
-                    ? 'text-[oklch(0.72_0.19_142)]'
-                    : 'text-white/40'
+                    ? 'text-primary'
+                    : 'text-muted-foreground'
                 }`}
               >
                 {item.label}

@@ -102,8 +102,8 @@ export default function SettingsPage() {
         animate={{ opacity: 1, y: 0 }}
         className="flex items-center gap-3"
       >
-        <div className="p-2 rounded-2xl bg-[oklch(0.72_0.19_142_/_0.15)]">
-          <Settings className="size-6 text-[oklch(0.72_0.19_142)]" />
+        <div className="p-2 rounded-2xl bg-primary/15">
+          <Settings className="size-6 text-primary" />
         </div>
         <h1 className="text-2xl font-bold">Settings</h1>
       </motion.div>
@@ -114,17 +114,17 @@ export default function SettingsPage() {
         variants={sectionVariants}
         initial="hidden"
         animate="visible"
-        className="rounded-3xl bg-[oklch(0.17_0.008_155)] border border-[oklch(0.28_0.01_155)] p-6 flex flex-col gap-4"
+        className="rounded-3xl bg-card border border-border p-6 flex flex-col gap-4"
       >
         <div className="flex items-center gap-2">
-          <User className="size-5 text-[oklch(0.72_0.19_142)]" />
-          <h2 className="text-lg font-semibold text-[oklch(0.96_0.005_155)]">Profile</h2>
+          <User className="size-5 text-primary" />
+          <h2 className="text-lg font-semibold text-foreground">Profile</h2>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-4">
           <div className="relative group">
             <Avatar className="size-20 rounded-2xl">
               <AvatarImage src={profilePicture} alt="Profile" />
-              <AvatarFallback className="bg-[oklch(0.22_0.008_155)] text-[oklch(0.72_0.19_142)] text-2xl rounded-2xl">
+              <AvatarFallback className="bg-muted text-primary text-2xl rounded-2xl">
                 {localName?.charAt(0)?.toUpperCase() || 'U'}
               </AvatarFallback>
             </Avatar>
@@ -143,12 +143,12 @@ export default function SettingsPage() {
             />
           </div>
           <div className="flex-1 w-full flex flex-col gap-2">
-            <label className="text-sm text-[oklch(0.75_0.01_155)]">Display Name</label>
+            <label className="text-sm text-on-surface-variant">Display Name</label>
             <Input
               value={localName}
               onChange={(e) => setLocalName(e.target.value)}
               placeholder="Your name"
-              className="rounded-2xl bg-[oklch(0.24_0.01_155)] border-[oklch(0.28_0.01_155)]"
+              className="rounded-2xl bg-input border-border"
             />
           </div>
         </div>
@@ -160,35 +160,35 @@ export default function SettingsPage() {
         variants={sectionVariants}
         initial="hidden"
         animate="visible"
-        className="rounded-3xl bg-[oklch(0.17_0.008_155)] border border-[oklch(0.28_0.01_155)] p-6 flex flex-col gap-4"
+        className="rounded-3xl bg-card border border-border p-6 flex flex-col gap-4"
       >
         <div className="flex items-center gap-2">
-          <AppWindow className="size-5 text-[oklch(0.72_0.19_142)]" />
-          <h2 className="text-lg font-semibold text-[oklch(0.96_0.005_155)]">App</h2>
+          <AppWindow className="size-5 text-primary" />
+          <h2 className="text-lg font-semibold text-foreground">App</h2>
         </div>
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <label className="text-sm text-[oklch(0.75_0.01_155)]">App Title</label>
+            <label className="text-sm text-on-surface-variant">App Title</label>
             <Input
               value={localAppTitle}
               onChange={(e) => setLocalAppTitle(e.target.value)}
               placeholder="App title"
-              className="rounded-2xl bg-[oklch(0.24_0.01_155)] border-[oklch(0.28_0.01_155)]"
+              className="rounded-2xl bg-input border-border"
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-sm text-[oklch(0.75_0.01_155)]">App Logo</label>
+            <label className="text-sm text-on-surface-variant">App Logo</label>
             <div className="flex items-center gap-4">
-              <div className="size-16 rounded-2xl bg-[oklch(0.22_0.008_155)] border border-[oklch(0.28_0.01_155)] flex items-center justify-center overflow-hidden">
+              <div className="size-16 rounded-2xl bg-muted border border-border flex items-center justify-center overflow-hidden">
                 {appLogo ? (
                   <img src={appLogo} alt="App Logo" className="size-full object-cover" />
                 ) : (
-                  <ImageIcon className="size-6 text-[oklch(0.5_0.01_155)]" />
+                  <ImageIcon className="size-6 text-outline" />
                 )}
               </div>
               <Button
                 variant="outline"
-                className="rounded-2xl border-[oklch(0.28_0.01_155)]"
+                className="rounded-2xl border-border"
                 onClick={() => logoInputRef.current?.click()}
               >
                 <Upload className="size-4 mr-2" />
@@ -212,17 +212,17 @@ export default function SettingsPage() {
         variants={sectionVariants}
         initial="hidden"
         animate="visible"
-        className="rounded-3xl bg-[oklch(0.17_0.008_155)] border border-[oklch(0.28_0.01_155)] p-6 flex flex-col gap-4"
+        className="rounded-3xl bg-card border border-border p-6 flex flex-col gap-4"
       >
         <div className="flex items-center gap-2">
-          <Globe className="size-5 text-[oklch(0.72_0.19_142)]" />
-          <h2 className="text-lg font-semibold text-[oklch(0.96_0.005_155)]">Timezone</h2>
+          <Globe className="size-5 text-primary" />
+          <h2 className="text-lg font-semibold text-foreground">Timezone</h2>
         </div>
         <Select value={localTimezone} onValueChange={setLocalTimezone}>
-          <SelectTrigger className="rounded-2xl bg-[oklch(0.24_0.01_155)] border-[oklch(0.28_0.01_155)] w-full">
+          <SelectTrigger className="rounded-2xl bg-input border-border w-full">
             <SelectValue placeholder="Select timezone" />
           </SelectTrigger>
-          <SelectContent className="bg-[oklch(0.17_0.008_155)] border-[oklch(0.28_0.01_155)] rounded-2xl max-h-64">
+          <SelectContent className="bg-card border-border rounded-2xl max-h-64">
             {TIMEZONES.map((tz) => (
               <SelectItem key={tz} value={tz}>
                 {tz.replace(/_/g, ' ')}
@@ -230,7 +230,7 @@ export default function SettingsPage() {
             ))}
           </SelectContent>
         </Select>
-        <p className="text-xs text-[oklch(0.55_0.01_155)]">
+        <p className="text-xs text-outline">
           Current: {new Date().toLocaleString('en-US', { timeZone: localTimezone })}
         </p>
       </motion.section>
@@ -241,25 +241,25 @@ export default function SettingsPage() {
         variants={sectionVariants}
         initial="hidden"
         animate="visible"
-        className="rounded-3xl bg-[oklch(0.17_0.008_155)] border border-[oklch(0.28_0.01_155)] p-6 flex flex-col gap-3"
+        className="rounded-3xl bg-card border border-border p-6 flex flex-col gap-3"
       >
         <div className="flex items-center gap-2">
-          <Info className="size-5 text-[oklch(0.72_0.19_142)]" />
-          <h2 className="text-lg font-semibold text-[oklch(0.96_0.005_155)]">About</h2>
+          <Info className="size-5 text-primary" />
+          <h2 className="text-lg font-semibold text-foreground">About</h2>
         </div>
-        <Separator className="bg-[oklch(0.28_0.01_155)]" />
+        <Separator className="bg-border" />
         <div className="flex flex-col gap-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-[oklch(0.65_0.01_155)]">App Name</span>
-            <span className="text-[oklch(0.96_0.005_155)]">{appTitle}</span>
+            <span className="text-muted-foreground">App Name</span>
+            <span className="text-foreground">{appTitle}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-[oklch(0.65_0.01_155)]">Version</span>
-            <span className="text-[oklch(0.96_0.005_155)]">1.0.0</span>
+            <span className="text-muted-foreground">Version</span>
+            <span className="text-foreground">1.0.0</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-[oklch(0.65_0.01_155)]">Credits</span>
-            <span className="text-[oklch(0.72_0.19_142)]">ar-Raqmi Team</span>
+            <span className="text-muted-foreground">Credits</span>
+            <span className="text-primary">ar-Raqmi Team</span>
           </div>
         </div>
       </motion.section>
@@ -274,7 +274,7 @@ export default function SettingsPage() {
       >
         <Button
           onClick={handleSave}
-          className="w-full rounded-2xl bg-[oklch(0.72_0.19_142)] text-[oklch(0.13_0.005_155)] hover:bg-[oklch(0.65_0.19_142)] h-12 text-base font-semibold"
+          className="w-full rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 h-12 text-base font-semibold"
         >
           <Save className="size-5 mr-2" />
           {saved ? 'Saved!' : 'Save Changes'}

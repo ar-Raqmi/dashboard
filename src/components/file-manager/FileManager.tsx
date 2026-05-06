@@ -86,7 +86,7 @@ const getCategoryColor = (category: FileCategory): string => {
     case 'pdf': return 'bg-red-500/20 text-red-400'
     case 'doc': return 'bg-amber-500/20 text-amber-400'
     case 'video': return 'bg-pink-500/20 text-pink-400'
-    case 'folder': return 'bg-[oklch(0.72_0.19_142)_/20] text-[oklch(0.72_0.19_142)]'
+    case 'folder': return 'bg-primary/20 text-primary'
     default: return 'bg-gray-500/20 text-gray-400'
   }
 }
@@ -115,13 +115,13 @@ function BreadcrumbNav() {
     <nav aria-label="File breadcrumb" className="flex items-center gap-1 text-sm px-1 py-2 overflow-x-auto">
       {breadcrumbs.map((crumb, i) => (
         <React.Fragment key={crumb.id ?? 'home'}>
-          {i > 0 && <ChevronRight className="size-3.5 text-white/30 shrink-0" />}
+          {i > 0 && <ChevronRight className="size-3.5 text-outline shrink-0" />}
           {i === breadcrumbs.length - 1 ? (
-            <span className="text-white font-medium truncate max-w-48">{crumb.name}</span>
+            <span className="text-foreground font-medium truncate max-w-48">{crumb.name}</span>
           ) : (
             <button
               onClick={() => setCurrentFolderId(crumb.id)}
-              className="text-white/50 hover:text-white transition-colors truncate max-w-32"
+              className="text-muted-foreground hover:text-foreground transition-colors truncate max-w-32"
             >
               {i === 0 ? <Home className="size-3.5" /> : crumb.name}
             </button>
@@ -177,8 +177,8 @@ function MoveToFolderModal({
           onClick={() => setSelectedFolderId(folder.id)}
           className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors ${
             selectedFolderId === folder.id
-              ? 'bg-[oklch(0.72_0.19_142)]/20 text-[oklch(0.72_0.19_142)]'
-              : 'text-white/70 hover:bg-white/5 hover:text-white'
+              ? 'bg-primary/20 text-primary'
+              : 'text-foreground/70 hover:bg-muted/50 hover:text-foreground'
           }`}
           style={{ paddingLeft: `${depth * 20 + 12}px` }}
         >
@@ -198,10 +198,10 @@ function MoveToFolderModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) { onClose(); setSelectedFolderId(null) } }}>
-      <DialogContent className="bg-[oklch(0.2_0.02_260)] border-white/10 text-white sm:max-w-md rounded-3xl">
+      <DialogContent className="bg-card border-border text-foreground sm:max-w-md rounded-3xl">
         <DialogHeader>
-          <DialogTitle className="text-white">Move to Folder</DialogTitle>
-          <DialogDescription className="text-white/50">
+          <DialogTitle className="text-foreground">Move to Folder</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
             Select a destination folder for {fileIds.length} item{fileIds.length > 1 ? 's' : ''}
           </DialogDescription>
         </DialogHeader>
@@ -210,8 +210,8 @@ function MoveToFolderModal({
             onClick={() => setSelectedFolderId(null)}
             className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors ${
               selectedFolderId === null
-                ? 'bg-[oklch(0.72_0.19_142)]/20 text-[oklch(0.72_0.19_142)]'
-                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                ? 'bg-primary/20 text-primary'
+                : 'text-foreground/70 hover:bg-muted/50 hover:text-foreground'
             }`}
           >
             <Home className="size-4 shrink-0" />
@@ -225,13 +225,13 @@ function MoveToFolderModal({
           <Button
             variant="outline"
             onClick={() => { onClose(); setSelectedFolderId(null) }}
-            className="rounded-2xl border-white/20 text-white hover:bg-white/10"
+            className="rounded-2xl border-border text-foreground hover:bg-accent"
           >
             Cancel
           </Button>
           <Button
             onClick={handleMove}
-            className="rounded-2xl bg-[oklch(0.72_0.19_142)] text-white hover:bg-[oklch(0.72_0.19_142)]/90"
+            className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
           >
             <ArrowRight className="size-4" />
             Move Here
@@ -291,8 +291,8 @@ function FileCard({
       transition={{ duration: 0.2 }}
       className={`group relative rounded-3xl p-4 cursor-pointer transition-all border ${
         selected
-          ? 'bg-[oklch(0.72_0.19_142)]/15 border-[oklch(0.72_0.19_142)]/30'
-          : 'bg-[oklch(0.22_0.015_260)] border-white/5 hover:border-white/15 hover:bg-[oklch(0.24_0.015_260)]'
+          ? 'bg-primary/15 border-primary/30'
+          : 'bg-card border-border/50 hover:border-border hover:bg-accent'
       }`}
       onClick={handleClick}
     >
@@ -301,35 +301,35 @@ function FileCard({
         onClick={(e) => { e.stopPropagation(); onToggleSelect(file.id) }}
         className={`absolute top-3 left-3 size-5 rounded-full border-2 flex items-center justify-center transition-all z-10 ${
           selected
-            ? 'bg-[oklch(0.72_0.19_142)] border-[oklch(0.72_0.19_142)]'
-            : 'border-white/20 opacity-0 group-hover:opacity-100 hover:border-white/50'
+            ? 'bg-primary border-primary'
+            : 'border-border/50 opacity-0 group-hover:opacity-100 hover:border-border'
         }`}
       >
-        {selected && <Check className="size-3 text-white" />}
+        {selected && <Check className="size-3 text-primary-foreground" />}
       </button>
 
       {/* Context menu */}
       <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
         <DropdownMenu>
           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-            <Button variant="ghost" size="icon" className="size-7 rounded-full text-white/50 hover:text-white hover:bg-white/10">
+            <Button variant="ghost" size="icon" className="size-7 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent">
               <MoreVertical className="size-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-[oklch(0.2_0.02_260)] border-white/10 text-white rounded-2xl" align="end">
+          <DropdownMenuContent className="bg-card border-border text-foreground rounded-2xl" align="end">
             <DropdownMenuItem
-              className="gap-2 focus:bg-white/10 focus:text-white cursor-pointer"
+              className="gap-2 focus:bg-accent focus:text-foreground cursor-pointer"
               onClick={(e) => { e.stopPropagation(); onRename(file); setRenaming(true); setRenameValue(file.name) }}
             >
               <Pencil className="size-4" /> Rename
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="gap-2 focus:bg-white/10 focus:text-white cursor-pointer"
+              className="gap-2 focus:bg-accent focus:text-foreground cursor-pointer"
               onClick={(e) => { e.stopPropagation(); onMove(file) }}
             >
               <Move className="size-4" /> Move
             </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-white/10" />
+            <DropdownMenuSeparator className="bg-border" />
             <DropdownMenuItem
               className="gap-2 focus:bg-red-500/20 focus:text-red-400 cursor-pointer text-red-400"
               onClick={(e) => { e.stopPropagation(); onDelete(file) }}
@@ -359,23 +359,23 @@ function FileCard({
             }}
             onBlur={handleRename}
             autoFocus
-            className="h-7 text-xs text-center bg-white/10 border-white/20 text-white rounded-xl"
+            className="h-7 text-xs text-center bg-input border-border/50 text-foreground rounded-xl"
           />
         </div>
       ) : (
-        <p className="text-sm font-medium text-white truncate text-center mb-1">{file.name}</p>
+        <p className="text-sm font-medium text-foreground truncate text-center mb-1">{file.name}</p>
       )}
 
       {/* Meta */}
       {!isFolder && (
-        <div className="flex items-center justify-center gap-2 text-xs text-white/40">
+        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
           <span>{formatSize(file.size)}</span>
-          <span className="size-1 rounded-full bg-white/20" />
+          <span className="size-1 rounded-full bg-border/50" />
           <span>{formatDate(file.createdAt)}</span>
         </div>
       )}
       {isFolder && (
-        <p className="text-xs text-white/30 text-center">Folder</p>
+        <p className="text-xs text-outline text-center">Folder</p>
       )}
     </motion.div>
   )
@@ -387,13 +387,13 @@ function EmptyState() {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col items-center justify-center py-20 text-white/30"
+      className="flex flex-col items-center justify-center py-20 text-outline"
     >
-      <div className="size-24 rounded-3xl bg-white/5 flex items-center justify-center mb-4">
-        <FolderOpen className="size-12 text-white/20" />
+      <div className="size-24 rounded-3xl bg-muted/50 flex items-center justify-center mb-4">
+        <FolderOpen className="size-12 text-outline" />
       </div>
-      <p className="text-lg font-medium text-white/40">This folder is empty</p>
-      <p className="text-sm text-white/25 mt-1">Create a new folder or upload a file to get started</p>
+      <p className="text-lg font-medium text-muted-foreground">This folder is empty</p>
+      <p className="text-sm text-outline mt-1">Create a new folder or upload a file to get started</p>
     </motion.div>
   )
 }
@@ -513,14 +513,14 @@ export default function FileManager() {
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center gap-2"
             >
-              <Badge className="bg-[oklch(0.72_0.19_142)]/20 text-[oklch(0.72_0.19_142)] border-0 rounded-2xl">
+              <Badge className="bg-primary/20 text-primary border-0 rounded-2xl">
                 {selectedIds.size} selected
               </Badge>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleBulkMove}
-                className="rounded-2xl text-white/70 hover:text-white hover:bg-white/10"
+                className="rounded-2xl text-foreground/70 hover:text-foreground hover:bg-accent"
               >
                 <Move className="size-4" />
                 Move
@@ -540,7 +540,7 @@ export default function FileManager() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setSelectedIds(new Set())}
-                className="rounded-2xl text-white/50 hover:text-white hover:bg-white/10"
+                className="rounded-2xl text-muted-foreground hover:text-foreground hover:bg-accent"
               >
                 <X className="size-4" />
               </Button>
@@ -550,7 +550,7 @@ export default function FileManager() {
           <Button
             onClick={() => setShowNewFolder(true)}
             size="sm"
-            className="rounded-2xl bg-[oklch(0.72_0.19_142)] text-white hover:bg-[oklch(0.72_0.19_142)]/90 gap-1.5"
+            className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 gap-1.5"
           >
             <FolderPlus className="size-4" />
             <span className="hidden sm:inline">New Folder</span>
@@ -558,7 +558,7 @@ export default function FileManager() {
           <Button
             onClick={() => setShowUpload(true)}
             size="sm"
-            className="rounded-2xl bg-[oklch(0.8_0.08_350)] text-white hover:bg-[oklch(0.8_0.08_350)]/90 gap-1.5"
+            className="rounded-2xl bg-secondary text-secondary-foreground hover:bg-secondary/90 gap-1.5"
           >
             <Upload className="size-4" />
             <span className="hidden sm:inline">Upload</span>
@@ -575,8 +575,8 @@ export default function FileManager() {
             exit={{ opacity: 0, height: 0 }}
             className="mb-4 overflow-hidden"
           >
-            <div className="flex items-center gap-2 p-3 rounded-2xl bg-[oklch(0.22_0.015_260)] border border-[oklch(0.72_0.19_142)]/20">
-              <FolderPlus className="size-5 text-[oklch(0.72_0.19_142)]" />
+            <div className="flex items-center gap-2 p-3 rounded-2xl bg-card border border-primary/20">
+              <FolderPlus className="size-5 text-primary" />
               <Input
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
@@ -586,12 +586,12 @@ export default function FileManager() {
                 }}
                 placeholder="Folder name..."
                 autoFocus
-                className="h-8 bg-white/5 border-white/10 text-white rounded-xl text-sm"
+                className="h-8 bg-input border-border text-foreground rounded-xl text-sm"
               />
-              <Button size="sm" onClick={handleCreateFolder} className="rounded-2xl bg-[oklch(0.72_0.19_142)] text-white hover:bg-[oklch(0.72_0.19_142)]/90 size-8">
+              <Button size="sm" onClick={handleCreateFolder} className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 size-8">
                 <Check className="size-4" />
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => { setShowNewFolder(false); setNewFolderName('') }} className="rounded-2xl text-white/50 hover:text-white hover:bg-white/10 size-8">
+              <Button size="sm" variant="ghost" onClick={() => { setShowNewFolder(false); setNewFolderName('') }} className="rounded-2xl text-muted-foreground hover:text-foreground hover:bg-accent size-8">
                 <X className="size-4" />
               </Button>
             </div>
@@ -608,8 +608,8 @@ export default function FileManager() {
             exit={{ opacity: 0, height: 0 }}
             className="mb-4 overflow-hidden"
           >
-            <div className="flex items-center gap-2 p-3 rounded-2xl bg-[oklch(0.22_0.015_260)] border border-[oklch(0.8_0.08_350)]/20">
-              <Upload className="size-5 text-[oklch(0.8_0.08_350)]" />
+            <div className="flex items-center gap-2 p-3 rounded-2xl bg-card border border-secondary/20">
+              <Upload className="size-5 text-secondary" />
               <Input
                 value={uploadFileName}
                 onChange={(e) => setUploadFileName(e.target.value)}
@@ -619,12 +619,12 @@ export default function FileManager() {
                 }}
                 placeholder="filename.ext (mock upload)..."
                 autoFocus
-                className="h-8 bg-white/5 border-white/10 text-white rounded-xl text-sm"
+                className="h-8 bg-input border-border text-foreground rounded-xl text-sm"
               />
-              <Button size="sm" onClick={handleUploadFile} className="rounded-2xl bg-[oklch(0.8_0.08_350)] text-white hover:bg-[oklch(0.8_0.08_350)]/90 size-8">
+              <Button size="sm" onClick={handleUploadFile} className="rounded-2xl bg-secondary text-secondary-foreground hover:bg-secondary/90 size-8">
                 <Check className="size-4" />
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => { setShowUpload(false); setUploadFileName('') }} className="rounded-2xl text-white/50 hover:text-white hover:bg-white/10 size-8">
+              <Button size="sm" variant="ghost" onClick={() => { setShowUpload(false); setUploadFileName('') }} className="rounded-2xl text-muted-foreground hover:text-foreground hover:bg-accent size-8">
                 <X className="size-4" />
               </Button>
             </div>
@@ -662,17 +662,17 @@ export default function FileManager() {
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(v) => { if (!v) setDeleteTarget(null) }}>
-        <AlertDialogContent className="bg-[oklch(0.2_0.02_260)] border-white/10 text-white rounded-3xl">
+        <AlertDialogContent className="bg-card border-border text-foreground rounded-3xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">Delete &quot;{deleteTarget?.name}&quot;?</AlertDialogTitle>
-            <AlertDialogDescription className="text-white/50">
+            <AlertDialogTitle className="text-foreground">Delete &quot;{deleteTarget?.name}&quot;?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
               {deleteTarget?.type === 'folder'
                 ? 'This will delete the folder and all its contents. This action cannot be undone.'
                 : 'This file will be permanently deleted. This action cannot be undone.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-2xl border-white/20 text-white hover:bg-white/10">
+            <AlertDialogCancel className="rounded-2xl border-border text-foreground hover:bg-accent">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction

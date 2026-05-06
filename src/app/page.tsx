@@ -29,7 +29,6 @@ const pageComponents: Record<ActivePage, React.ComponentType> = {
 
 export default function Home() {
   const activePage = useAppStore((s) => s.activePage)
-  const setActivePage = useAppStore((s) => s.setActivePage)
   const setVerse = useAppStore((s) => s.setVerse)
   const setVerseLoading = useAppStore((s) => s.setVerseLoading)
   const setHadith = useAppStore((s) => s.setHadith)
@@ -66,7 +65,7 @@ export default function Home() {
   const PageComponent = pageComponents[activePage]
 
   return (
-    <div className="min-h-screen flex flex-col bg-[oklch(0.13_0.005_155)]">
+    <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
       <Header />
 

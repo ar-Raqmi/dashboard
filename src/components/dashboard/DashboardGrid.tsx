@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react'
-import { ResponsiveGridLayout } from 'react-grid-layout'
+import { ResponsiveGridLayout, useContainerWidth } from 'react-grid-layout'
 import { CheckCircle, CalendarDays, StickyNote, BookOpen, Flag, Clock } from 'lucide-react'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
@@ -26,7 +26,7 @@ const widgetTitles: Record<WidgetType, string> = {
   notes: 'Quick Notes',
   verse: 'Daily Verse',
   goals: 'Goals',
-  clock: 'GMT Clock',
+  clock: 'Clock',
 }
 
 // ===== Widget Content Components =====
@@ -39,18 +39,18 @@ function DailyTasksContent() {
       {tasks.slice(0, 5).map((task) => (
         <div
           key={task.id}
-          className="flex items-center gap-3 p-2 rounded-xl hover:bg-[oklch(0.22_0.02_142)]/30 transition-colors cursor-pointer"
+          className="flex items-center gap-3 p-2 rounded-xl hover:bg-accent transition-colors cursor-pointer"
           onClick={() => toggleTaskStatus(task.id)}
         >
           <div
             className={
               task.status === 'completed'
-                ? 'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 border-[oklch(0.72_0.19_142)] bg-[oklch(0.72_0.19_142)]'
-                : 'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 border-[oklch(0.38_0.01_155)] hover:border-[oklch(0.72_0.19_142)] transition-colors'
+                ? 'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 border-primary bg-primary'
+                : 'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 border-outline hover:border-primary transition-colors'
             }
           >
             {task.status === 'completed' && (
-              <svg className="w-3 h-3 text-[oklch(0.13_0.005_155)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <svg className="w-3 h-3 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             )}
@@ -58,8 +58,8 @@ function DailyTasksContent() {
           <span
             className={
               task.status === 'completed'
-                ? 'text-sm truncate line-through text-[oklch(0.5_0.01_155)]'
-                : 'text-sm truncate text-[oklch(0.96_0.005_155)]'
+                ? 'text-sm truncate line-through text-muted-foreground'
+                : 'text-sm truncate text-foreground'
             }
           >
             {task.title}
@@ -78,11 +78,11 @@ function CalendarContent() {
         <div key={event.id} className="flex items-center gap-3 p-2 rounded-xl">
           <div
             className="w-2 h-2 rounded-full shrink-0"
-            style={{ backgroundColor: event.color || '#A5D6A7' }}
+            style={{ backgroundColor: event.color || 'var(--citrus)' }}
           />
           <div className="min-w-0 flex-1">
-            <p className="text-sm text-[oklch(0.96_0.005_155)] truncate">{event.title}</p>
-            <p className="text-xs text-[oklch(0.65_0.01_155)]">{event.date}</p>
+            <p className="text-sm text-foreground truncate">{event.title}</p>
+            <p className="text-xs text-muted-foreground">{event.date}</p>
           </div>
         </div>
       ))}
@@ -97,11 +97,11 @@ function NotesContent() {
       {notes.slice(0, 3).map((note) => (
         <div
           key={note.id}
-          className="p-3 rounded-xl border border-[oklch(0.28_0.01_155)]/50"
+          className="p-3 rounded-xl border border-border"
           style={{ borderLeftColor: note.color, borderLeftWidth: '3px' }}
         >
-          <p className="text-sm font-medium text-[oklch(0.96_0.005_155)]">{note.title}</p>
-          <p className="text-xs text-[oklch(0.65_0.01_155)] mt-1 line-clamp-2">{note.content}</p>
+          <p className="text-sm font-medium text-foreground">{note.title}</p>
+          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{note.content}</p>
         </div>
       ))}
     </div>
@@ -114,25 +114,25 @@ function VerseContent() {
   if (verseLoading) {
     return (
       <div className="flex items-center justify-center h-24">
-        <div className="w-6 h-6 border-2 border-[oklch(0.72_0.19_142)] border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
   if (verse) {
     return (
       <div className="space-y-3">
-        <p className="arabic-text text-lg leading-relaxed text-[oklch(0.72_0.19_142)]">
+        <p className="arabic-text text-lg leading-relaxed text-primary">
           {verse.arabic}
         </p>
-        <p className="text-sm text-[oklch(0.75_0.01_155)] italic">{verse.translation}</p>
-        <p className="text-xs text-[oklch(0.65_0.01_155)]">{verse.reference}</p>
+        <p className="text-sm text-on-surface-variant italic">{verse.translation}</p>
+        <p className="text-xs text-muted-foreground">{verse.reference}</p>
       </div>
     )
   }
   return (
     <div className="text-center py-4">
-      <p className="text-sm text-[oklch(0.65_0.01_155)]">No verse loaded yet</p>
-      <p className="text-xs text-[oklch(0.5_0.01_155)] mt-1">Visit the Spiritual tab to load a verse</p>
+      <p className="text-sm text-muted-foreground">No verse loaded yet</p>
+      <p className="text-xs text-outline mt-1">Visit the Spiritual tab to load a verse</p>
     </div>
   )
 }
@@ -144,12 +144,12 @@ function GoalsContent() {
       {goals.slice(0, 3).map((goal) => (
         <div key={goal.id} className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-[oklch(0.96_0.005_155)] truncate">{goal.title}</span>
-            <span className="text-xs text-[oklch(0.72_0.19_142)] font-medium ml-2">{goal.progress}%</span>
+            <span className="text-sm text-foreground truncate">{goal.title}</span>
+            <span className="text-xs text-primary font-medium ml-2">{goal.progress}%</span>
           </div>
-          <div className="w-full h-1.5 bg-[oklch(0.22_0.008_155)] rounded-full overflow-hidden">
+          <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
             <div
-              className="h-full bg-[oklch(0.72_0.19_142)] rounded-full transition-all duration-500"
+              className="h-full bg-primary rounded-full transition-all duration-500"
               style={{ width: `${goal.progress}%` }}
             />
           </div>
@@ -163,8 +163,10 @@ function ClockContent() {
   const timezone = useAppStore((s) => s.timezone)
   const [time, setTime] = React.useState('')
   const [date, setDate] = React.useState('')
+  const [mounted, setMounted] = React.useState(false)
 
   React.useEffect(() => {
+    setMounted(true)
     const update = () => {
       const now = new Date()
       try {
@@ -180,13 +182,23 @@ function ClockContent() {
     return () => clearInterval(interval)
   }, [timezone])
 
+  if (!mounted) {
+    return (
+      <div className="flex flex-col items-center justify-center py-2">
+        <p className="text-3xl font-bold text-primary tabular-nums tracking-wider">
+          --:--:--
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col items-center justify-center py-2">
-      <p className="text-3xl font-bold text-[oklch(0.72_0.19_142)] tabular-nums tracking-wider">
+      <p className="text-3xl font-bold text-primary tabular-nums tracking-wider">
         {time}
       </p>
-      <p className="text-sm text-[oklch(0.65_0.01_155)] mt-1">{date}</p>
-      <p className="text-xs text-[oklch(0.5_0.01_155)] mt-0.5">{timezone}</p>
+      <p className="text-sm text-muted-foreground mt-1">{date}</p>
+      <p className="text-xs text-outline mt-0.5">{timezone}</p>
     </div>
   )
 }
@@ -201,51 +213,50 @@ const widgetComponents: Record<WidgetType, React.ComponentType> = {
   clock: ClockContent,
 }
 
-// Stable selector: only re-renders when the set of visible widget types actually changes
-const getVisibleWidgetTypes = (s: { widgets: { type: string; visible: boolean }[] }) => {
-  const types = s.widgets.filter((w) => w.visible).map((w) => w.type)
-  return types.join(',')
-}
-
 export function DashboardGrid() {
   const layouts = useAppStore((s) => s.layouts)
   const setLayouts = useAppStore((s) => s.setLayouts)
   const widgets = useAppStore((s) => s.widgets)
-  // Use the stable selector for re-render decisions, then derive visibleWidgets via useMemo
-  const visibleWidgetTypesKey = useAppStore(getVisibleWidgetTypes)
+
+  // Stable selector: only re-renders when the set of visible widget types actually changes
+  const visibleWidgetTypesKey = useAppStore(
+    useCallback((s: { widgets: { type: string; visible: boolean }[] }) => {
+      return s.widgets.filter((w) => w.visible).map((w) => w.type).join(',')
+    }, [])
+  )
 
   const visibleWidgets = useMemo(
     () => widgets.filter((w) => w.visible),
     [widgets, visibleWidgetTypesKey]
   )
 
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [width, setWidth] = useState(1200)
+  // Use the container width hook from react-grid-layout v2
+  const { containerRef, width } = useContainerWidth()
 
-  // Measure container width
-  useEffect(() => {
-    const measure = () => {
-      if (containerRef.current) {
-        setWidth(containerRef.current.offsetWidth)
-      }
-    }
-    measure()
-    const observer = new ResizeObserver(measure)
-    if (containerRef.current) {
-      observer.observe(containerRef.current)
-    }
-    return () => observer.disconnect()
-  }, [])
-
-  // Build responsive layouts from the single layout array
+  // Build responsive layouts: 3 columns for desktop, 1 for mobile
   const responsiveLayouts = useMemo(() => {
     const visibleTypes = new Set(visibleWidgets.map((w) => w.type))
     const currentLayout = layouts.filter((l) => visibleTypes.has(l.i))
+
+    // Desktop: 3 columns - keep original layout
+    const desktopLayout = currentLayout.map((l) => ({
+      ...l,
+      w: Math.min(l.w, 3),
+      x: Math.min(l.x, 2),
+    }))
+
+    // Mobile: 1 column - each widget takes full width
+    const mobileLayout = currentLayout.map((l, idx) => ({
+      ...l,
+      w: 1,
+      x: 0,
+      y: idx * (l.h || 3),
+    }))
+
     return {
-      lg: currentLayout,
-      md: currentLayout.map((l) => ({ ...l, w: Math.min(l.w, 5), x: Math.min(l.x, 5) })),
-      sm: currentLayout.map((l) => ({ ...l, w: Math.min(l.w, 3), x: Math.min(l.x, 3) })),
-      xs: currentLayout.map((l) => ({ ...l, w: Math.min(l.w, 2), x: Math.min(l.x, 2) })),
+      lg: desktopLayout,
+      md: desktopLayout,
+      sm: mobileLayout,
     }
   }, [layouts, visibleWidgets])
 
@@ -266,9 +277,9 @@ export function DashboardGrid() {
       <ResponsiveGridLayout
         className="layout"
         layouts={responsiveLayouts}
-        breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480 }}
-        cols={{ lg: 12, md: 10, sm: 6, xs: 4 }}
-        rowHeight={80}
+        breakpoints={{ lg: 768, md: 768, sm: 0 }}
+        cols={{ lg: 3, md: 3, sm: 1 }}
+        rowHeight={100}
         width={width}
         onLayoutChange={handleLayoutChange}
         draggableHandle=".widget-drag-handle"
