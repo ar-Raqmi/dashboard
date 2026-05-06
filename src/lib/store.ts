@@ -105,7 +105,7 @@ const defaultWidgets: DashboardWidget[] = [
 
 // Max dimensions for grid widgets
 export const MAX_GRID_W = 3
-export const MAX_GRID_H = 5
+export const MAX_GRID_H = 6
 
 // Aliases for internal use
 const MAX_W = MAX_GRID_W
