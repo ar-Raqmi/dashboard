@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { Plus, Trash2, CalendarDays, Clock } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { Button } from '@/components/ui/button'
@@ -45,12 +45,19 @@ function parseLocalDateString(dateStr: string): Date {
 
 export default function CalendarPage() {
   const { events, addEvent, deleteEvent } = useAppStore()
+  const [mounted, setMounted] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [dialogOpen, setDialogOpen] = useState(false)
   const [eventTitle, setEventTitle] = useState('')
   const [eventDate, setEventDate] = useState<Date>(selectedDate)
   const [eventColor, setEventColor] = useState(EVENT_COLORS[0].value)
   const [calendarOpen, setCalendarOpen] = useState(false)
+
+  useEffect(() => {
+    // Schedule mount flag outside the synchronous effect body to avoid cascading renders
+    const id = requestAnimationFrame(() => setMounted(true))
+    return () => cancelAnimationFrame(id)
+  }, [])
 
   const selectedDateStr = toLocalDateString(selectedDate)
 
@@ -69,14 +76,15 @@ export default function CalendarPage() {
     return map
   }, [events])
 
-  // Upcoming events (today + future, excluding selected date)
-  const todayStr = toLocalDateString(new Date())
+  // Upcoming events (today + future, excluding selected date) — client-only to avoid hydration mismatch
+  const todayStr = mounted ? toLocalDateString(new Date()) : ''
   const upcomingEvents = useMemo(() => {
+    if (!mounted) return []
     return events
       .filter((e) => e.date >= todayStr && e.date !== selectedDateStr)
       .sort((a, b) => a.date.localeCompare(b.date))
       .slice(0, 8)
-  }, [events, todayStr, selectedDateStr])
+  }, [events, todayStr, selectedDateStr, mounted])
 
   // All events for selected month (for the mini month summary)
   const selectedMonthEvents = useMemo(() => {
@@ -113,7 +121,9 @@ export default function CalendarPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">Calendar</h1>
-            <p className="text-xs text-muted-foreground">{selectedMonthEvents.length} events this month</p>
+            <p className="text-xs text-muted-foreground">
+              {mounted ? `${selectedMonthEvents.length} events this month` : '\u00A0'}
+            </p>
           </div>
         </div>
 
@@ -148,7 +158,7 @@ export default function CalendarPage() {
                       className="rounded-2xl bg-input border-border justify-start text-left font-normal"
                     >
                       <CalendarDays className="mr-2 size-4" />
-                      {eventDate ? format(eventDate, 'EEEE, MMMM d, yyyy') : 'Pick a date'}
+                      {mounted && eventDate ? format(eventDate, 'EEEE, MMMM d, yyyy') : 'Pick a date'}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0 bg-card border-border rounded-2xl">
@@ -199,6 +209,15 @@ export default function CalendarPage() {
       </div>
 
       {/* Calendar + Events Layout */}
+      {!mounted ? (
+        // Pre-mount skeleton to avoid hydration mismatch from Date-dependent rendering
+        <div className="flex flex-col lg:flex-row gap-5">
+          <div className="rounded-3xl bg-card border border-border p-5 flex-1 min-h-[320px] flex items-center justify-center">
+            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+          <div className="rounded-3xl bg-card border border-border p-5 lg:w-80 min-h-[200px]" />
+        </div>
+      ) : (
       <div className="flex flex-col lg:flex-row gap-5">
         {/* Calendar Card */}
         <div className="rounded-3xl bg-card border border-border p-5 flex-1">
@@ -345,6 +364,7 @@ export default function CalendarPage() {
           )}
         </div>
       </div>
+      )}
     </div>
   )
 }
