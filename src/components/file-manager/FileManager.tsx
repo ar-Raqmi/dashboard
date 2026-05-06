@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState, useMemo, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import {
   Folder,
   Image as ImageIcon,
@@ -331,13 +330,8 @@ function FileCard({
   }
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, scale: 0.92 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.92 }}
-      transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-      className={`group relative rounded-3xl cursor-pointer transition-all duration-200 overflow-hidden ${
+    <div
+      className={`group relative rounded-3xl cursor-pointer transition-colors duration-150 overflow-hidden ${
         selected
           ? 'ring-2 ring-primary/40 bg-primary/5 shadow-lg shadow-primary/5'
           : 'bg-card hover:shadow-md hover:shadow-black/5 border border-border/40 hover:border-border/70'
@@ -441,7 +435,7 @@ function FileCard({
           <p className="text-xs text-muted-foreground text-center mt-0.5">Folder</p>
         )}
       </div>
-    </motion.div>
+    </div>
   )
 }
 
@@ -486,13 +480,8 @@ function FileListRow({
   }
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -10 }}
-      transition={{ duration: 0.15 }}
-      className={`group flex items-center gap-3 px-3 sm:px-4 py-2.5 rounded-2xl cursor-pointer transition-all duration-150 ${
+    <div
+      className={`group flex items-center gap-3 px-3 sm:px-4 py-2.5 rounded-2xl cursor-pointer transition-colors duration-150 ${
         selected
           ? 'bg-primary/10 ring-1 ring-primary/30'
           : 'hover:bg-accent/60'
@@ -594,16 +583,14 @@ function FileListRow({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-    </motion.div>
+    </div>
   )
 }
 
 // ===== EMPTY STATE =====
 function EmptyState() {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+    <div
       className="flex flex-col items-center justify-center py-20 text-outline"
     >
       <div className="size-24 rounded-3xl bg-gradient-to-br from-muted/60 to-muted/20 flex items-center justify-center mb-4 shadow-sm">
@@ -611,7 +598,7 @@ function EmptyState() {
       </div>
       <p className="text-lg font-medium text-muted-foreground">This folder is empty</p>
       <p className="text-sm text-outline mt-1">Create a new folder or upload a file to get started</p>
-    </motion.div>
+    </div>
   )
 }
 
@@ -780,9 +767,7 @@ export default function FileManager() {
 
         <div className="flex items-center gap-2">
           {selectedIds.size > 0 && (
-            <motion.div
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
+            <div
               className="flex items-center gap-2"
             >
               <Badge className="bg-primary/15 text-primary border-0 rounded-2xl font-medium">
@@ -816,7 +801,7 @@ export default function FileManager() {
               >
                 <X className="size-4" />
               </Button>
-            </motion.div>
+            </div>
           )}
 
           {/* View toggle */}
@@ -843,15 +828,9 @@ export default function FileManager() {
       </div>
 
       {/* New Folder Input */}
-      <AnimatePresence>
-        {showNewFolder && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mb-3 overflow-hidden"
-          >
-            <div className="flex items-center gap-2 p-3 rounded-2xl bg-primary/5 border border-primary/20">
+      {showNewFolder && (
+        <div className="mb-3">
+          <div className="flex items-center gap-2 p-3 rounded-2xl bg-primary/5 border border-primary/20">
               <FolderPlus className="size-5 text-primary shrink-0" />
               <Input
                 value={newFolderName}
@@ -870,21 +849,14 @@ export default function FileManager() {
               <Button size="sm" variant="ghost" onClick={() => { setShowNewFolder(false); setNewFolderName('') }} className="rounded-2xl text-muted-foreground hover:text-foreground hover:bg-accent size-8 shrink-0">
                 <X className="size-4" />
               </Button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+      )}
 
       {/* Upload Input */}
-      <AnimatePresence>
-        {showUpload && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mb-3 overflow-hidden"
-          >
-            <div className="flex items-center gap-2 p-3 rounded-2xl bg-muted/30 border border-border/40">
+      {showUpload && (
+        <div className="mb-3">
+          <div className="flex items-center gap-2 p-3 rounded-2xl bg-muted/30 border border-border/40">
               <Upload className="size-5 text-muted-foreground shrink-0" />
               <Input
                 value={uploadFileName}
@@ -903,10 +875,9 @@ export default function FileManager() {
               <Button size="sm" variant="ghost" onClick={() => { setShowUpload(false); setUploadFileName('') }} className="rounded-2xl text-muted-foreground hover:text-foreground hover:bg-accent size-8 shrink-0">
                 <X className="size-4" />
               </Button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+      )}
 
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto min-h-0">
@@ -914,13 +885,11 @@ export default function FileManager() {
           <EmptyState />
         ) : viewMode === 'grid' ? (
           /* Grid View */
-          <motion.div
-            layout
+          <div
             className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3"
           >
-            <AnimatePresence mode="popLayout">
-              {sortedItems.map(file => (
-                <FileCard
+            {sortedItems.map(file => (
+              <FileCard
                   key={file.id}
                   file={file}
                   onNavigate={handleNavigate}
@@ -931,16 +900,14 @@ export default function FileManager() {
                   selected={selectedIds.has(file.id)}
                   onToggleSelect={toggleSelect}
                 />
-              ))}
-            </AnimatePresence>
-          </motion.div>
+            ))}
+          </div>
         ) : (
           /* List View */
           <div className="space-y-0.5">
             <ListHeader />
-            <AnimatePresence mode="popLayout">
-              {sortedItems.map(file => (
-                <FileListRow
+            {sortedItems.map(file => (
+              <FileListRow
                   key={file.id}
                   file={file}
                   onNavigate={handleNavigate}
@@ -951,8 +918,7 @@ export default function FileManager() {
                   selected={selectedIds.has(file.id)}
                   onToggleSelect={toggleSelect}
                 />
-              ))}
-            </AnimatePresence>
+            ))}
           </div>
         )}
       </div>
