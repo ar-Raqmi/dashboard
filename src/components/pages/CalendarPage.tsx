@@ -43,6 +43,18 @@ function parseLocalDateString(dateStr: string): Date {
   return new Date(dateStr + 'T12:00:00')
 }
 
+// Helper: robustly parse a date string (handles 'yyyy-MM-dd', 'yyyy-M-d', or ISO strings)
+// Returns a Date at noon in local timezone for reliable comparison
+function parseEventDate(dateStr: string): Date {
+  const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr
+  const parts = datePart.split('-')
+  if (parts.length === 3) {
+    const [y, m, d] = parts.map(Number)
+    if (y && m && d) return new Date(y, m - 1, d, 12, 0, 0)
+  }
+  return new Date(dateStr)
+}
+
 export default function CalendarPage() {
   const { events, addEvent, deleteEvent } = useAppStore()
   const [mounted, setMounted] = useState(false)
@@ -80,11 +92,18 @@ export default function CalendarPage() {
   const todayStr = mounted ? toLocalDateString(new Date()) : ''
   const upcomingEvents = useMemo(() => {
     if (!mounted) return []
+    const todayDate = new Date()
+    todayDate.setHours(0, 0, 0, 0)
     return events
-      .filter((e) => e.date >= todayStr && e.date !== selectedDateStr)
+      .filter((e) => {
+        if (e.date === selectedDateStr) return false
+        const eventDate = parseEventDate(e.date)
+        eventDate.setHours(0, 0, 0, 0)
+        return eventDate >= todayDate
+      })
       .sort((a, b) => a.date.localeCompare(b.date))
       .slice(0, 8)
-  }, [events, todayStr, selectedDateStr, mounted])
+  }, [events, selectedDateStr, mounted])
 
   // All events for selected month (for the mini month summary)
   const selectedMonthEvents = useMemo(() => {
@@ -335,8 +354,8 @@ export default function CalendarPage() {
           {/* Divider + Upcoming Events */}
           {upcomingEvents.length > 0 && (
             <>
-              <div className="border-t border-border/50" />
-              <div>
+              <div className="border-t border-border/50 mt-2" />
+              <div className="mt-2">
                 <div className="flex items-center gap-2 mb-2.5">
                   <Clock className="size-3.5 text-muted-foreground" />
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Upcoming</span>

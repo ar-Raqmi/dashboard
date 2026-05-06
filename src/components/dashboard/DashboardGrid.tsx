@@ -50,6 +50,18 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
+// Helper: robustly parse a date string (handles 'yyyy-MM-dd', 'yyyy-M-d', or ISO strings)
+// Returns a Date at noon in local timezone for reliable comparison
+function parseEventDate(dateStr: string): Date {
+  const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr
+  const parts = datePart.split('-')
+  if (parts.length === 3) {
+    const [y, m, d] = parts.map(Number)
+    if (y && m && d) return new Date(y, m - 1, d, 12, 0, 0)
+  }
+  return new Date(dateStr)
+}
+
 // Helper to get file icon based on category
 function getFileIcon(category: FileItem['category']) {
   switch (category) {
@@ -121,17 +133,29 @@ function CalendarContent({ w, h }: { w: number; h: number }) {
   }
   const todayStr = mounted ? getTodayStr() : ''
 
-  // Upcoming events (today + future) — only compute after mount
+  // Upcoming events (today + future) — only compute after mount, using robust Date comparison
   const upcomingEvents = useMemo(() => {
     if (!mounted) return []
+    const todayDate = new Date()
+    todayDate.setHours(0, 0, 0, 0)
     return events
-      .filter((e) => e.date >= todayStr)
+      .filter((e) => {
+        const eventDate = parseEventDate(e.date)
+        eventDate.setHours(0, 0, 0, 0)
+        return eventDate >= todayDate
+      })
       .sort((a, b) => a.date.localeCompare(b.date))
-  }, [events, todayStr, mounted])
+  }, [events, mounted])
 
   // Events today
   const todayEvents = upcomingEvents.filter((e) => e.date === todayStr)
-  const futureEvents = upcomingEvents.filter((e) => e.date > todayStr)
+  const futureEvents = upcomingEvents.filter((e) => {
+    const eventDate = parseEventDate(e.date)
+    eventDate.setHours(0, 0, 0, 0)
+    const todayDate = new Date()
+    todayDate.setHours(0, 0, 0, 0)
+    return eventDate > todayDate
+  })
 
   const maxUpcoming = h >= 4 ? 8 : h >= 3 ? 5 : h >= 2 ? 4 : 3
   const showToday = h >= 2
@@ -165,7 +189,7 @@ function CalendarContent({ w, h }: { w: number; h: number }) {
   }
 
   return (
-    <div className="flex flex-col gap-4 h-full">
+    <div className="flex flex-col gap-2 h-full">
       {/* Today's events */}
       {showToday && (
         <div>
@@ -190,7 +214,7 @@ function CalendarContent({ w, h }: { w: number; h: number }) {
 
       {/* Upcoming events */}
       {showFuture && (
-        <div>
+        <div className="mt-3">
           <div className="flex items-center gap-2 mb-2">
             <CalendarDays className="size-3 text-muted-foreground" />
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Upcoming</span>
