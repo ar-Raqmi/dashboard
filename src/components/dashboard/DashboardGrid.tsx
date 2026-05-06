@@ -311,8 +311,11 @@ export function DashboardGrid() {
   const responsiveLayouts = useMemo(() => {
     const visibleTypes = new Set(visibleWidgets.map((w) => w.type))
 
-    // Apply static when not in edit mode to prevent any dragging
-    const applyStatic = (l: Layout) => dashboardEditMode ? l : { ...l, static: true }
+    // Apply static when not in edit mode to prevent any dragging; strip static in edit mode
+    const applyStatic = (l: Layout): Layout => {
+      const { static: _s, ...rest } = l as Layout & { static?: boolean }
+      return dashboardEditMode ? rest : { ...rest, static: true }
+    }
 
     // Desktop: 3 columns - use dedicated desktop layouts
     const desktopLayout = layouts
@@ -343,12 +346,18 @@ export function DashboardGrid() {
     }
   }, [layouts, mobileLayouts, visibleWidgets, dashboardEditMode])
 
+  // Strip `static` flag before persisting so it never gets baked into the store
+  const stripStatic = (l: Layout): Layout => {
+    const { static: _s, ...rest } = l as Layout & { static?: boolean }
+    return rest
+  }
+
   // Save desktop layouts when they change (only for lg/md breakpoint)
   const handleDesktopLayoutChange = useCallback(
     (currentLayout: Layout[]) => {
       const visibleTypes = new Set(visibleWidgets.map((w) => w.type))
       const hiddenLayouts = layouts.filter((l) => !visibleTypes.has(l.i))
-      setLayouts([...hiddenLayouts, ...currentLayout])
+      setLayouts([...hiddenLayouts, ...currentLayout.map(stripStatic)])
     },
     [layouts, visibleWidgets, setLayouts]
   )
@@ -358,7 +367,7 @@ export function DashboardGrid() {
     (currentLayout: Layout[]) => {
       const visibleTypes = new Set(visibleWidgets.map((w) => w.type))
       const hiddenLayouts = mobileLayouts.filter((l) => !visibleTypes.has(l.i))
-      setMobileLayouts([...hiddenLayouts, ...currentLayout])
+      setMobileLayouts([...hiddenLayouts, ...currentLayout.map(stripStatic)])
     },
     [mobileLayouts, visibleWidgets, setMobileLayouts]
   )

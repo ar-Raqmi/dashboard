@@ -189,7 +189,11 @@ function NotesGridSection({
     )
     const missingNotes = notes.filter((n) => !existingIds.has(n.id))
 
-    const applyStatic = (l: Layout) => editMode ? l : { ...l, static: true }
+    // When editMode: strip static so items are draggable. When not editMode: force static.
+    const applyStatic = (l: Layout): Layout => {
+      const { static: _s, ...rest } = l as Layout & { static?: boolean }
+      return editMode ? rest : { ...rest, static: true }
+    }
 
     let desktopBase = responsiveLayouts.lg
     let mobileBase = responsiveLayouts.sm
@@ -221,13 +225,20 @@ function NotesGridSection({
     }
   }, [responsiveLayouts, notes, editMode])
 
+  // Strip `static` flag before persisting so it never gets baked into the store
+  const stripStatic = (l: Layout): Layout => {
+    const { static: _s, ...rest } = l as Layout & { static?: boolean }
+    return rest
+  }
+
   const handleLayoutChange = useCallback((currentLayout: Layout[]) => {
+    const cleaned = currentLayout.map(stripStatic)
     if (currentBreakpointRef.current === 'sm') {
       const hiddenLayouts = mobileLayouts.filter((l) => !noteIds.has(l.i))
-      setMobileLayouts([...hiddenLayouts, ...currentLayout])
+      setMobileLayouts([...hiddenLayouts, ...cleaned])
     } else {
       const hiddenLayouts = layouts.filter((l) => !noteIds.has(l.i))
-      setLayouts([...hiddenLayouts, ...currentLayout])
+      setLayouts([...hiddenLayouts, ...cleaned])
     }
   }, [layouts, mobileLayouts, noteIds, setLayouts, setMobileLayouts])
 
