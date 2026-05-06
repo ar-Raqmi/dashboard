@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAppStore, type ActivePage } from '@/lib/store'
 import Header from '@/components/navigation/Header'
@@ -27,12 +27,25 @@ const pageComponents: Record<ActivePage, React.ComponentType> = {
   settings: SettingsPage,
 }
 
+// Preset gradient definitions
+const GRADIENT_MAP: Record<string, string> = {
+  'citrus-dawn': 'linear-gradient(135deg, #A5D6A7 0%, #F48FB1 50%, #CE93D8 100%)',
+  'citrus-breeze': 'linear-gradient(135deg, #80CBC4 0%, #A5D6A7 50%, #C5E1A5 100%)',
+  'pink-sunset': 'linear-gradient(135deg, #F48FB1 0%, #CE93D8 50%, #9FA8DA 100%)',
+  'ocean-mist': 'linear-gradient(135deg, #80DEEA 0%, #80CBC4 50%, #A5D6A7 100%)',
+  'warm-sand': 'linear-gradient(135deg, #FFE082 0%, #FFCC80 50%, #F48FB1 100%)',
+  'forest-dew': 'linear-gradient(135deg, #A5D6A7 0%, #66BB6A 50%, #26A69A 100%)',
+  'lavender-dream': 'linear-gradient(135deg, #CE93D8 0%, #B39DDB 50%, #9FA8DA 100%)',
+  'golden-hour': 'linear-gradient(135deg, #FFD54F 0%, #FFB74D 50%, #FF8A65 100%)',
+}
+
 export default function Home() {
   const activePage = useAppStore((s) => s.activePage)
   const setVerse = useAppStore((s) => s.setVerse)
   const setVerseLoading = useAppStore((s) => s.setVerseLoading)
   const setHadith = useAppStore((s) => s.setHadith)
   const setHadithLoading = useAppStore((s) => s.setHadithLoading)
+  const background = useAppStore((s) => s.background)
 
   // Fetch spiritual data on mount
   useEffect(() => {
@@ -64,8 +77,39 @@ export default function Home() {
 
   const PageComponent = pageComponents[activePage]
 
+  // Compute the background style for the decorative layer
+  const bgStyle = useMemo(() => {
+    if (background.type === 'default') return null
+    const opacity = background.opacity / 100
+    switch (background.type) {
+      case 'color':
+        return { backgroundColor: background.color, opacity }
+      case 'gradient': {
+        const gradient = GRADIENT_MAP[background.gradient] || background.gradient
+        return { background: gradient, opacity }
+      }
+      case 'image':
+        return {
+          backgroundImage: `url(${background.image})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          opacity,
+        }
+      default:
+        return null
+    }
+  }, [background])
+
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background relative">
+      {/* Decorative Background Layer */}
+      {bgStyle && (
+        <div
+          className="fixed inset-0 pointer-events-none z-0"
+          style={bgStyle}
+        />
+      )}
       {/* Header */}
       <Header />
 
@@ -75,7 +119,7 @@ export default function Home() {
       </div>
 
       {/* Content Area */}
-      <main className="flex-1 pt-[112px] overflow-y-auto">
+      <main className="flex-1 pt-[112px] overflow-y-auto relative z-10">
         <AnimatePresence mode="wait">
           <motion.div
             key={activePage}

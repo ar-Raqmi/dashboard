@@ -82,6 +82,16 @@ export interface DashboardWidget {
 
 export type ActivePage = 'dashboard' | 'tasks' | 'calendar' | 'notes' | 'files' | 'spiritual' | 'goals' | 'settings'
 
+export type BackgroundType = 'default' | 'color' | 'gradient' | 'image'
+
+export interface BackgroundSettings {
+  type: BackgroundType
+  color: string
+  gradient: string
+  image: string
+  opacity: number // 0-100
+}
+
 // ===== DEFAULT WIDGET CONFIGS =====
 const defaultWidgets: DashboardWidget[] = [
   { type: 'tasks', label: 'Daily Tasks', icon: 'check_circle', visible: true },
@@ -268,6 +278,10 @@ interface AppStore {
   // Dashboard Edit Mode
   dashboardEditMode: boolean
   setDashboardEditMode: (edit: boolean) => void
+
+  // Background
+  background: BackgroundSettings
+  setBackground: (settings: Partial<BackgroundSettings>) => void
 }
 
 // ===== GENERATE ID =====
@@ -456,6 +470,19 @@ export const useAppStore = create<AppStore>()(
       // Dashboard Edit Mode
       dashboardEditMode: false,
       setDashboardEditMode: (edit) => set({ dashboardEditMode: edit }),
+
+      // Background
+      background: {
+        type: 'default',
+        color: '#A5D6A7',
+        gradient: 'citrus-dawn',
+        image: '',
+        opacity: 30,
+      },
+      setBackground: (updates) =>
+        set((state) => ({
+          background: { ...state.background, ...updates },
+        })),
     }),
     {
       name: 'ar-raqmi-store',
@@ -473,6 +500,7 @@ export const useAppStore = create<AppStore>()(
         profilePicture: state.profilePicture,
         appTitle: state.appTitle,
         appLogo: state.appLogo,
+        background: state.background,
       }),
     }
   )

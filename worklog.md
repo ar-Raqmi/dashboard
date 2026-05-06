@@ -106,3 +106,31 @@ Stage Summary:
 - Files page now has Grid + List view toggle, Drive/Explorer-like design
 - Notes support full Markdown with GFM (tables, strikethrough, etc.)
 - All dashboard widgets navigate to full pages when clicked
+---
+Task ID: 1
+Agent: Main
+Task: Add background customization feature with color, gradient, image options and opacity control
+
+Work Log:
+- Added BackgroundType and BackgroundSettings types to Zustand store
+- Added background state (type, color, gradient, image, opacity) with setBackground action
+- Added background to persist partialize so settings survive page reload
+- Updated page.tsx with decorative background layer (fixed position, z-0, pointer-events-none)
+- Added GRADIENT_MAP with 8 preset gradients in page.tsx
+- Applied background styles based on type (color/gradient/image) with opacity control
+- Gave main content area z-10 to ensure it sits above the decorative background
+- Completely rewrote SettingsPage with new Background section featuring:
+  - Tabs for Default / Color / Gradient / Image modes
+  - 15 preset solid colors + custom color picker with hex input
+  - 8 gradient presets with visual thumbnails and labels
+  - Image upload + URL paste for custom backgrounds
+  - Opacity slider (5-100%) for all non-default modes
+  - Live preview showing background behind a simulated widget card
+  - Material 3 Expressive design with rounded-2xl corners throughout
+
+Stage Summary:
+- Background customization feature fully implemented and working
+- Store persistence ensures background settings are saved across sessions
+- All 4 background types work: default (clean), solid color, gradient presets, image upload/URL
+- Opacity slider gives fine-grained control over background visibility
+- No lint errors, dev server compiles successfully
