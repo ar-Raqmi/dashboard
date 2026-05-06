@@ -25,19 +25,22 @@ Stage Summary:
 ---
 Task ID: 2
 Agent: Main Orchestrator
-Task: Fix 502 Bad Gateway error and ensure dev server is running
+Task: Fix 502 Bad Gateway error and ensure dev server is running persistently
 
 Work Log:
 - Diagnosed that the dev server was not running (502 error from preview)
-- Killed stale processes and restarted the Next.js dev server
 - Added allowedDevOrigins config for .space-z.ai domain in next.config.ts
 - Fixed lint warning by replacing Google Fonts <link> tag with Next.js font system (Noto_Sans_Arabic)
 - Updated globals.css to use CSS variable for Arabic font family
-- Verified dev server returns HTTP 200
-- Lint check passes with 0 errors and 0 warnings
+- Removed `output: "standalone"` from next.config.ts (not needed for dev, can cause issues)
+- Cleared .next cache for clean restart
+- Discovered that background processes started with `&` die when bash session times out
+- Used Node.js `child_process.spawn` with `detached: true` + `unref()` to create a truly persistent process
+- Verified server stays alive for 50+ seconds with multiple successful HTTP 200 responses
+- Lint check: 0 errors, 0 warnings
 
 Stage Summary:
-- Dev server is running on port 3000, responding with HTTP 200
-- Cross-origin warning resolved with allowedDevOrigins config
-- Font loading warning resolved by using Next.js font optimization
+- Dev server is running persistently on port 3000 (detached process)
+- All APIs responding: / (200), /api/verse (200), /api/hadith (200)
+- Cross-origin issues resolved with allowedDevOrigins
 - Application accessible via Preview Panel
