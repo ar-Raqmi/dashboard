@@ -228,27 +228,7 @@
   opacity: 0.9;
 }
 
-.react-grid-item > .react-resizable-handle {
-  position: absolute;
-  width: 24px;
-  height: 24px;
-}
-
-.react-grid-item > .react-resizable-handle::after {
-  content: '';
-  position: absolute;
-  right: 6px;
-  bottom: 6px;
-  width: 8px;
-  height: 8px;
-  border-right: 2px solid color-mix(in oklch, var(--primary) 50%, transparent);
-  border-bottom: 2px solid color-mix(in oklch, var(--primary) 50%, transparent);
-  border-radius: 0 0 2px 0;
-}
-
-.react-grid-item > .react-resizable-handle:hover::after {
-  border-color: var(--primary);
-}
+/* Resize handle removed — using grid-based size picker instead */
 
 /* Custom scrollbar for lists */
 .custom-scrollbar::-webkit-scrollbar {

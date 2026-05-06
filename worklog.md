@@ -27,3 +27,31 @@ Stage Summary:
 - Material 3 Expressive design with Citrus Green + Light Pink color palette
 - All hydration and infinite loop bugs fixed
 - Dev server running on port 3000
+---
+Task ID: 1
+Agent: main
+Task: Replace freeform card resizing with grid-based discrete size picker (1×1 to 3×3)
+
+Work Log:
+- Read all dashboard-related files: DashboardGrid.tsx, WidgetCard.tsx, store.ts, globals.css
+- Added `updateWidgetSize(widgetId, w, h)` action to Zustand store with min/max clamping (1-3)
+- Updated default layouts: changed h values from 4→2, added maxW:3/maxH:3 constraints
+- Completely rewrote WidgetCard.tsx with GridSizePicker component:
+  - 3×3 visual grid of buttons (1×1 through 3×3)
+  - Current size highlighted with primary color
+  - Selected range shown with primary/20 opacity
+  - Opens via Maximize2 icon button in card header
+  - Popover with spring animation, closes on outside click
+- Updated DashboardGrid.tsx:
+  - Set `isResizable={false}` to disable free resize
+  - Set `rowHeight={120}` for better proportions
+  - Pass currentW/currentH/onSizeChange props to WidgetCard
+  - Added layoutMap for efficient widget size lookup
+  - Cap h at 3 in both desktop and mobile responsive layouts (handles old localStorage data)
+- Updated globals.css: removed react-resizable-handle styles, added comment explaining change
+
+Stage Summary:
+- Card resizing is now grid-based: discrete 1×1 to 3×3 via visual picker
+- No more freeform drag-to-resize (was "off and whack")
+- All lint checks pass, page serves with 200 status
+- Backward compatible with old localStorage data (h values capped at 3)

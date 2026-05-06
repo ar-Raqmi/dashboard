@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { ResponsiveGridLayout, useContainerWidth } from 'react-grid-layout'
 import { CheckCircle, CalendarDays, StickyNote, BookOpen, Flag, Clock } from 'lucide-react'
 import 'react-grid-layout/css/styles.css'
@@ -216,6 +216,7 @@ const widgetComponents: Record<WidgetType, React.ComponentType> = {
 export function DashboardGrid() {
   const layouts = useAppStore((s) => s.layouts)
   const setLayouts = useAppStore((s) => s.setLayouts)
+  const updateWidgetSize = useAppStore((s) => s.updateWidgetSize)
   const widgets = useAppStore((s) => s.widgets)
 
   // Stable selector: only re-renders when the set of visible widget types actually changes
@@ -230,6 +231,15 @@ export function DashboardGrid() {
     [widgets, visibleWidgetTypesKey]
   )
 
+  // Lookup map: widget type → current layout size
+  const layoutMap = useMemo(() => {
+    const map = new Map<string, Layout>()
+    for (const l of layouts) {
+      map.set(l.i, l)
+    }
+    return map
+  }, [layouts])
+
   // Use the container width hook from react-grid-layout v2
   const { containerRef, width } = useContainerWidth()
 
@@ -238,19 +248,21 @@ export function DashboardGrid() {
     const visibleTypes = new Set(visibleWidgets.map((w) => w.type))
     const currentLayout = layouts.filter((l) => visibleTypes.has(l.i))
 
-    // Desktop: 3 columns - keep original layout
+    // Desktop: 3 columns - keep original layout, cap w at 3, h at 3, x at 2
     const desktopLayout = currentLayout.map((l) => ({
       ...l,
       w: Math.min(l.w, 3),
+      h: Math.min(l.h, 3),
       x: Math.min(l.x, 2),
     }))
 
-    // Mobile: 1 column - each widget takes full width
+    // Mobile: 1 column - each widget takes full width, cap h at 3
     const mobileLayout = currentLayout.map((l, idx) => ({
       ...l,
       w: 1,
+      h: Math.min(l.h, 3),
       x: 0,
-      y: idx * (l.h || 3),
+      y: idx * (Math.min(l.h, 3) || 2),
     }))
 
     return {
@@ -272,6 +284,13 @@ export function DashboardGrid() {
     [layouts, visibleWidgets, setLayouts]
   )
 
+  const handleSizeChange = useCallback(
+    (widgetId: string, w: number, h: number) => {
+      updateWidgetSize(widgetId, w, h)
+    },
+    [updateWidgetSize]
+  )
+
   return (
     <div ref={containerRef} className="w-full">
       <ResponsiveGridLayout
@@ -279,23 +298,28 @@ export function DashboardGrid() {
         layouts={responsiveLayouts}
         breakpoints={{ lg: 768, md: 768, sm: 0 }}
         cols={{ lg: 3, md: 3, sm: 1 }}
-        rowHeight={100}
+        rowHeight={120}
         width={width}
         onLayoutChange={handleLayoutChange}
         draggableHandle=".widget-drag-handle"
         compactType="vertical"
         margin={[16, 16]}
         containerPadding={[0, 0]}
-        isResizable={true}
+        isResizable={false}
         isDraggable={true}
       >
         {visibleWidgets.map((widget) => {
           const WidgetComponent = widgetComponents[widget.type]
+          const layout = layoutMap.get(widget.type)
           return (
             <div key={widget.type}>
               <WidgetCard
                 title={widgetTitles[widget.type]}
                 icon={widgetIcons[widget.type]}
+                widgetId={widget.type}
+                currentW={layout?.w ?? 1}
+                currentH={layout?.h ?? 1}
+                onSizeChange={(w, h) => handleSizeChange(widget.type, w, h)}
               >
                 <WidgetComponent />
               </WidgetCard>

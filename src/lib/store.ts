@@ -93,12 +93,12 @@ const defaultWidgets: DashboardWidget[] = [
 ]
 
 const defaultLayouts: Layout[] = [
-  { i: 'tasks', x: 0, y: 0, w: 2, h: 4, minW: 1, minH: 2 },
-  { i: 'calendar', x: 2, y: 0, w: 1, h: 4, minW: 1, minH: 2 },
-  { i: 'notes', x: 0, y: 4, w: 1, h: 3, minW: 1, minH: 2 },
-  { i: 'verse', x: 1, y: 4, w: 1, h: 3, minW: 1, minH: 2 },
-  { i: 'goals', x: 2, y: 4, w: 1, h: 3, minW: 1, minH: 2 },
-  { i: 'clock', x: 0, y: 7, w: 1, h: 2, minW: 1, minH: 1 },
+  { i: 'tasks', x: 0, y: 0, w: 2, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 3 },
+  { i: 'calendar', x: 2, y: 0, w: 1, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 3 },
+  { i: 'notes', x: 0, y: 2, w: 1, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 3 },
+  { i: 'verse', x: 1, y: 2, w: 1, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 3 },
+  { i: 'goals', x: 2, y: 2, w: 1, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 3 },
+  { i: 'clock', x: 0, y: 4, w: 1, h: 1, minW: 1, maxW: 3, minH: 1, maxH: 3 },
 ]
 
 // ===== SAMPLE DATA =====
@@ -179,6 +179,7 @@ interface AppStore {
   layouts: Layout[]
   setLayouts: (layouts: Layout[]) => void
   toggleWidgetVisibility: (type: WidgetType) => void
+  updateWidgetSize: (widgetId: string, w: number, h: number) => void
 
   // Tasks
   tasks: Task[]
@@ -269,6 +270,12 @@ export const useAppStore = create<AppStore>()(
         set((state) => ({
           widgets: state.widgets.map((w) =>
             w.type === type ? { ...w, visible: !w.visible } : w
+          ),
+        })),
+      updateWidgetSize: (widgetId, w, h) =>
+        set((state) => ({
+          layouts: state.layouts.map((l) =>
+            l.i === widgetId ? { ...l, w: Math.min(Math.max(w, 1), 3), h: Math.min(Math.max(h, 1), 3) } : l
           ),
         })),
 
