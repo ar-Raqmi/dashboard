@@ -107,15 +107,27 @@ function DailyTasksContent({ h }: { w: number; h: number }) {
 
 function CalendarContent({ w, h }: { w: number; h: number }) {
   const events = useAppStore((s) => s.events)
-  const today = new Date()
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+  const [mounted, setMounted] = React.useState(false)
 
-  // Upcoming events (today + future)
+  React.useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true))
+    return () => cancelAnimationFrame(id)
+  }, [])
+
+  // Compute todayStr client-side only to avoid hydration mismatch
+  const getTodayStr = () => {
+    const today = new Date()
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+  }
+  const todayStr = mounted ? getTodayStr() : ''
+
+  // Upcoming events (today + future) — only compute after mount
   const upcomingEvents = useMemo(() => {
+    if (!mounted) return []
     return events
       .filter((e) => e.date >= todayStr)
       .sort((a, b) => a.date.localeCompare(b.date))
-  }, [events, todayStr])
+  }, [events, todayStr, mounted])
 
   // Events today
   const todayEvents = upcomingEvents.filter((e) => e.date === todayStr)
@@ -125,8 +137,35 @@ function CalendarContent({ w, h }: { w: number; h: number }) {
   const showToday = h >= 2
   const showFuture = h >= 2
 
+  // Pre-mount: show a safe placeholder that won't differ between server/client
+  if (!mounted) {
+    return (
+      <div className="flex flex-col gap-4 h-full">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="size-2 rounded-full bg-primary/50" />
+            <span className="text-xs font-semibold text-primary/50 uppercase tracking-wider">Today</span>
+          </div>
+          <div className="space-y-1.5 pl-4">
+            <div className="h-4 w-24 rounded bg-muted animate-pulse" />
+          </div>
+        </div>
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <CalendarDays className="size-3 text-muted-foreground/50" />
+            <span className="text-xs font-semibold text-muted-foreground/50 uppercase tracking-wider">Upcoming</span>
+          </div>
+          <div className="space-y-1.5 pl-4">
+            <div className="h-4 w-32 rounded bg-muted animate-pulse" />
+            <div className="h-4 w-28 rounded bg-muted animate-pulse" />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="flex flex-col gap-3 h-full">
+    <div className="flex flex-col gap-4 h-full">
       {/* Today's events */}
       {showToday && (
         <div>
