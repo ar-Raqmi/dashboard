@@ -33,21 +33,21 @@ export function WidgetCard({
         mass: 0.8,
       }}
       className={cn(
-        'widget-card rounded-3xl border border-[oklch(0.28_0.01_155)] bg-[oklch(0.17_0.008_155)] flex flex-col h-full overflow-hidden relative',
+        'widget-card rounded-3xl border border-border bg-card flex flex-col h-full overflow-hidden relative shadow-sm',
         className
       )}
     >
       {/* Header with drag handle */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-[oklch(0.28_0.01_155)]/50">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50">
         {/* Drag handle */}
-        <div className="widget-drag-handle cursor-grab active:cursor-grabbing p-0.5 -ml-1 rounded-lg hover:bg-[oklch(0.22_0.02_142)] transition-colors">
-          <GripVertical className="w-4 h-4 text-[oklch(0.38_0.01_155)] hover:text-[oklch(0.72_0.19_142)] transition-colors" />
+        <div className="widget-drag-handle cursor-grab active:cursor-grabbing p-0.5 -ml-1 rounded-xl hover:bg-accent transition-colors">
+          <GripVertical className="w-4 h-4 text-outline hover:text-primary transition-colors" />
         </div>
 
         {/* Icon + Title */}
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          <span className="text-[oklch(0.72_0.19_142)] shrink-0">{icon}</span>
-          <h3 className="text-sm font-semibold text-[oklch(0.96_0.005_155)] truncate">
+          <span className="text-primary shrink-0">{icon}</span>
+          <h3 className="text-sm font-semibold text-foreground truncate">
             {title}
           </h3>
         </div>
@@ -56,7 +56,7 @@ export function WidgetCard({
         {onAction && actionIcon && (
           <button
             onClick={onAction}
-            className="shrink-0 p-1.5 rounded-xl hover:bg-[oklch(0.22_0.02_142)] transition-colors text-[oklch(0.65_0.01_155)] hover:text-[oklch(0.72_0.19_142)]"
+            className="shrink-0 p-1.5 rounded-xl hover:bg-accent transition-colors text-muted-foreground hover:text-primary"
             aria-label={`${title} action`}
           >
             {actionIcon}

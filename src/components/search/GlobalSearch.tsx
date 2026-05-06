@@ -34,8 +34,8 @@ interface SearchResult {
 // ===== ICONS BY TYPE =====
 const getTypeIcon = (type: SearchResult['type']) => {
   switch (type) {
-    case 'task': return <CheckCircle className="size-4 text-[oklch(0.72_0.19_142)]" />
-    case 'note': return <StickyNote className="size-4 text-[oklch(0.8_0.08_350)]" />
+    case 'task': return <CheckCircle className="size-4 text-primary" />
+    case 'note': return <StickyNote className="size-4 text-secondary" />
     case 'file': return <File className="size-4 text-blue-400" />
     case 'goal': return <Flag className="size-4 text-amber-400" />
   }
@@ -43,8 +43,8 @@ const getTypeIcon = (type: SearchResult['type']) => {
 
 const getTypeBadgeColor = (type: SearchResult['type']): string => {
   switch (type) {
-    case 'task': return 'bg-[oklch(0.72_0.19_142)]/20 text-[oklch(0.72_0.19_142)]'
-    case 'note': return 'bg-[oklch(0.8_0.08_350)]/20 text-[oklch(0.8_0.08_350)]'
+    case 'task': return 'bg-primary/20 text-primary'
+    case 'note': return 'bg-secondary/20 text-secondary'
     case 'file': return 'bg-blue-500/20 text-blue-400'
     case 'goal': return 'bg-amber-500/20 text-amber-400'
   }
@@ -138,32 +138,32 @@ export default function GlobalSearch() {
       }}
       title="Search ar-Raqmi Database"
       description="Search across tasks, notes, files, and goals"
-      className="bg-[oklch(0.15_0.02_260)] border-white/10 text-white rounded-3xl"
+      className="bg-card border-border text-foreground rounded-3xl"
     >
       <CommandInput
         placeholder="Search tasks, notes, files, goals..."
         value={searchQuery}
         onValueChange={setSearchQuery}
-        className="text-white"
+        className="text-foreground"
       />
       <CommandList className="max-h-80">
         {!searchQuery.trim() ? (
-          <div className="py-12 flex flex-col items-center gap-3 text-white/30">
+          <div className="py-12 flex flex-col items-center gap-3 text-outline">
             <Search className="size-8 opacity-50" />
             <p className="text-sm">Start typing to search...</p>
           </div>
         ) : !hasResults ? (
-          <CommandEmpty className="text-white/30">No results found</CommandEmpty>
+          <CommandEmpty className="text-outline">No results found</CommandEmpty>
         ) : (
           <>
             {searchResults.tasks.length > 0 && (
-              <CommandGroup heading="Tasks" className="[&_[cmdk-group-heading]]:text-[oklch(0.72_0.19_142)]">
+              <CommandGroup heading="Tasks" className="[&_[cmdk-group-heading]]:text-primary">
                 {searchResults.tasks.map(result => (
                   <CommandItem
                     key={result.id}
                     value={`task-${result.name}`}
                     onSelect={() => handleSelect(result)}
-                    className="text-white/80 hover:bg-white/10 data-[selected=true]:bg-white/10 cursor-pointer rounded-2xl"
+                    className="text-foreground/80 hover:bg-accent data-[selected=true]:bg-accent cursor-pointer rounded-2xl"
                   >
                     {getTypeIcon(result.type)}
                     <span className="flex-1 truncate">{result.name}</span>
@@ -175,13 +175,13 @@ export default function GlobalSearch() {
               </CommandGroup>
             )}
             {searchResults.notes.length > 0 && (
-              <CommandGroup heading="Notes" className="[&_[cmdk-group-heading]]:text-[oklch(0.8_0.08_350)]">
+              <CommandGroup heading="Notes" className="[&_[cmdk-group-heading]]:text-secondary">
                 {searchResults.notes.map(result => (
                   <CommandItem
                     key={result.id}
                     value={`note-${result.name}`}
                     onSelect={() => handleSelect(result)}
-                    className="text-white/80 hover:bg-white/10 data-[selected=true]:bg-white/10 cursor-pointer rounded-2xl"
+                    className="text-foreground/80 hover:bg-accent data-[selected=true]:bg-accent cursor-pointer rounded-2xl"
                   >
                     {getTypeIcon(result.type)}
                     <span className="flex-1 truncate">{result.name}</span>
@@ -199,7 +199,7 @@ export default function GlobalSearch() {
                     key={result.id}
                     value={`file-${result.name}`}
                     onSelect={() => handleSelect(result)}
-                    className="text-white/80 hover:bg-white/10 data-[selected=true]:bg-white/10 cursor-pointer rounded-2xl"
+                    className="text-foreground/80 hover:bg-accent data-[selected=true]:bg-accent cursor-pointer rounded-2xl"
                   >
                     {getTypeIcon(result.type)}
                     <span className="flex-1 truncate">{result.name}</span>
@@ -217,7 +217,7 @@ export default function GlobalSearch() {
                     key={result.id}
                     value={`goal-${result.name}`}
                     onSelect={() => handleSelect(result)}
-                    className="text-white/80 hover:bg-white/10 data-[selected=true]:bg-white/10 cursor-pointer rounded-2xl"
+                    className="text-foreground/80 hover:bg-accent data-[selected=true]:bg-accent cursor-pointer rounded-2xl"
                   >
                     {getTypeIcon(result.type)}
                     <span className="flex-1 truncate">{result.name}</span>
@@ -232,10 +232,10 @@ export default function GlobalSearch() {
         )}
       </CommandList>
       {/* Footer hint */}
-      <div className="flex items-center justify-between px-3 py-2 border-t border-white/5 text-xs text-white/25">
+      <div className="flex items-center justify-between px-3 py-2 border-t border-border/50 text-xs text-outline">
         <span>Navigate to item on select</span>
         <div className="flex items-center gap-1">
-          <kbd className="px-1.5 py-0.5 rounded-md bg-white/5 text-white/30 text-[10px]">
+          <kbd className="px-1.5 py-0.5 rounded-md bg-muted text-outline text-[10px]">
             <Command className="size-2.5 inline" />K
           </kbd>
           <span>to toggle</span>
@@ -250,11 +250,11 @@ export function SearchTrigger({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 transition-all text-white/40 hover:text-white/60 text-sm w-full sm:w-64"
+      className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-muted/50 hover:bg-accent border border-border/50 hover:border-border transition-all text-muted-foreground hover:text-foreground/60 text-sm w-full sm:w-64"
     >
       <Search className="size-4" />
       <span className="flex-1 text-left">Search...</span>
-      <kbd className="hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-white/5 text-white/25 text-[10px]">
+      <kbd className="hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-muted text-outline text-[10px]">
         <Command className="size-2.5" />K
       </kbd>
     </button>

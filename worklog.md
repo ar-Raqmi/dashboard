@@ -1,46 +1,29 @@
+# ar-Raqmi Database Worklog
+
 ---
 Task ID: 1
-Agent: Main Orchestrator
-Task: Build the ar-Raqmi Database PWA dashboard
+Agent: Main Agent
+Task: Fix Zustand selector infinite loop + hydration mismatch + Material 3 Expressive Light/Dark mode overhaul + 3-column grid fix
 
 Work Log:
-- Installed react-grid-layout and @types/react-grid-layout
-- Created comprehensive Zustand store with all data models (tasks, goals, notes, events, files, spiritual, settings)
-- Created globals.css with Material 3 Expressive dark theme using citrus-green and light-pink oklch color tokens
-- Dispatched 6 parallel subagents to build all components simultaneously
-- Fixed CSS @import ordering issue (moved Google Fonts to layout.tsx head)
-- Fixed react-grid-layout v2 API compatibility (WidthProvider removed, used ResponsiveGridLayout directly with ResizeObserver)
-- Updated API routes for /api/verse (alquran.cloud with en.hilali translation) and /api/hadith (curated collection with 20 authentic hadiths)
-- Created PWA manifest at /public/manifest.json
-- Assembled main page.tsx with all components integrated
-- Final lint check: 0 errors, 1 expected warning (font import in App Router)
+- Fixed Zustand selector infinite loop by using stable `useCallback`-wrapped selector and `useMemo` for derived visible widgets
+- Fixed hydration mismatch by using `mounted` state in Header and ClockContent to delay client-only rendering
+- Overhauled `globals.css` with complete light mode (default) and dark mode CSS custom properties
+- Light mode uses Citrus Green primary (oklch 0.62 0.19 142) + Light Pink secondary (oklch 0.85 0.07 350) on white/light backgrounds
+- Dark mode preserves original dark theme with brighter citrus/pink tokens
+- Added `ThemeProvider` from `next-themes` in `layout.tsx` with `defaultTheme="light"`
+- Added Sun/Moon theme toggle button in Header.tsx
+- Fixed DashboardGrid to use 3 columns desktop / 1 column mobile with fixed breakpoints
+- Replaced `WidthProvider` HOC (not available in react-grid-layout v2) with `useContainerWidth` hook
+- Updated store default layouts for 3-column grid (was 12-column)
+- Replaced all hardcoded `oklch()` values across 11 component files with semantic Tailwind classes
+- Fixed CSS issues: `var(--primary / 0.5)` replaced with `color-mix(in oklch, var(--primary) 50%, transparent)`
+- Fixed lint error for `setState` inside `useEffect` by using `requestAnimationFrame`
+- All pages load correctly (200 status), lint passes cleanly
 
 Stage Summary:
-- Full application is running on port 3000 with HTTP 200
-- All features implemented: Dashboard Grid, Tasks, Calendar, Notes, Files, Spiritual, Goals, Settings
-- Material 3 Expressive design with citrus green + light pink on dark mode
-- PWA manifest configured
-- Zustand store persists to localStorage
-
----
-Task ID: 2
-Agent: Main Orchestrator
-Task: Fix 502 Bad Gateway error and ensure dev server is running persistently
-
-Work Log:
-- Diagnosed that the dev server was not running (502 error from preview)
-- Added allowedDevOrigins config for .space-z.ai domain in next.config.ts
-- Fixed lint warning by replacing Google Fonts <link> tag with Next.js font system (Noto_Sans_Arabic)
-- Updated globals.css to use CSS variable for Arabic font family
-- Removed `output: "standalone"` from next.config.ts (not needed for dev, can cause issues)
-- Cleared .next cache for clean restart
-- Discovered that background processes started with `&` die when bash session times out
-- Used Node.js `child_process.spawn` with `detached: true` + `unref()` to create a truly persistent process
-- Verified server stays alive for 50+ seconds with multiple successful HTTP 200 responses
-- Lint check: 0 errors, 0 warnings
-
-Stage Summary:
-- Dev server is running persistently on port 3000 (detached process)
-- All APIs responding: / (200), /api/verse (200), /api/hadith (200)
-- Cross-origin issues resolved with allowedDevOrigins
-- Application accessible via Preview Panel
+- Complete light/dark mode theme system with toggle
+- 3-column desktop / 1-column mobile grid layout with resizable cards
+- Material 3 Expressive design with Citrus Green + Light Pink color palette
+- All hydration and infinite loop bugs fixed
+- Dev server running on port 3000

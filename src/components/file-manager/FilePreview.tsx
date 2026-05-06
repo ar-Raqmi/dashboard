@@ -77,7 +77,7 @@ const getCategoryColor = (category: FileCategory): string => {
     case 'pdf': return 'from-red-500/30 to-red-600/10 text-red-400'
     case 'doc': return 'from-amber-500/30 to-amber-600/10 text-amber-400'
     case 'video': return 'from-pink-500/30 to-pink-600/10 text-pink-400'
-    case 'folder': return 'from-[oklch(0.72_0.19_142)_/30] to-[oklch(0.72_0.19_142)_/10] text-[oklch(0.72_0.19_142)]'
+    case 'folder': return 'from-primary/30 to-primary/10 text-primary'
     default: return 'from-gray-500/30 to-gray-600/10 text-gray-400'
   }
 }
@@ -88,7 +88,7 @@ function PreviewContent({ file }: { file: FileItem }) {
     case 'image':
       return (
         <div className="flex flex-col items-center gap-4">
-          <div className="w-full max-w-md aspect-video rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/10 flex items-center justify-center border border-white/10 overflow-hidden">
+          <div className="w-full max-w-md aspect-video rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/10 flex items-center justify-center border border-border overflow-hidden">
             {file.content ? (
               <img
                 src={file.content}
@@ -107,16 +107,16 @@ function PreviewContent({ file }: { file: FileItem }) {
     case 'audio':
       return (
         <div className="flex flex-col items-center gap-4">
-          <div className="w-full max-w-md rounded-2xl bg-gradient-to-br from-purple-500/20 to-purple-600/5 border border-white/10 p-8 flex flex-col items-center gap-4">
+          <div className="w-full max-w-md rounded-2xl bg-gradient-to-br from-purple-500/20 to-purple-600/5 border border-border p-8 flex flex-col items-center gap-4">
             <div className="size-20 rounded-full bg-purple-500/20 flex items-center justify-center">
               <Music className="size-10 text-purple-400" />
             </div>
-            <p className="text-white/70 text-sm font-medium">{file.name}</p>
+            <p className="text-foreground/70 text-sm font-medium">{file.name}</p>
             {/* Audio player mock */}
-            <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+            <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
               <div className="h-full w-1/3 rounded-full bg-gradient-to-r from-purple-400 to-pink-400" />
             </div>
-            <div className="flex items-center gap-4 text-white/50 text-xs">
+            <div className="flex items-center gap-4 text-muted-foreground text-xs">
               <span>0:00</span>
               <span>3:45</span>
             </div>
@@ -129,9 +129,9 @@ function PreviewContent({ file }: { file: FileItem }) {
     case 'pdf':
       return (
         <div className="flex flex-col items-center gap-4">
-          <div className="w-full max-w-md rounded-2xl bg-gradient-to-br from-red-500/20 to-red-600/5 border border-white/10 p-8 flex flex-col items-center gap-4">
+          <div className="w-full max-w-md rounded-2xl bg-gradient-to-br from-red-500/20 to-red-600/5 border border-border p-8 flex flex-col items-center gap-4">
             <FileText className="size-20 text-red-400 opacity-50" />
-            <p className="text-white/50 text-sm">PDF Document</p>
+            <p className="text-muted-foreground text-sm">PDF Document</p>
             <Button className="rounded-2xl bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30">
               <FileText className="size-4" />
               Open PDF
@@ -142,18 +142,18 @@ function PreviewContent({ file }: { file: FileItem }) {
     case 'doc':
       return (
         <div className="flex flex-col items-center gap-4">
-          <div className="w-full max-w-md rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-600/5 border border-white/10 p-6">
+          <div className="w-full max-w-md rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-600/5 border border-border p-6">
             <div className="flex items-center gap-3 mb-4">
               <FileEdit className="size-6 text-amber-400" />
-              <span className="text-white font-medium text-sm">Document Preview</span>
+              <span className="text-foreground font-medium text-sm">Document Preview</span>
             </div>
-            <div className="space-y-2 text-white/40 text-xs">
-              <div className="h-3 bg-white/5 rounded-full w-full" />
-              <div className="h-3 bg-white/5 rounded-full w-4/5" />
-              <div className="h-3 bg-white/5 rounded-full w-full" />
-              <div className="h-3 bg-white/5 rounded-full w-3/5" />
-              <div className="h-3 bg-white/5 rounded-full w-full" />
-              <div className="h-3 bg-white/5 rounded-full w-2/3" />
+            <div className="space-y-2 text-muted-foreground text-xs">
+              <div className="h-3 bg-muted/50 rounded-full w-full" />
+              <div className="h-3 bg-muted/50 rounded-full w-4/5" />
+              <div className="h-3 bg-muted/50 rounded-full w-full" />
+              <div className="h-3 bg-muted/50 rounded-full w-3/5" />
+              <div className="h-3 bg-muted/50 rounded-full w-full" />
+              <div className="h-3 bg-muted/50 rounded-full w-2/3" />
             </div>
           </div>
         </div>
@@ -161,7 +161,7 @@ function PreviewContent({ file }: { file: FileItem }) {
     case 'video':
       return (
         <div className="flex flex-col items-center gap-4">
-          <div className="w-full max-w-md aspect-video rounded-2xl bg-gradient-to-br from-pink-500/20 to-pink-600/5 border border-white/10 flex items-center justify-center">
+          <div className="w-full max-w-md aspect-video rounded-2xl bg-gradient-to-br from-pink-500/20 to-pink-600/5 border border-border flex items-center justify-center">
             <div className="size-16 rounded-full bg-pink-500/20 flex items-center justify-center">
               <Film className="size-8 text-pink-400" />
             </div>
@@ -171,9 +171,9 @@ function PreviewContent({ file }: { file: FileItem }) {
     default:
       return (
         <div className="flex flex-col items-center gap-4">
-          <div className="w-full max-w-md rounded-2xl bg-gradient-to-br from-gray-500/20 to-gray-600/5 border border-white/10 p-8 flex flex-col items-center gap-4">
+          <div className="w-full max-w-md rounded-2xl bg-gradient-to-br from-gray-500/20 to-gray-600/5 border border-border p-8 flex flex-col items-center gap-4">
             <File className="size-20 text-gray-400 opacity-50" />
-            <p className="text-white/50 text-sm">File Preview</p>
+            <p className="text-muted-foreground text-sm">File Preview</p>
           </div>
         </div>
       )
@@ -197,7 +197,7 @@ export default function FilePreview() {
     <>
       <Dialog open={!!previewFile} onOpenChange={(v) => { if (!v) setPreviewFile(null) }}>
         <DialogContent
-          className="bg-[oklch(0.15_0.02_260)] border-white/10 text-white sm:max-w-2xl rounded-3xl p-0 overflow-hidden"
+          className="bg-card border-border text-foreground sm:max-w-2xl rounded-3xl p-0 overflow-hidden"
           showCloseButton={false}
         >
           <AnimatePresence>
@@ -217,8 +217,8 @@ export default function FilePreview() {
                         {getCategoryIcon(previewFile.category)}
                       </div>
                       <div>
-                        <h2 className="text-lg font-semibold text-white">{previewFile.name}</h2>
-                        <Badge className="mt-1 bg-white/10 text-white/70 border-0 rounded-2xl text-xs">
+                        <h2 className="text-lg font-semibold text-foreground">{previewFile.name}</h2>
+                        <Badge className="mt-1 bg-muted text-muted-foreground border-0 rounded-2xl text-xs">
                           {getCategoryLabel(previewFile.category)}
                         </Badge>
                       </div>
@@ -227,7 +227,7 @@ export default function FilePreview() {
                       variant="ghost"
                       size="icon"
                       onClick={() => setPreviewFile(null)}
-                      className="rounded-full text-white/70 hover:text-white hover:bg-white/10"
+                      className="rounded-full text-foreground/70 hover:text-foreground hover:bg-accent"
                     >
                       <X className="size-5" />
                     </Button>
@@ -242,15 +242,15 @@ export default function FilePreview() {
                 {/* Metadata */}
                 <div className="px-6 pb-4">
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div className="flex items-center gap-2 text-white/40 text-xs">
+                    <div className="flex items-center gap-2 text-muted-foreground text-xs">
                       <HardDrive className="size-3.5" />
                       <span>{formatSize(previewFile.size)}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-white/40 text-xs">
+                    <div className="flex items-center gap-2 text-muted-foreground text-xs">
                       <Tag className="size-3.5" />
                       <span>{getCategoryLabel(previewFile.category)}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-white/40 text-xs">
+                    <div className="flex items-center gap-2 text-muted-foreground text-xs">
                       <Calendar className="size-3.5" />
                       <span>{formatDate(previewFile.createdAt)}</span>
                     </div>
@@ -260,7 +260,7 @@ export default function FilePreview() {
                 {/* Actions */}
                 <div className="px-6 pb-6 flex items-center gap-3">
                   <Button
-                    className="rounded-2xl bg-[oklch(0.72_0.19_142)] text-white hover:bg-[oklch(0.72_0.19_142)]/90 gap-2"
+                    className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
                     onClick={() => {
                       // Mock download
                       const a = document.createElement('a')
@@ -289,15 +289,15 @@ export default function FilePreview() {
 
       {/* Delete Confirmation */}
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <AlertDialogContent className="bg-[oklch(0.2_0.02_260)] border-white/10 text-white rounded-3xl">
+        <AlertDialogContent className="bg-card border-border text-foreground rounded-3xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">Delete &quot;{previewFile?.name}&quot;?</AlertDialogTitle>
-            <AlertDialogDescription className="text-white/50">
+            <AlertDialogTitle className="text-foreground">Delete &quot;{previewFile?.name}&quot;?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
               This file will be permanently deleted. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-2xl border-white/20 text-white hover:bg-white/10">
+            <AlertDialogCancel className="rounded-2xl border-border text-foreground hover:bg-accent">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction

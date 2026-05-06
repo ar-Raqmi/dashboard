@@ -81,46 +81,46 @@ export default function TasksPage() {
         className="flex items-center justify-between"
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-2xl bg-[oklch(0.72_0.19_142_/_0.15)]">
-            <ListTodo className="size-6 text-[oklch(0.72_0.19_142)]" />
+          <div className="p-2 rounded-2xl bg-primary/15">
+            <ListTodo className="size-6 text-primary" />
           </div>
           <h1 className="text-2xl font-bold">Daily Tasks</h1>
         </div>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="rounded-2xl bg-[oklch(0.72_0.19_142)] text-[oklch(0.13_0.005_155)] hover:bg-[oklch(0.65_0.19_142)]">
+            <Button className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90">
               <Plus className="size-4 mr-1" />
               Add Task
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-[oklch(0.17_0.008_155)] border-[oklch(0.28_0.01_155)] rounded-3xl">
+          <DialogContent className="bg-card border-border rounded-3xl">
             <DialogHeader>
-              <DialogTitle className="text-[oklch(0.96_0.005_155)]">Add New Task</DialogTitle>
+              <DialogTitle className="text-foreground">Add New Task</DialogTitle>
             </DialogHeader>
             <div className="flex flex-col gap-4 py-2">
               <div className="flex flex-col gap-2">
-                <label className="text-sm text-[oklch(0.75_0.01_155)]">Title</label>
+                <label className="text-sm text-on-surface-variant">Title</label>
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Enter task title..."
-                  className="rounded-2xl bg-[oklch(0.24_0.01_155)] border-[oklch(0.28_0.01_155)]"
+                  className="rounded-2xl bg-input border-border"
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-sm text-[oklch(0.75_0.01_155)]">Due Date</label>
+                <label className="text-sm text-on-surface-variant">Due Date</label>
                 <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className="rounded-2xl bg-[oklch(0.24_0.01_155)] border-[oklch(0.28_0.01_155)] justify-start text-left font-normal"
+                      className="rounded-2xl bg-input border-border justify-start text-left font-normal"
                     >
                       <CalendarDays className="mr-2 size-4" />
                       {dueDate ? format(dueDate, 'PPP') : 'Pick a date'}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-[oklch(0.17_0.008_155)] border-[oklch(0.28_0.01_155)] rounded-2xl">
+                  <PopoverContent className="w-auto p-0 bg-card border-border rounded-2xl">
                     <Calendar
                       mode="single"
                       selected={dueDate}
@@ -133,12 +133,12 @@ export default function TasksPage() {
                 </Popover>
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-sm text-[oklch(0.75_0.01_155)]">Priority</label>
+                <label className="text-sm text-on-surface-variant">Priority</label>
                 <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
-                  <SelectTrigger className="rounded-2xl bg-[oklch(0.24_0.01_155)] border-[oklch(0.28_0.01_155)] w-full">
+                  <SelectTrigger className="rounded-2xl bg-input border-border w-full">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[oklch(0.17_0.008_155)] border-[oklch(0.28_0.01_155)] rounded-2xl">
+                  <SelectContent className="bg-card border-border rounded-2xl">
                     <SelectItem value="high">High</SelectItem>
                     <SelectItem value="medium">Medium</SelectItem>
                     <SelectItem value="low">Low</SelectItem>
@@ -152,7 +152,7 @@ export default function TasksPage() {
               </DialogClose>
               <Button
                 onClick={handleAddTask}
-                className="rounded-2xl bg-[oklch(0.72_0.19_142)] text-[oklch(0.13_0.005_155)] hover:bg-[oklch(0.65_0.19_142)]"
+                className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 Add Task
               </Button>
@@ -176,8 +176,8 @@ export default function TasksPage() {
             onClick={() => setFilter(f)}
             className={`rounded-2xl capitalize ${
               filter === f
-                ? 'bg-[oklch(0.72_0.19_142)] text-[oklch(0.13_0.005_155)]'
-                : 'text-[oklch(0.75_0.01_155)]'
+                ? 'bg-primary text-primary-foreground'
+                : 'text-on-surface-variant'
             }`}
           >
             {f} ({filterCounts[f]})
@@ -194,10 +194,10 @@ export default function TasksPage() {
               animate={{ opacity: 1, scale: 1 }}
               className="flex flex-col items-center justify-center py-16 gap-4"
             >
-              <div className="p-4 rounded-3xl bg-[oklch(0.22_0.008_155)]">
-                <CheckCircle2 className="size-12 text-[oklch(0.75_0.01_155)]" />
+              <div className="p-4 rounded-3xl bg-muted">
+                <CheckCircle2 className="size-12 text-on-surface-variant" />
               </div>
-              <p className="text-[oklch(0.65_0.01_155)] text-center">
+              <p className="text-muted-foreground text-center">
                 {filter === 'all'
                   ? 'No tasks yet. Add your first task!'
                   : filter === 'pending'
@@ -214,18 +214,18 @@ export default function TasksPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: -100, transition: { duration: 0.2 } }}
                 transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                className="flex items-center gap-3 p-4 rounded-3xl bg-[oklch(0.17_0.008_155)] border border-[oklch(0.28_0.01_155)] hover:border-[oklch(0.38_0.01_155)] transition-colors group"
+                className="flex items-center gap-3 p-4 rounded-3xl bg-card border border-border hover:border-outline transition-colors group"
               >
                 <Checkbox
                   checked={task.status === 'completed'}
                   onCheckedChange={() => toggleTaskStatus(task.id)}
-                  className="size-5 rounded-lg data-[state=checked]:bg-[oklch(0.72_0.19_142)] data-[state=checked]:border-[oklch(0.72_0.19_142)]"
+                  className="size-5 rounded-lg data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                 />
                 <span
                   className={`flex-1 text-sm ${
                     task.status === 'completed'
-                      ? 'line-through text-[oklch(0.5_0.01_155)]'
-                      : 'text-[oklch(0.96_0.005_155)]'
+                      ? 'line-through text-outline'
+                      : 'text-foreground'
                   }`}
                 >
                   {task.title}
@@ -234,7 +234,7 @@ export default function TasksPage() {
                   {task.dueDate && (
                     <Badge
                       variant="outline"
-                      className="rounded-xl text-[0.65rem] border-[oklch(0.28_0.01_155)] text-[oklch(0.75_0.01_155)]"
+                      className="rounded-xl text-[0.65rem] border-border text-on-surface-variant"
                     >
                       {format(new Date(task.dueDate), 'MMM d')}
                     </Badge>
@@ -248,7 +248,7 @@ export default function TasksPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="size-8 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity text-[oklch(0.65_0.2_25)] hover:text-[oklch(0.7_0.2_25)] hover:bg-[oklch(0.65_0.2_25_/_0.1)]"
+                    className="size-8 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
                     onClick={() => deleteTask(task.id)}
                   >
                     <Trash2 className="size-4" />

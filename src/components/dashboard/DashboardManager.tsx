@@ -31,15 +31,15 @@ export function DashboardManager() {
     >
       <SheetContent
         side="right"
-        className="bg-[oklch(0.15_0.006_155)] border-l border-[oklch(0.28_0.01_155)] w-80 sm:max-w-sm"
+        className="bg-background border-l border-border w-80 sm:max-w-sm"
       >
         <SheetHeader className="pb-2">
-          <SheetTitle className="text-[oklch(0.96_0.005_155)] text-lg font-bold">
+          <SheetTitle className="text-foreground text-lg font-bold">
             Dashboard Widgets
           </SheetTitle>
         </SheetHeader>
 
-        <p className="text-xs text-[oklch(0.5_0.01_155)] px-4 -mt-1 mb-4">
+        <p className="text-xs text-muted-foreground px-4 -mt-1 mb-4">
           Hidden widgets are still accessible via navigation tabs
         </p>
 
@@ -57,15 +57,15 @@ export function DashboardManager() {
                   stiffness: 300,
                   damping: 25,
                 }}
-                className="flex items-center justify-between p-3 rounded-2xl hover:bg-[oklch(0.2_0.01_155)] transition-colors group"
+                className="flex items-center justify-between p-3 rounded-2xl hover:bg-accent transition-colors group"
               >
                 {/* Icon + Label */}
                 <div className="flex items-center gap-3 min-w-0">
                   <span
                     className={
                       widget.visible
-                        ? 'text-[oklch(0.72_0.19_142)]'
-                        : 'text-[oklch(0.38_0.01_155)]'
+                        ? 'text-primary'
+                        : 'text-outline'
                     }
                   >
                     {widgetIconMap[widget.type]}
@@ -73,8 +73,8 @@ export function DashboardManager() {
                   <span
                     className={
                       widget.visible
-                        ? 'text-sm font-medium text-[oklch(0.96_0.005_155)]'
-                        : 'text-sm font-medium text-[oklch(0.5_0.01_155)]'
+                        ? 'text-sm font-medium text-foreground'
+                        : 'text-sm font-medium text-muted-foreground'
                     }
                   >
                     {widget.label}
@@ -91,7 +91,7 @@ export function DashboardManager() {
                     onCheckedChange={() => toggleWidgetVisibility(widget.type)}
                     className={
                       widget.visible
-                        ? 'data-[state=checked]:bg-[oklch(0.72_0.19_142)]'
+                        ? 'data-[state=checked]:bg-primary'
                         : ''
                     }
                   />
@@ -102,8 +102,8 @@ export function DashboardManager() {
         </div>
 
         {/* Footer note */}
-        <div className="mt-auto pt-4 px-4 border-t border-[oklch(0.28_0.01_155)]/50">
-          <p className="text-[10px] text-[oklch(0.4_0.01_155)] text-center">
+        <div className="mt-auto pt-4 px-4 border-t border-border/50">
+          <p className="text-[10px] text-outline text-center">
             Drag widgets on the dashboard to rearrange them
           </p>
         </div>

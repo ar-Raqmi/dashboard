@@ -81,46 +81,46 @@ export default function CalendarPage() {
         className="flex items-center justify-between"
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-2xl bg-[oklch(0.72_0.19_142_/_0.15)]">
-            <CalendarDays className="size-6 text-[oklch(0.72_0.19_142)]" />
+          <div className="p-2 rounded-2xl bg-primary/15">
+            <CalendarDays className="size-6 text-primary" />
           </div>
           <h1 className="text-2xl font-bold">Calendar</h1>
         </div>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="rounded-2xl bg-[oklch(0.72_0.19_142)] text-[oklch(0.13_0.005_155)] hover:bg-[oklch(0.65_0.19_142)]">
+            <Button className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90">
               <Plus className="size-4 mr-1" />
               Add Event
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-[oklch(0.17_0.008_155)] border-[oklch(0.28_0.01_155)] rounded-3xl">
+          <DialogContent className="bg-card border-border rounded-3xl">
             <DialogHeader>
-              <DialogTitle className="text-[oklch(0.96_0.005_155)]">Add New Event</DialogTitle>
+              <DialogTitle className="text-foreground">Add New Event</DialogTitle>
             </DialogHeader>
             <div className="flex flex-col gap-4 py-2">
               <div className="flex flex-col gap-2">
-                <label className="text-sm text-[oklch(0.75_0.01_155)]">Title</label>
+                <label className="text-sm text-on-surface-variant">Title</label>
                 <Input
                   value={eventTitle}
                   onChange={(e) => setEventTitle(e.target.value)}
                   placeholder="Enter event title..."
-                  className="rounded-2xl bg-[oklch(0.24_0.01_155)] border-[oklch(0.28_0.01_155)]"
+                  className="rounded-2xl bg-input border-border"
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-sm text-[oklch(0.75_0.01_155)]">Date</label>
+                <label className="text-sm text-on-surface-variant">Date</label>
                 <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className="rounded-2xl bg-[oklch(0.24_0.01_155)] border-[oklch(0.28_0.01_155)] justify-start text-left font-normal"
+                      className="rounded-2xl bg-input border-border justify-start text-left font-normal"
                     >
                       <CalendarDays className="mr-2 size-4" />
                       {eventDate ? format(eventDate, 'PPP') : 'Pick a date'}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-[oklch(0.17_0.008_155)] border-[oklch(0.28_0.01_155)] rounded-2xl">
+                  <PopoverContent className="w-auto p-0 bg-card border-border rounded-2xl">
                     <Calendar
                       mode="single"
                       selected={eventDate}
@@ -135,13 +135,13 @@ export default function CalendarPage() {
                 </Popover>
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-sm text-[oklch(0.75_0.01_155)]">Color</label>
+                <label className="text-sm text-on-surface-variant">Color</label>
                 <div className="flex gap-2 flex-wrap">
                   {EVENT_COLORS.map((color) => (
                     <button
                       key={color}
                       className={`size-8 rounded-xl transition-all ${
-                        eventColor === color ? 'ring-2 ring-white ring-offset-2 ring-offset-[oklch(0.17_0.008_155)] scale-110' : ''
+                        eventColor === color ? 'ring-2 ring-white ring-offset-2 ring-offset-card scale-110' : ''
                       }`}
                       style={{ backgroundColor: color }}
                       onClick={() => setEventColor(color)}
@@ -156,7 +156,7 @@ export default function CalendarPage() {
               </DialogClose>
               <Button
                 onClick={handleAddEvent}
-                className="rounded-2xl bg-[oklch(0.72_0.19_142)] text-[oklch(0.13_0.005_155)] hover:bg-[oklch(0.65_0.19_142)]"
+                className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 Add Event
               </Button>
@@ -172,7 +172,7 @@ export default function CalendarPage() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
-          className="rounded-3xl bg-[oklch(0.17_0.008_155)] border border-[oklch(0.28_0.01_155)] p-4 flex-1"
+          className="rounded-3xl bg-card border border-border p-4 flex-1"
         >
           <Calendar
             mode="single"
@@ -195,11 +195,11 @@ export default function CalendarPage() {
                       {...props}
                       className={`flex items-center justify-center size-8 rounded-lg text-sm transition-colors ${
                         modifiers.selected
-                          ? 'bg-[oklch(0.72_0.19_142)] text-[oklch(0.13_0.005_155)]'
+                          ? 'bg-primary text-primary-foreground'
                           : modifiers.today
-                          ? 'bg-[oklch(0.22_0.02_142)] text-[oklch(0.72_0.19_142)]'
-                          : 'hover:bg-[oklch(0.22_0.008_155)] text-[oklch(0.96_0.005_155)]'
-                      } ${modifiers.outside ? 'text-[oklch(0.5_0.01_155)]' : ''}`}
+                          ? 'bg-accent text-primary'
+                          : 'hover:bg-accent text-foreground'
+                      } ${modifiers.outside ? 'text-outline' : ''}`}
                       onClick={(e) => {
                         props.onClick?.(e)
                         handleDayClick(day.date)
@@ -230,9 +230,9 @@ export default function CalendarPage() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
-          className="rounded-3xl bg-[oklch(0.17_0.008_155)] border border-[oklch(0.28_0.01_155)] p-4 lg:w-80 flex flex-col gap-3"
+          className="rounded-3xl bg-card border border-border p-4 lg:w-80 flex flex-col gap-3"
         >
-          <h2 className="text-lg font-semibold text-[oklch(0.96_0.005_155)]">
+          <h2 className="text-lg font-semibold text-foreground">
             {format(selectedDate, 'MMMM d, yyyy')}
           </h2>
 
@@ -243,8 +243,8 @@ export default function CalendarPage() {
                 animate={{ opacity: 1 }}
                 className="flex flex-col items-center justify-center py-8 gap-2"
               >
-                <CalendarDays className="size-8 text-[oklch(0.5_0.01_155)]" />
-                <p className="text-sm text-[oklch(0.65_0.01_155)]">No events for this day</p>
+                <CalendarDays className="size-8 text-outline" />
+                <p className="text-sm text-muted-foreground">No events for this day</p>
               </motion.div>
             ) : (
               eventsForSelectedDate.map((event) => (
@@ -255,17 +255,17 @@ export default function CalendarPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: 50 }}
                   transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                  className="flex items-center gap-3 p-3 rounded-2xl bg-[oklch(0.22_0.008_155)] group"
+                  className="flex items-center gap-3 p-3 rounded-2xl bg-muted group"
                 >
                   <div
                     className="size-3 rounded-full shrink-0"
                     style={{ backgroundColor: event.color || EVENT_COLORS[0] }}
                   />
-                  <span className="flex-1 text-sm text-[oklch(0.96_0.005_155)]">{event.title}</span>
+                  <span className="flex-1 text-sm text-foreground">{event.title}</span>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="size-7 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity text-[oklch(0.65_0.2_25)] hover:text-[oklch(0.7_0.2_25)] hover:bg-[oklch(0.65_0.2_25_/_0.1)]"
+                    className="size-7 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
                     onClick={() => deleteEvent(event.id)}
                   >
                     <Trash2 className="size-3.5" />
