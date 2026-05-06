@@ -190,14 +190,14 @@ export default function CalendarPage() {
                 const dateStr = format(day.date, 'yyyy-MM-dd')
                 const colors = eventDateMap.get(dateStr)
                 return (
-                  <div className="flex flex-col items-center gap-0.5 w-full">
+                  <div className="flex flex-col items-center gap-0.5 w-full h-full">
                     <button
                       {...props}
-                      className={`flex items-center justify-center size-8 rounded-lg text-sm transition-colors ${
+                      className={`flex items-center justify-center w-full aspect-square rounded-full text-sm transition-colors ${
                         modifiers.selected
-                          ? 'bg-primary text-primary-foreground'
+                          ? 'ring-2 ring-primary text-primary font-semibold'
                           : modifiers.today
-                          ? 'bg-accent text-primary'
+                          ? 'bg-primary/15 text-primary font-semibold'
                           : 'hover:bg-accent text-foreground'
                       } ${modifiers.outside ? 'text-outline' : ''}`}
                       onClick={(e) => {

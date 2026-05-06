@@ -43,7 +43,7 @@ export default function CalendarWidget() {
         <span
           className={`text-xs font-medium ${
             todayHighlight
-              ? 'bg-[oklch(0.72_0.19_142)] text-[oklch(0.17_0.008_155)] w-6 h-6 flex items-center justify-center rounded-full'
+              ? 'ring-2 ring-[oklch(0.72_0.19_142)] text-[oklch(0.72_0.19_142)] w-6 h-6 flex items-center justify-center rounded-full'
               : ''
           }`}
         >
@@ -90,7 +90,7 @@ export default function CalendarWidget() {
       </div>
 
       {/* DayPicker */}
-      <div className="flex justify-center [&_table]:w-full [&_th]:text-[10px] [&_th]:text-[oklch(0.5_0.01_155)] [&_th]:font-medium [&_th]:py-1 [&_td]:p-0 [&_td]:text-center [&_.rdp-day]:w-8 [&_.rdp-day]:h-8">
+      <div className="flex justify-center [&_table]:w-full [&_th]:text-[10px] [&_th]:text-[oklch(0.5_0.01_155)] [&_th]:font-medium [&_th]:py-1 [&_td]:p-0 [&_td]:text-center [&_.rdp-day]:w-full [&_.rdp-day]:aspect-square">
         <DayPicker
           month={month}
           onMonthChange={setMonth}
@@ -102,7 +102,7 @@ export default function CalendarWidget() {
             months: 'flex flex-col',
             month: 'flex flex-col w-full',
             weekday: 'text-[10px] text-[oklch(0.5_0.01_155)] font-medium',
-            day: 'text-center p-0',
+            day: 'text-center p-0 w-full aspect-square',
           }}
           formatters={{
             formatWeekdayName: (date) =>
