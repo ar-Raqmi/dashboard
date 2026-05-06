@@ -151,7 +151,6 @@ function NotesGridSection({
   onDelete,
   onCopy,
   copiedId,
-  onSizeChange,
 }: {
   title: string; icon: React.ReactNode; notes: Note[]
   layouts: Layout[]; mobileLayouts: Layout[]
@@ -160,7 +159,6 @@ function NotesGridSection({
   onOpen: (id: string) => void; onPin: (id: string) => void
   onDelete: (id: string) => void; onCopy: (id: string) => void
   copiedId: string | null
-  onSizeChange: (noteId: string, w: number, h: number) => void
 }) {
   const { containerRef, width } = useContainerWidth()
   const currentBreakpointRef = useRef<string>('lg')
@@ -229,6 +227,33 @@ function NotesGridSection({
     return map
   }, [finalLayouts])
 
+  // Handle size change — uses finalLayouts to find current position for notes missing from store
+  const handleSizeChange = useCallback((noteId: string, w: number, h: number) => {
+    const clampedW = Math.min(Math.max(w, 1), MAX_GRID_W)
+    const clampedH = Math.min(Math.max(h, 1), MAX_GRID_H)
+
+    // Find the note's current desktop layout (from finalLayouts which has auto-generated entries)
+    const currentDesktop = finalLayouts.lg.find((l) => l.i === noteId)
+    const currentMobile = finalLayouts.sm.find((l) => l.i === noteId)
+
+    // Update desktop layout
+    const existingDesktop = layouts.find((l) => l.i === noteId)
+    if (existingDesktop) {
+      setLayouts(layouts.map((l) => l.i === noteId ? { ...l, w: clampedW, h: clampedH } : l))
+    } else if (currentDesktop) {
+      // Note doesn't have a store entry yet — create one using current position from finalLayouts
+      setLayouts([...layouts, { ...currentDesktop, w: clampedW, h: clampedH }])
+    }
+
+    // Update mobile layout
+    const existingMobile = mobileLayouts.find((l) => l.i === noteId)
+    if (existingMobile) {
+      setMobileLayouts(mobileLayouts.map((l) => l.i === noteId ? { ...l, h: clampedH } : l))
+    } else if (currentMobile) {
+      setMobileLayouts([...mobileLayouts, { ...currentMobile, h: clampedH }])
+    }
+  }, [finalLayouts, layouts, mobileLayouts, setLayouts, setMobileLayouts])
+
   if (notes.length === 0) return null
 
   return (
@@ -273,7 +298,7 @@ function NotesGridSection({
                       <PopoverContent side="bottom" align="end" sideOffset={4} className="rounded-2xl p-3 w-auto">
                         <NoteSizePicker
                           currentW={size?.w ?? 1} currentH={size?.h ?? 1}
-                          onSizeChange={(w, h) => onSizeChange(note.id, w, h)}
+                          onSizeChange={(w, h) => handleSizeChange(note.id, w, h)}
                         />
                       </PopoverContent>
                     </Popover>
@@ -400,21 +425,6 @@ export default function NotesPage() {
     }
     setViewDialogOpen(open)
   }
-
-  // Note size change handler (updates both layout arrays)
-  const handleNoteSizeChange = useCallback((noteId: string, w: number, h: number) => {
-    const clampedW = Math.min(Math.max(w, 1), MAX_GRID_W)
-    const clampedH = Math.min(Math.max(h, 1), MAX_GRID_H)
-    setNoteLayouts(noteLayouts.map((l) => l.i === noteId ? { ...l, w: clampedW, h: clampedH } : l))
-    setNoteMobileLayouts(noteMobileLayouts.map((l) => l.i === noteId ? { ...l, h: clampedH } : l))
-  }, [noteLayouts, noteMobileLayouts, setNoteLayouts, setNoteMobileLayouts])
-
-  const handlePinnedSizeChange = useCallback((noteId: string, w: number, h: number) => {
-    const clampedW = Math.min(Math.max(w, 1), MAX_GRID_W)
-    const clampedH = Math.min(Math.max(h, 1), MAX_GRID_H)
-    setPinnedNoteLayouts(pinnedNoteLayouts.map((l) => l.i === noteId ? { ...l, w: clampedW, h: clampedH } : l))
-    setPinnedNoteMobileLayouts(pinnedNoteMobileLayouts.map((l) => l.i === noteId ? { ...l, h: clampedH } : l))
-  }, [pinnedNoteLayouts, pinnedNoteMobileLayouts, setPinnedNoteLayouts, setPinnedNoteMobileLayouts])
 
   const handleDelete = (id: string) => { deleteNote(id) }
   const handleCopy = (id: string) => {
@@ -610,7 +620,6 @@ export default function NotesPage() {
           setLayouts={setPinnedNoteLayouts} setMobileLayouts={setPinnedNoteMobileLayouts}
           editMode={editMode} onOpen={openNotePreview} onPin={toggleNotePinned}
           onDelete={handleDelete} onCopy={handleCopy} copiedId={copiedId}
-          onSizeChange={handlePinnedSizeChange}
         />
       )}
 
@@ -623,7 +632,6 @@ export default function NotesPage() {
           setLayouts={setNoteLayouts} setMobileLayouts={setNoteMobileLayouts}
           editMode={editMode} onOpen={openNotePreview} onPin={toggleNotePinned}
           onDelete={handleDelete} onCopy={handleCopy} copiedId={copiedId}
-          onSizeChange={handleNoteSizeChange}
         />
       )}
 
