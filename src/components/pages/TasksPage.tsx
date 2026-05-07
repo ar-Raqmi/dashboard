@@ -99,7 +99,7 @@ function TaskCard({ task, onToggle, onDelete }: {
         isOverdue
           ? 'bg-destructive/5 border-destructive/20 hover:border-destructive/40'
           : isToday && !isCompleted
-            ? 'bg-primary/5 border-primary/20 hover:border-primary/40'
+            ? 'bg-card border-primary/20 hover:border-primary/40'
             : 'bg-card border-border hover:border-outline'
       }`}
     >
@@ -409,6 +409,7 @@ export default function TasksPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.05 }}
+                  className="rounded-3xl bg-primary/5 border border-primary/15 p-4"
                 >
                   <SectionHeader
                     label="Today"
@@ -435,6 +436,7 @@ export default function TasksPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
+                  className="rounded-3xl bg-muted/30 border border-border/50 p-4"
                 >
                   <SectionHeader
                     label="Upcoming"
