@@ -150,75 +150,6 @@ const localDateStr = (date: Date) => {
   return `${y}-${m}-${d}`
 }
 
-// ===== SAMPLE DATA (used as fallback before Convex loads) =====
-const sampleTasks: Task[] = [
-  { id: crypto.randomUUID(), title: 'Submit quarterly report', dueDate: localDateStr(new Date(Date.now() - 86400000 * 2)), priority: 'high', status: 'pending', createdAt: new Date().toISOString() },
-  { id: crypto.randomUUID(), title: 'Review project proposal', dueDate: localDateStr(new Date()), priority: 'high', status: 'pending', createdAt: new Date().toISOString() },
-  { id: crypto.randomUUID(), title: 'Update documentation', dueDate: localDateStr(new Date(Date.now() + 86400000)), priority: 'medium', status: 'pending', createdAt: new Date().toISOString() },
-  { id: crypto.randomUUID(), title: 'Team standup meeting', dueDate: localDateStr(new Date()), priority: 'low', status: 'completed', createdAt: new Date().toISOString() },
-  { id: crypto.randomUUID(), title: 'Fix API endpoint bug', dueDate: localDateStr(new Date(Date.now() + 86400000 * 2)), priority: 'high', status: 'pending', createdAt: new Date().toISOString() },
-  { id: crypto.randomUUID(), title: 'Write unit tests', dueDate: localDateStr(new Date(Date.now() + 86400000)), priority: 'medium', status: 'pending', createdAt: new Date().toISOString() },
-]
-
-const sampleGoals: Goal[] = [
-  {
-    id: crypto.randomUUID(), title: 'Complete ar-Raqmi Database', progress: 65,
-    milestones: [
-      { id: 'm1', label: 'Design Phase', completed: true },
-      { id: 'm2', label: 'Core Features', completed: true },
-      { id: 'm3', label: 'Grid Engine', completed: false },
-      { id: 'm4', label: 'Launch', completed: false },
-    ],
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: crypto.randomUUID(), title: 'Learn Arabic Calligraphy', progress: 30,
-    milestones: [
-      { id: 'm5', label: 'Basic Strokes', completed: true },
-      { id: 'm6', label: 'Letter Forms', completed: false },
-      { id: 'm7', label: 'Composition', completed: false },
-    ],
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: crypto.randomUUID(), title: 'Read 30 Books This Year', progress: 43,
-    milestones: [
-      { id: 'm8', label: '10 Books', completed: true },
-      { id: 'm9', label: '20 Books', completed: false },
-      { id: 'm10', label: '30 Books', completed: false },
-    ],
-    createdAt: new Date().toISOString(),
-  },
-]
-
-const sampleNotes: Note[] = [
-  { id: crypto.randomUUID(), title: 'Project Ideas', content: 'Build a Quran study app with AI-powered tafsir recommendations', color: '#A5D6A7', pinned: true, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: crypto.randomUUID(), title: 'Meeting Notes', content: 'Discuss sprint priorities and assign tasks for next week', color: '#F48FB1', pinned: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: crypto.randomUUID(), title: 'Quick Reminder', content: 'Submit quarterly report by Friday', color: '#CE93D8', pinned: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: crypto.randomUUID(), title: 'Design Inspiration', content: 'Material 3 Expressive: bouncy animations, bold colors, rounded shapes', color: '#80CBC4', pinned: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-]
-
-
-const sampleEvents: CalendarEvent[] = [
-  { id: crypto.randomUUID(), title: 'Team Meeting', date: localDateStr(new Date()), color: '#A5D6A7' },
-  { id: crypto.randomUUID(), title: 'Project Deadline', date: localDateStr(new Date(Date.now() + 86400000 * 2)), color: '#F48FB1' },
-  { id: crypto.randomUUID(), title: 'Design Review', date: localDateStr(new Date(Date.now() + 86400000 * 5)), color: '#CE93D8' },
-  { id: crypto.randomUUID(), title: 'Sprint Planning', date: localDateStr(new Date(Date.now() + 86400000 * 7)), color: '#80CBC4' },
-]
-
-const sampleFiles: FileItem[] = [
-  { id: 'f1', name: 'Documents', type: 'folder', category: 'folder', parentId: null, size: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: 'f2', name: 'Images', type: 'folder', category: 'folder', parentId: null, size: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: 'f3', name: 'Audio', type: 'folder', category: 'folder', parentId: null, size: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: 'f4', name: 'Project Plan.pdf', type: 'file', category: 'pdf', parentId: 'f1', size: 2450000, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: 'f5', name: 'Meeting Notes.doc', type: 'file', category: 'doc', parentId: 'f1', size: 156000, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: 'f6', name: 'Dashboard Mock.png', type: 'file', category: 'image', parentId: 'f2', size: 3200000, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: 'f7', name: 'Logo.svg', type: 'file', category: 'image', parentId: 'f2', size: 24000, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: 'f8', name: 'Recitation.mp3', type: 'file', category: 'audio', parentId: 'f3', size: 8500000, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: 'f9', name: 'Adhan.mp3', type: 'file', category: 'audio', parentId: 'f3', size: 4200000, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: 'f10', name: 'Budget.xlsx', type: 'file', category: 'doc', parentId: 'f1', size: 89000, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-]
-
 // ===== GENERATE ID =====
 const genId = () => crypto.randomUUID()
 
@@ -343,7 +274,7 @@ interface AppStore {
 }
 
 // ===== STORE =====
-// Note: This store uses sample data as initial values.
+// Note: This store starts with empty state.
 // When authenticated with Convex, ConvexSync component will:
 // 1. Override all write actions with Convex-aware versions
 // 2. Sync Convex query results to the store state
@@ -375,7 +306,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     })),
 
   // Tasks
-  tasks: sampleTasks,
+  tasks: [],
   addTask: (task) =>
     set((state) => ({
       tasks: [...state.tasks, { ...task, id: genId(), createdAt: new Date().toISOString() }],
@@ -398,7 +329,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     })),
 
   // Goals
-  goals: sampleGoals,
+  goals: [],
   addGoal: (goal) =>
     set((state) => ({
       goals: [...state.goals, { ...goal, id: genId(), createdAt: new Date().toISOString() }],
@@ -423,7 +354,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     })),
 
   // Notes
-  notes: sampleNotes,
+  notes: [],
   addNote: (note) =>
     set((state) => {
       const newId = genId()
@@ -505,7 +436,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   setPinnedNoteMobileLayouts: (layouts) => set({ pinnedNoteMobileLayouts: layouts }),
 
   // Calendar
-  events: sampleEvents,
+  events: [],
   addEvent: (event) =>
     set((state) => ({ events: [...state.events, { ...event, id: genId() }] })),
   deleteEvent: (id) =>
@@ -516,7 +447,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   setClipboardText: (text) => set({ clipboardText: text }),
 
   // File Manager
-  files: sampleFiles,
+  files: [],
   currentFolderId: null,
   setCurrentFolderId: (id) => set({ currentFolderId: id }),
   addFile: (file) =>
@@ -566,9 +497,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   setHadithLoading: (loading) => set({ hadithLoading: loading }),
 
   // Clock
-  clocks: [
-    { id: 'clock-1', label: 'Kuala Lumpur', timezone: 'Asia/Kuala_Lumpur' },
-  ],
+  clocks: [],
   addClock: (clock) =>
     set((state) => ({
       clocks: [...state.clocks, { ...clock, id: genId() }],

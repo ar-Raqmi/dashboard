@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 import { useAuth } from '@/hooks/useAuth'
 import { useAppStore } from '@/lib/store'
+import { Loader2 } from 'lucide-react'
 
 /**
  * ConvexSync subscribes to all Convex queries and syncs data to the Zustand store.
@@ -14,6 +15,7 @@ import { useAppStore } from '@/lib/store'
 export function ConvexSync({ children }: { children: React.ReactNode }) {
   const { sessionToken, user } = useAuth()
   const initialized = useRef(false)
+  const [isInitialSyncComplete, setIsInitialSyncComplete] = useState(false)
 
   // Subscribe to all Convex queries
   const tasks = useQuery(api.tasks.list, sessionToken ? { sessionToken } : 'skip')
@@ -30,6 +32,30 @@ export function ConvexSync({ children }: { children: React.ReactNode }) {
   const pinnedDesktopLayouts = useQuery(api.dashboard.getLayout, sessionToken ? { sessionToken, layoutType: 'pinnedDesktop' } : 'skip')
   const pinnedMobileLayouts = useQuery(api.dashboard.getLayout, sessionToken ? { sessionToken, layoutType: 'pinnedMobile' } : 'skip')
   const settings = useQuery(api.settings.get, sessionToken ? { sessionToken } : 'skip')
+
+  // Check if initial sync is complete
+  useEffect(() => {
+    if (isInitialSyncComplete) return
+
+    const isDataLoaded =
+      tasks !== undefined &&
+      goals !== undefined &&
+      notes !== undefined &&
+      events !== undefined &&
+      files !== undefined &&
+      clocks !== undefined &&
+      widgets !== undefined &&
+      desktopLayouts !== undefined &&
+      mobileLayouts !== undefined &&
+      settings !== undefined
+
+    if (isDataLoaded) {
+      setIsInitialSyncComplete(true)
+    }
+  }, [
+    tasks, goals, notes, events, files, clocks, widgets,
+    desktopLayouts, mobileLayouts, settings, isInitialSyncComplete
+  ])
 
   // Convex mutations for write operations
   const createTask = useMutation(api.tasks.create)
@@ -423,12 +449,32 @@ export function ConvexSync({ children }: { children: React.ReactNode }) {
     })
   }, [sessionToken])
 
-  // Reset initialized flag when user logs out
+  // Reset initialized flag and sync state when user logs out
   useEffect(() => {
     if (!user) {
       initialized.current = false
+      setIsInitialSyncComplete(false)
     }
   }, [user])
+
+  if (!isInitialSyncComplete) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="fixed inset-0 bg-background z-[9999] flex flex-col items-center justify-center gap-6 p-6">
+          <div className="relative">
+            <div className="absolute inset-0 blur-2xl bg-primary/20 rounded-full animate-pulse" />
+            <Loader2 className="size-12 text-primary animate-spin relative" />
+          </div>
+          <div className="flex flex-col items-center gap-2 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <h2 className="text-xl font-semibold tracking-tight">Synchronizing</h2>
+            <p className="text-sm text-muted-foreground max-w-[240px]">
+              Preparing your personal dashboard with the latest data...
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return <>{children}</>
 }
