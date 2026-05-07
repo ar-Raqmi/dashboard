@@ -1,4 +1,4 @@
-import { query } from "./_generated/server";
+import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 
@@ -56,5 +56,44 @@ export const getUserByUsername = query({
       passwordHash: user.passwordHash,
       salt: user.salt,
     };
+  },
+});
+
+// Mutation: Update user credentials
+export const updateUser = mutation({
+  args: {
+    sessionToken: v.string(),
+    newUsername: v.optional(v.string()),
+    newPasswordHash: v.optional(v.string()),
+    newSalt: v.optional(v.string()),
+  },
+  handler: async (ctx, { sessionToken, newUsername, newPasswordHash, newSalt }) => {
+    const userId = await getAuthedUserId(ctx, sessionToken);
+
+    const updates: Record<string, any> = {};
+
+    if (newUsername !== undefined) {
+      // Check if username is already taken by another user
+      const existing = await ctx.db
+        .query("users")
+        .withIndex("by_username", (q: any) => q.eq("username", newUsername))
+        .first();
+
+      if (existing && existing._id !== userId) {
+        return { success: false, error: "Username already taken" };
+      }
+      updates.username = newUsername;
+    }
+
+    if (newPasswordHash !== undefined) {
+      updates.passwordHash = newPasswordHash;
+      updates.salt = newSalt;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await ctx.db.patch(userId, updates);
+    }
+
+    return { success: true };
   },
 });

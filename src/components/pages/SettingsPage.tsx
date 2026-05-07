@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Settings, User, AppWindow, Globe, Info, Upload, Save, ImageIcon, Palette, Paintbrush, Droplets, Image as ImageLucide, Mountain, Square } from 'lucide-react'
+import { Settings, User, AppWindow, Globe, Info, Upload, Save, ImageIcon, Palette, Paintbrush, Droplets, Image as ImageLucide, Mountain, Square, Lock, KeyRound } from 'lucide-react'
 import { useAppStore, type BackgroundType } from '@/lib/store'
+import { useAuth } from '@/hooks/useAuth'
+import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Slider } from '@/components/ui/slider'
@@ -79,10 +81,27 @@ export default function SettingsPage() {
     background, setBackground,
   } = useAppStore()
 
+  const { user, updateCredentials } = useAuth()
+  const { toast } = useToast()
+
   const [localName, setLocalName] = useState(profileName)
   const [localAppTitle, setLocalAppTitle] = useState(appTitle)
   const [localTimezone, setLocalTimezone] = useState(clocks.length > 0 ? clocks[0].timezone : 'Asia/Kuala_Lumpur')
   const [saved, setSaved] = useState(false)
+
+  // Account Security state
+  const [newUsername, setNewUsername] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [isUpdatingAuth, setIsUpdatingAuth] = useState(false)
+
+  // Initialize username from auth
+  useEffect(() => {
+    if (user?.username) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setNewUsername(user.username)
+    }
+  }, [user?.username])
 
   const avatarInputRef = useRef<HTMLInputElement>(null)
   const logoInputRef = useRef<HTMLInputElement>(null)
@@ -115,6 +134,42 @@ export default function SettingsPage() {
     if (clocks.length > 0) updateClock(clocks[0].id, { timezone: localTimezone })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+  }
+
+  const handleUpdateAuth = async () => {
+    if (newPassword && newPassword !== confirmPassword) {
+      toast({
+        title: 'Passwords do not match',
+        description: 'Please make sure your passwords match.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    setIsUpdatingAuth(true)
+    try {
+      const result = await updateCredentials(
+        newUsername !== user?.username ? newUsername : undefined,
+        newPassword || undefined
+      )
+
+      if (result.success) {
+        toast({
+          title: 'Credentials updated',
+          description: 'Your account security settings have been saved.',
+        })
+        setNewPassword('')
+        setConfirmPassword('')
+      } else {
+        toast({
+          title: 'Update failed',
+          description: result.error || 'Failed to update credentials.',
+          variant: 'destructive',
+        })
+      }
+    } finally {
+      setIsUpdatingAuth(false)
+    }
   }
 
   const sectionVariants = {
@@ -206,9 +261,76 @@ export default function SettingsPage() {
         </div>
       </motion.section>
 
-      {/* Background Section */}
+      {/* Account Security Section */}
       <motion.section
         custom={1}
+        variants={sectionVariants}
+        initial="hidden"
+        animate="visible"
+        className="rounded-3xl bg-card border border-border p-6 flex flex-col gap-5"
+      >
+        <div className="flex items-center gap-2">
+          <Lock className="size-5 text-primary" />
+          <h2 className="text-lg font-semibold text-foreground">Account Security</h2>
+        </div>
+        
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <Label className="text-sm text-on-surface-variant">User ID (Username)</Label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                value={newUsername}
+                onChange={(e) => setNewUsername(e.target.value)}
+                placeholder="New username"
+                className="rounded-2xl bg-input border-border pl-10"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <Label className="text-sm text-on-surface-variant">New Password</Label>
+              <div className="relative">
+                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="rounded-2xl bg-input border-border pl-10"
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label className="text-sm text-on-surface-variant">Confirm Password</Label>
+              <div className="relative">
+                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="rounded-2xl bg-input border-border pl-10"
+                />
+              </div>
+            </div>
+          </div>
+
+          <Button
+            onClick={handleUpdateAuth}
+            disabled={isUpdatingAuth || (!newPassword && newUsername === user?.username)}
+            variant="outline"
+            className="rounded-2xl border-primary text-primary hover:bg-primary/5 mt-2"
+          >
+            {isUpdatingAuth ? 'Updating...' : 'Update Credentials'}
+          </Button>
+        </div>
+      </motion.section>
+
+      {/* Background Section */}
+      <motion.section
+        custom={2}
         variants={sectionVariants}
         initial="hidden"
         animate="visible"
@@ -437,7 +559,7 @@ export default function SettingsPage() {
 
       {/* App Section */}
       <motion.section
-        custom={2}
+        custom={3}
         variants={sectionVariants}
         initial="hidden"
         animate="visible"
@@ -540,7 +662,7 @@ export default function SettingsPage() {
 
       {/* Timezone Section */}
       <motion.section
-        custom={3}
+        custom={4}
         variants={sectionVariants}
         initial="hidden"
         animate="visible"
@@ -569,7 +691,7 @@ export default function SettingsPage() {
 
       {/* About Section */}
       <motion.section
-        custom={4}
+        custom={5}
         variants={sectionVariants}
         initial="hidden"
         animate="visible"
@@ -598,7 +720,7 @@ export default function SettingsPage() {
 
       {/* Save Button */}
       <motion.div
-        custom={5}
+        custom={6}
         variants={sectionVariants}
         initial="hidden"
         animate="visible"
