@@ -128,7 +128,7 @@ export function ConvexSync({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (notesMobileLayouts !== undefined) {
-      useAppStore.setState({ noteMobileLayouts })
+      useAppStore.setState({ noteMobileLayouts: notesMobileLayouts })
     }
   }, [notesMobileLayouts])
 
@@ -140,7 +140,7 @@ export function ConvexSync({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (pinnedMobileLayouts !== undefined) {
-      useAppStore.setState({ pinnedNoteMobileLayouts })
+      useAppStore.setState({ pinnedNoteMobileLayouts: pinnedMobileLayouts })
     }
   }, [pinnedMobileLayouts])
 

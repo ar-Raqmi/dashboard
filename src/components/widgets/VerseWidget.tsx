@@ -36,10 +36,15 @@ export default function VerseWidget() {
   }
 
   useEffect(() => {
-    fetchVerse()
+    const rafId = requestAnimationFrame(() => {
+      fetchVerse()
+    })
     // Refresh daily
     const interval = setInterval(fetchVerse, 24 * 60 * 60 * 1000)
-    return () => clearInterval(interval)
+    return () => {
+      clearInterval(interval)
+      cancelAnimationFrame(rafId)
+    }
   }, [])
 
   // Loading skeleton

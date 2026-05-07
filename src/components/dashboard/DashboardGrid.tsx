@@ -701,7 +701,9 @@ function ClockDisplay({ clock, isPrimary, showSeconds }: { clock: ClockConfig; i
   const [mounted, setMounted] = React.useState(false)
 
   React.useEffect(() => {
-    setMounted(true)
+    const rafId = requestAnimationFrame(() => {
+      setMounted(true)
+    })
     const update = () => {
       const now = new Date()
       try {
@@ -727,7 +729,10 @@ function ClockDisplay({ clock, isPrimary, showSeconds }: { clock: ClockConfig; i
     }
     update()
     const interval = setInterval(update, 1000)
-    return () => clearInterval(interval)
+    return () => {
+      clearInterval(interval)
+      cancelAnimationFrame(rafId)
+    }
   }, [clock.timezone, showSeconds])
 
   if (!mounted) {
