@@ -67,14 +67,13 @@ export default defineSchema({
   files: defineTable({
     userId: v.id("users"),
     name: v.string(),
-    type: v.string(), // 'file' | 'folder'
-    category: v.string(), // 'image' | 'audio' | 'pdf' | 'doc' | 'video' | 'other' | 'folder'
-    parentId: v.optional(v.id("files")),
-    size: v.number(),
-    createdAt: v.string(),
-    updatedAt: v.string(),
-    content: v.optional(v.string()),
+    type: v.union(v.literal("file"), v.literal("folder")),
+    category: v.optional(v.union(v.literal("image"), v.literal("audio"), v.literal("pdf"), v.literal("doc"), v.literal("video"), v.literal("other"))),
+    parentId: v.optional(v.id("files")), // self-referential parent
+    size: v.optional(v.number()),
     storageId: v.optional(v.id("_storage")),
+    createdAt: v.number(), // Use number (timestamp)
+    updatedAt: v.number(),
   }).index("by_user", ["userId"])
     .index("by_parent", ["parentId"]),
 
