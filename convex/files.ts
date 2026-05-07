@@ -229,3 +229,55 @@ export const remove = mutation({
     await ctx.db.delete(id);
   },
 });
+
+export const getFilesRecursive = query({
+  args: { 
+    sessionToken: v.string(), 
+    ids: v.array(v.id("files")) 
+  },
+  handler: async (ctx, { sessionToken, ids }) => {
+    const userId = await getAuthedUserId(ctx, sessionToken);
+    const result: any[] = [];
+
+    const fetchRecursive = async (fileId: any, currentPath: string) => {
+      const file = await ctx.db.get(fileId);
+      if (!file || file.userId !== userId) return;
+
+      if (file.type === "file") {
+        const url = file.storageId ? await ctx.storage.getUrl(file.storageId) : null;
+        result.push({
+          ...file,
+          url,
+          relativePath: currentPath + file.name
+        });
+      } else {
+        const children = await ctx.db
+          .query("files")
+          .withIndex("by_parent", (q) => q.eq("parentId", fileId))
+          .collect();
+        
+        for (const child of children) {
+          await fetchRecursive(child._id, currentPath + file.name + "/");
+        }
+      }
+    };
+
+    for (const id of ids) {
+      const file = await ctx.db.get(id);
+      if (!file || file.userId !== userId) continue;
+      
+      if (file.type === "file") {
+        const url = file.storageId ? await ctx.storage.getUrl(file.storageId) : null;
+        result.push({
+          ...file,
+          url,
+          relativePath: file.name
+        });
+      } else {
+        await fetchRecursive(id, "");
+      }
+    }
+
+    return result;
+  },
+});

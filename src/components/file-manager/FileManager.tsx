@@ -136,6 +136,60 @@ export default function FileManager() {
     }
   }
 
+  // ZIP Download Logic
+  const [idsToDownload, setIdsToDownload] = useState<string[]>([])
+  const filesToDownload = useQuery(api.files.getFilesRecursive, 
+    idsToDownload.length > 0 ? { sessionToken, ids: idsToDownload as any } : 'skip'
+  )
+
+  const handleBatchDownload = async (ids: string[]) => {
+    if (ids.length === 0) return
+    setIdsToDownload(ids)
+    toast.info("Preparing files for download...")
+  }
+
+  // Handle the download when the query returns data
+  React.useEffect(() => {
+    if (filesToDownload && idsToDownload.length > 0) {
+      const downloadZip = async () => {
+        const JSZip = (window as any).JSZip
+        if (!JSZip) {
+          toast.error("Download library not loaded yet. Please try again in a moment.")
+          return
+        }
+
+        const zip = new JSZip()
+        const toastId = toast.loading("Creating ZIP archive...")
+        
+        try {
+          for (const file of filesToDownload) {
+            if (!file.url) continue
+            const res = await fetch(file.url)
+            const blob = await res.blob()
+            zip.file(file.relativePath, blob)
+          }
+
+          const content = await zip.generateAsync({ type: "blob" })
+          const url = window.URL.createObjectURL(content)
+          const a = document.createElement("a")
+          a.href = url
+          a.download = idsToDownload.length === 1 && filesToDownload.length > 0 && filesToDownload[0].type === 'folder' 
+            ? `${filesToDownload[0].name}.zip` 
+            : "batch_download.zip"
+          a.click()
+          window.URL.revokeObjectURL(url)
+          toast.success("Download started", { id: toastId })
+        } catch (e) {
+          console.error(e)
+          toast.error("Failed to create ZIP", { id: toastId })
+        } finally {
+          setIdsToDownload([])
+        }
+      }
+      downloadZip()
+    }
+  }, [filesToDownload, idsToDownload])
+
   const handleDrop = async (e: React.DragEvent, targetId: string | null) => {
     e.preventDefault()
     const draggedId = e.dataTransfer.getData('fileId')
@@ -344,10 +398,7 @@ export default function FileManager() {
                 <Button variant="ghost" size="sm" onClick={() => setIsMoveDialogOpen(true)} className="h-8 hover:bg-white/10 text-primary-foreground gap-2">
                   <Edit3 className="size-3.5" /> Move
                 </Button>
-                <Button variant="ghost" size="sm" onClick={async () => {
-                  toast.info("Preparing batch download...");
-                  toast.warning("ZIP compression for multiple files coming soon!");
-                }} className="h-8 hover:bg-white/10 text-primary-foreground gap-2">
+                <Button variant="ghost" size="sm" onClick={() => handleBatchDownload(Array.from(selectedIds))} className="h-8 hover:bg-white/10 text-primary-foreground gap-2">
                   <Download className="size-3.5" /> Download (.zip)
                 </Button>
                 <Button variant="ghost" size="sm" onClick={handleBatchDelete} className="h-8 hover:bg-white/10 text-primary-foreground gap-2">
@@ -398,6 +449,7 @@ export default function FileManager() {
                         storageId: file.storageId
                       })}
                       onDelete={() => handleDelete(file._id)}
+                      onDownload={() => handleBatchDownload([file._id])}
                       onToggleStar={(e) => handleToggleStar(file._id, e)}
                       onDragStart={(e) => {
                         e.dataTransfer.setData('fileId', file._id)
@@ -439,6 +491,7 @@ export default function FileManager() {
                           storageId: file.storageId
                         })}
                         onDelete={() => handleDelete(file._id)}
+                        onDownload={() => handleBatchDownload([file._id])}
                         onToggleStar={(e) => handleToggleStar(file._id, e)}
                         onDragStart={(e) => {
                           e.dataTransfer.setData('fileId', file._id)
@@ -546,10 +599,17 @@ function NavButton({ active, icon, label, onClick }: { active: boolean, icon: Re
 }
 
 function FileGridItem({ 
-  file, onOpen, onDelete, onToggleStar, selected, onToggleSelect, onDragStart, onDrop 
+  file, onOpen, onDelete, onDownload, onToggleStar, selected, onToggleSelect, onDragStart, onDrop 
 }: { 
-  file: any, onOpen: () => void, onDelete: () => void, onToggleStar: (e: React.MouseEvent) => void, 
-  selected: boolean, onToggleSelect: () => void, onDragStart: (e: React.DragEvent) => void, onDrop: (e: React.DragEvent) => void
+  file: any, 
+  onOpen: () => void, 
+  onDelete: () => void, 
+  onDownload: () => void,
+  onToggleStar: (e: React.MouseEvent) => void, 
+  selected: boolean, 
+  onToggleSelect: () => void, 
+  onDragStart: (e: React.DragEvent) => void, 
+  onDrop: (e: React.DragEvent) => void 
 }) {
   return (
     <motion.div 
@@ -631,8 +691,8 @@ function FileGridItem({
             <DropdownMenuItem className="rounded-xl" onClick={(e) => { e.stopPropagation(); setSelectedIds(new Set([file._id])); setIsMoveDialogOpen(true); }}>
               <Edit3 className="size-4 mr-2" /> Move
             </DropdownMenuItem>
-            <DropdownMenuItem className="rounded-xl">
-              <Download className="size-4 mr-2" /> Download
+            <DropdownMenuItem className="rounded-xl" onClick={(e) => { e.stopPropagation(); onDownload(); }}>
+              <Download className="size-4 mr-2" /> {file.type === 'folder' ? 'Download as ZIP' : 'Download'}
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-white/10" />
             <DropdownMenuItem onClick={onDelete} className="text-destructive rounded-xl hover:bg-destructive/10">
@@ -646,10 +706,17 @@ function FileGridItem({
 }
 
 function FileListItem({ 
-  file, onOpen, onDelete, onToggleStar, selected, onToggleSelect, onDragStart, onDrop 
+  file, onOpen, onDelete, onDownload, onToggleStar, selected, onToggleSelect, onDragStart, onDrop 
 }: { 
-  file: any, onOpen: () => void, onDelete: () => void, onToggleStar: (e: React.MouseEvent) => void,
-  selected: boolean, onToggleSelect: () => void, onDragStart: (e: React.DragEvent) => void, onDrop: (e: React.DragEvent) => void
+  file: any, 
+  onOpen: () => void, 
+  onDelete: () => void, 
+  onDownload: () => void,
+  onToggleStar: (e: React.MouseEvent) => void, 
+  selected: boolean, 
+  onToggleSelect: () => void, 
+  onDragStart: (e: React.DragEvent) => void, 
+  onDrop: (e: React.DragEvent) => void 
 }) {
   return (
     <TableRow 
