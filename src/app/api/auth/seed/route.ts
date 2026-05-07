@@ -25,12 +25,12 @@ export async function POST(request: NextRequest) {
     // Hash the password
     const { hash, salt } = await hashPassword(password)
 
-    // Call Convex to create the admin user
+    // Call Convex to reset the admin user (wipes existing and seeds fresh without sample data)
     const response = await fetch(`${convexUrl}/api/mutation`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        path: 'seed:admin',
+        path: 'seed:resetAdmin',
         args: {
           username,
           passwordHash: hash,
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Admin user created successfully with sample data',
+      message: 'Admin user reset successfully with clean data',
     })
   } catch (error) {
     console.error('Seed error:', error)
