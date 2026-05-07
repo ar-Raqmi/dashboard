@@ -760,7 +760,7 @@ export default function FileManager() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full rounded-3xl bg-card/80 backdrop-blur-sm border border-border/40 p-4">
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
         <BreadcrumbNav />
