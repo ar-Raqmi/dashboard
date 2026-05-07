@@ -77,10 +77,11 @@ function categorizeTasks(tasks: Task[]) {
 }
 
 // ===== Task Card for full page =====
-function TaskCard({ task, onToggle, onDelete }: {
+function TaskCard({ task, onToggle, onDelete, isHighlighted }: {
   task: Task
   onToggle: (id: string) => void
   onDelete: (id: string) => void
+  isHighlighted?: boolean
 }) {
   const isCompleted = task.status === 'completed'
   const today = new Date()
@@ -95,12 +96,14 @@ function TaskCard({ task, onToggle, onDelete }: {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -100, transition: { duration: 0.2 } }}
       transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-      className={`flex items-center gap-3 p-4 rounded-3xl border transition-colors group ${
-        isOverdue
-          ? 'bg-destructive/5 border-destructive/20 hover:border-destructive/40'
-          : isToday && !isCompleted
-            ? 'bg-card border-primary/20 hover:border-primary/40'
-            : 'bg-card border-border hover:border-outline'
+      className={`flex items-center gap-3 p-4 rounded-3xl border transition-all duration-500 group ${
+        isHighlighted
+          ? 'ring-2 ring-primary ring-offset-2 bg-primary/10 border-primary shadow-lg shadow-primary/20 scale-[1.02]'
+          : isOverdue
+            ? 'bg-destructive/5 border-destructive/20 hover:border-destructive/40'
+            : isToday && !isCompleted
+              ? 'bg-card border-primary/20 hover:border-primary/40'
+              : 'bg-card border-border hover:border-outline'
       }`}
     >
       <Checkbox
@@ -196,13 +199,21 @@ function SectionHeader({ label, icon, count, variant }: {
 }
 
 export default function TasksPage() {
-  const { tasks, addTask, toggleTaskStatus, deleteTask, deleteCompletedTasks } = useAppStore()
+  const { tasks, addTask, toggleTaskStatus, deleteTask, deleteCompletedTasks, highlightedTaskId, setHighlightedTask } = useAppStore()
   const [filter, setFilter] = useState<FilterType>('all')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [title, setTitle] = useState('')
   const [dueDate, setDueDate] = useState<Date | undefined>(new Date())
   const [priority, setPriority] = useState<Priority>('medium')
   const [calendarOpen, setCalendarOpen] = useState(false)
+
+  // Clear highlight after 3 seconds
+  useEffect(() => {
+    if (highlightedTaskId) {
+      const timer = setTimeout(() => setHighlightedTask(null), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [highlightedTaskId, setHighlightedTask])
 
   // Filter tasks first
   const filteredTasks = useMemo(() => tasks.filter((task) => {
@@ -410,6 +421,7 @@ export default function TasksPage() {
                         task={task}
                         onToggle={toggleTaskStatus}
                         onDelete={deleteTask}
+                        isHighlighted={highlightedTaskId === task.id}
                       />
                     ))}
                   </div>
@@ -437,6 +449,7 @@ export default function TasksPage() {
                         task={task}
                         onToggle={toggleTaskStatus}
                         onDelete={deleteTask}
+                        isHighlighted={highlightedTaskId === task.id}
                       />
                     ))}
                   </div>
@@ -459,12 +472,13 @@ export default function TasksPage() {
                   />
                   <div className="flex flex-col gap-2">
                     {upcoming.map((task) => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        onToggle={toggleTaskStatus}
-                        onDelete={deleteTask}
-                      />
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          onToggle={toggleTaskStatus}
+                          onDelete={deleteTask}
+                          isHighlighted={highlightedTaskId === task.id}
+                        />
                     ))}
                   </div>
                 </motion.div>

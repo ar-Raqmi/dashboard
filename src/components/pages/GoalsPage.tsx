@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Trash2, Flag, CheckCircle2, Circle, Pencil } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
@@ -17,8 +17,16 @@ import {
 } from '@/components/ui/dialog'
 
 export default function GoalsPage() {
-  const { goals, addGoal, deleteGoal, updateGoal, toggleMilestone } = useAppStore()
+  const { goals, addGoal, deleteGoal, updateGoal, toggleMilestone, highlightedGoalId, setHighlightedGoal } = useAppStore()
   const [dialogOpen, setDialogOpen] = useState(false)
+
+  // Clear highlight after 3 seconds
+  useEffect(() => {
+    if (highlightedGoalId) {
+      const timer = setTimeout(() => setHighlightedGoal(null), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [highlightedGoalId, setHighlightedGoal])
   const [editingGoal, setEditingGoal] = useState<any>(null)
   const [goalTitle, setGoalTitle] = useState('')
   const [milestoneInput, setMilestoneInput] = useState('')
@@ -223,7 +231,11 @@ export default function GoalsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: -100 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                className="rounded-3xl bg-card border border-border p-5 flex flex-col gap-4"
+                className={`rounded-3xl bg-card border p-5 flex flex-col gap-4 transition-all duration-500 ${
+                  highlightedGoalId === goal.id
+                    ? 'ring-2 ring-primary ring-offset-2 border-primary bg-primary/5 shadow-lg shadow-primary/20 scale-[1.02]'
+                    : 'border-border'
+                }`}
               >
                 {/* Goal Header */}
                 <div className="flex items-center justify-between">

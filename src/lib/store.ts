@@ -273,6 +273,14 @@ interface AppStore {
   // Background
   background: BackgroundSettings
   setBackground: (settings: Partial<BackgroundSettings>) => void
+
+  // Highlighting (for navigation from search)
+  highlightedTaskId: string | null
+  setHighlightedTask: (id: string | null) => void
+  highlightedNoteId: string | null
+  setHighlightedNote: (id: string | null) => void
+  highlightedGoalId: string | null
+  setHighlightedGoal: (id: string | null) => void
 }
 
 // ===== STORE =====
@@ -557,4 +565,11 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     set((state) => ({
       background: { ...state.background, ...updates },
     })),
+  // Highlighting
+  highlightedTaskId: null,
+  setHighlightedTask: (id) => set({ highlightedTaskId: id }),
+  highlightedNoteId: null,
+  setHighlightedNote: (id) => set({ highlightedNoteId: id }),
+  highlightedGoalId: null,
+  setHighlightedGoal: (id) => set({ highlightedGoalId: id }),
 }))
