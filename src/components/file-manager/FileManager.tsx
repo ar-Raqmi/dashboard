@@ -73,6 +73,9 @@ export default function FileManager() {
   const [isNewFolderDialogOpen, setIsNewFolderDialogOpen] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
+  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false)
+  const [renamingFile, setRenamingFile] = useState<{ id: string, name: string } | null>(null)
+  const [newRenameName, setNewRenameName] = useState('')
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false)
   const [targetFolderId, setTargetFolderId] = useState<string | null>(null)
 
@@ -121,6 +124,18 @@ export default function FileManager() {
       toast.success(`Deleted ${selectedIds.size} items`)
     } catch (error) {
       toast.error('Batch delete failed')
+    }
+  }
+
+  const handleRename = async () => {
+    if (!sessionToken || !renamingFile || !newRenameName) return
+    try {
+      await renameFile({ sessionToken, id: renamingFile.id as any, name: newRenameName })
+      setIsRenameDialogOpen(false)
+      setRenamingFile(null)
+      toast.success('Renamed successfully')
+    } catch (error) {
+      toast.error('Rename failed')
     }
   }
 
@@ -456,6 +471,11 @@ export default function FileManager() {
                         e.dataTransfer.effectAllowed = 'move'
                       }}
                       onDrop={(e) => file.type === 'folder' ? handleDrop(e, file._id) : undefined}
+                      onRename={() => {
+                        setRenamingFile({ id: file._id, name: file.name })
+                        setNewRenameName(file.name)
+                        setIsRenameDialogOpen(true)
+                      }}
                     />
                   ))}
                 </AnimatePresence>
@@ -498,6 +518,11 @@ export default function FileManager() {
                           e.dataTransfer.effectAllowed = 'move'
                         }}
                         onDrop={(e) => file.type === 'folder' ? handleDrop(e, file._id) : undefined}
+                        onRename={() => {
+                          setRenamingFile({ id: file._id, name: file.name })
+                          setNewRenameName(file.name)
+                          setIsRenameDialogOpen(true)
+                        }}
                       />
                     ))}
                   </TableBody>
@@ -509,6 +534,28 @@ export default function FileManager() {
       </div>
 
       {/* Dialogs */}
+      <Dialog open={isRenameDialogOpen} onOpenChange={setIsRenameDialogOpen}>
+        <DialogContent className="rounded-3xl border-white/10 bg-background/95 backdrop-blur-2xl">
+          <DialogHeader>
+            <DialogTitle>Rename Item</DialogTitle>
+            <DialogDescription>Enter a new name for this item.</DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input 
+              autoFocus
+              placeholder="New Name" 
+              value={newRenameName} 
+              onChange={(e) => setNewRenameName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleRename()}
+              className="rounded-xl bg-white/5 border-white/10 h-12"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsRenameDialogOpen(false)} className="rounded-xl">Cancel</Button>
+            <Button onClick={handleRename} className="rounded-xl bg-primary shadow-lg shadow-primary/20 px-6">Rename</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog open={isNewFolderDialogOpen} onOpenChange={setIsNewFolderDialogOpen}>
         <DialogContent className="rounded-3xl border-white/10 bg-background/95 backdrop-blur-2xl">
           <DialogHeader>
@@ -599,7 +646,7 @@ function NavButton({ active, icon, label, onClick }: { active: boolean, icon: Re
 }
 
 function FileGridItem({ 
-  file, onOpen, onDelete, onDownload, onToggleStar, selected, onToggleSelect, onDragStart, onDrop 
+  file, onOpen, onDelete, onDownload, onToggleStar, selected, onToggleSelect, onDragStart, onDrop, onRename 
 }: { 
   file: any, 
   onOpen: () => void, 
@@ -609,7 +656,8 @@ function FileGridItem({
   selected: boolean, 
   onToggleSelect: () => void, 
   onDragStart: (e: React.DragEvent) => void, 
-  onDrop: (e: React.DragEvent) => void 
+  onDrop: (e: React.DragEvent) => void,
+  onRename: () => void
 }) {
   return (
     <motion.div 
@@ -688,8 +736,11 @@ function FileGridItem({
             <DropdownMenuItem className="rounded-xl" onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}>
               {selected ? <X className="size-4 mr-2" /> : <Check className="size-4 mr-2" />} {selected ? 'Deselect' : 'Select'}
             </DropdownMenuItem>
+            <DropdownMenuItem className="rounded-xl" onClick={(e) => { e.stopPropagation(); onRename(); }}>
+              <Edit3 className="size-4 mr-2" /> Rename
+            </DropdownMenuItem>
             <DropdownMenuItem className="rounded-xl" onClick={(e) => { e.stopPropagation(); setSelectedIds(new Set([file._id])); setIsMoveDialogOpen(true); }}>
-              <Edit3 className="size-4 mr-2" /> Move
+              <Folder className="size-4 mr-2" /> Move
             </DropdownMenuItem>
             <DropdownMenuItem className="rounded-xl" onClick={(e) => { e.stopPropagation(); onDownload(); }}>
               <Download className="size-4 mr-2" /> {file.type === 'folder' ? 'Download as ZIP' : 'Download'}
@@ -706,7 +757,7 @@ function FileGridItem({
 }
 
 function FileListItem({ 
-  file, onOpen, onDelete, onDownload, onToggleStar, selected, onToggleSelect, onDragStart, onDrop 
+  file, onOpen, onDelete, onDownload, onToggleStar, selected, onToggleSelect, onDragStart, onDrop, onRename 
 }: { 
   file: any, 
   onOpen: () => void, 
@@ -716,7 +767,8 @@ function FileListItem({
   selected: boolean, 
   onToggleSelect: () => void, 
   onDragStart: (e: React.DragEvent) => void, 
-  onDrop: (e: React.DragEvent) => void 
+  onDrop: (e: React.DragEvent) => void,
+  onRename: () => void
 }) {
   return (
     <TableRow 
@@ -764,8 +816,11 @@ function FileListItem({
             <DropdownMenuItem className="rounded-xl" onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}>
               {selected ? <X className="size-4 mr-2" /> : <Check className="size-4 mr-2" />} {selected ? 'Deselect' : 'Select'}
             </DropdownMenuItem>
+            <DropdownMenuItem className="rounded-xl" onClick={(e) => { e.stopPropagation(); onRename(); }}>
+              <Edit3 className="size-4 mr-2" /> Rename
+            </DropdownMenuItem>
             <DropdownMenuItem className="rounded-xl" onClick={(e) => { e.stopPropagation(); setSelectedIds(new Set([file._id])); setIsMoveDialogOpen(true); }}>
-              <Edit3 className="size-4 mr-2" /> Move
+              <Folder className="size-4 mr-2" /> Move
             </DropdownMenuItem>
             <DropdownMenuItem className="rounded-xl"><Download className="size-4 mr-2" /> Download</DropdownMenuItem>
             <DropdownMenuSeparator className="bg-white/10" />
