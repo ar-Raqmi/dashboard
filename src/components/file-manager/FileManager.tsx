@@ -674,7 +674,6 @@ export default function FileManager() {
   const [showNewFolder, setShowNewFolder] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
   const [showUpload, setShowUpload] = useState(false)
-  const [uploadFileName, setUploadFileName] = useState('')
 
   // Current directory items
   const currentItems = useMemo(
@@ -721,9 +720,28 @@ export default function FileManager() {
     }
   }
 
-  const handleUploadFile = () => {
-    if (uploadFileName.trim()) {
-      const ext = uploadFileName.split('.').pop()?.toLowerCase() || ''
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl)
+  const saveFile = useMutation(api.files.saveFile)
+  const { sessionToken } = useAuth()
+
+  const handleUploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !sessionToken) return
+
+    try {
+      // 1. Get upload URL
+      const postUrl = await generateUploadUrl()
+
+      // 2. Upload file
+      const result = await fetch(postUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
+      })
+      const { storageId } = await result.json()
+
+      // 3. Save file metadata
+      const ext = file.name.split('.').pop()?.toLowerCase() || ''
       let category: FileCategory = 'other'
       if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(ext)) category = 'image'
       else if (['mp3', 'wav', 'ogg', 'flac', 'aac'].includes(ext)) category = 'audio'
@@ -731,15 +749,20 @@ export default function FileManager() {
       else if (['doc', 'docx', 'txt', 'xlsx', 'xls', 'csv'].includes(ext)) category = 'doc'
       else if (['mp4', 'avi', 'mov', 'mkv', 'webm'].includes(ext)) category = 'video'
 
-      addFile({
-        name: uploadFileName.trim(),
+      await saveFile({
+        sessionToken,
+        name: file.name,
         type: 'file',
         category,
-        parentId: currentFolderId,
-        size: Math.floor(Math.random() * 5000000) + 10000,
+        parentId: currentFolderId ?? undefined,
+        size: file.size,
+        storageId: storageId,
       })
-      setUploadFileName('')
+
       setShowUpload(false)
+    } catch (err) {
+      console.error('Upload failed:', err)
+      // TODO: Add toast notification
     }
   }
 
@@ -858,21 +881,12 @@ export default function FileManager() {
         <div className="mb-3">
           <div className="flex items-center gap-2 p-3 rounded-2xl bg-muted/30 border border-border/40">
               <Upload className="size-5 text-muted-foreground shrink-0" />
-              <Input
-                value={uploadFileName}
-                onChange={(e) => setUploadFileName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleUploadFile()
-                  if (e.key === 'Escape') { setShowUpload(false); setUploadFileName('') }
-                }}
-                placeholder="filename.ext (mock upload)..."
-                autoFocus
-                className="h-8 bg-input border-border text-foreground rounded-xl text-sm"
+              <input
+                type="file"
+                onChange={handleUploadFile}
+                className="flex-1 text-sm text-foreground file:mr-4 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
               />
-              <Button size="sm" onClick={handleUploadFile} className="rounded-2xl bg-secondary text-secondary-foreground hover:bg-secondary/90 size-8 shrink-0">
-                <Check className="size-4" />
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => { setShowUpload(false); setUploadFileName('') }} className="rounded-2xl text-muted-foreground hover:text-foreground hover:bg-accent size-8 shrink-0">
+              <Button size="sm" variant="ghost" onClick={() => setShowUpload(false)} className="rounded-2xl text-muted-foreground hover:text-foreground hover:bg-accent size-8 shrink-0">
                 <X className="size-4" />
               </Button>
           </div>

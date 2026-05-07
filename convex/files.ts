@@ -64,31 +64,34 @@ export const rename = mutation({
   },
 });
 
-// Recursively delete file and all children
-export const remove = mutation({
-  args: { sessionToken: v.string(), fileId: v.id("files") },
-  handler: async (ctx, { sessionToken, fileId }) => {
+export const generateUploadUrl = mutation(async (ctx) => {
+  return await ctx.storage.generateUploadUrl();
+});
+
+export const saveFile = mutation({
+  args: {
+    sessionToken: v.string(),
+    name: v.string(),
+    type: v.string(),
+    category: v.string(),
+    parentId: v.optional(v.id("files")),
+    size: v.number(),
+    storageId: v.id("_storage"),
+  },
+  handler: async (ctx, { sessionToken, name, type, category, parentId, size, storageId }) => {
     const userId = await getAuthedUserId(ctx, sessionToken);
-    const file = await ctx.db.get(fileId);
-    if (!file || file.userId !== userId) {
-      throw new Error("File not found or unauthorized");
-    }
-
-    // Recursively delete children
-    const deleteRecursive = async (parentId: any) => {
-      const children = await ctx.db
-        .query("files")
-        .withIndex("by_parent", (q: any) => q.eq("parentId", parentId))
-        .collect();
-
-      for (const child of children) {
-        await deleteRecursive(child._id);
-        await ctx.db.delete(child._id);
-      }
-    };
-
-    await deleteRecursive(fileId);
-    await ctx.db.delete(fileId);
+    const now = new Date().toISOString();
+    return await ctx.db.insert("files", {
+      userId,
+      name,
+      type,
+      category,
+      parentId,
+      size,
+      createdAt: now,
+      updatedAt: now,
+      storageId,
+    });
   },
 });
 

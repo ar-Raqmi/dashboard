@@ -74,6 +74,7 @@ export default defineSchema({
     createdAt: v.string(),
     updatedAt: v.string(),
     content: v.optional(v.string()),
+    storageId: v.optional(v.id("_storage")),
   }).index("by_user", ["userId"])
     .index("by_parent", ["parentId"]),
 
