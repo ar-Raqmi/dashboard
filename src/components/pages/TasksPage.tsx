@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, CheckCircle2, Trash2, ListTodo, CalendarDays } from 'lucide-react'
+import { Plus, CheckCircle2, Trash2, ListTodo, CalendarDays, AlertTriangle, Clock } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
-import type { Priority, TaskStatus } from '@/lib/store'
+import type { Priority, TaskStatus, Task } from '@/lib/store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -37,6 +37,164 @@ const priorityConfig: Record<Priority, { label: string; className: string }> = {
   low: { label: 'Low', className: 'priority-low' },
 }
 
+// ===== Categorize tasks into overdue / today / upcoming =====
+function categorizeTasks(tasks: Task[]) {
+  const today = new Date()
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+
+  const overdue: Task[] = []
+  const todayList: Task[] = []
+  const upcoming: Task[] = []
+
+  // Sort: pending first, then by dueDate ascending, then priority
+  const priorityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 }
+  const sorted = [...tasks].sort((a, b) => {
+    if (a.status !== b.status) return a.status === 'completed' ? 1 : -1
+    if (a.dueDate && b.dueDate) {
+      const cmp = a.dueDate.localeCompare(b.dueDate)
+      if (cmp !== 0) return cmp
+    } else if (a.dueDate) {
+      return -1
+    } else if (b.dueDate) {
+      return 1
+    }
+    return (priorityOrder[a.priority] ?? 2) - (priorityOrder[b.priority] ?? 2)
+  })
+
+  for (const task of sorted) {
+    if (!task.dueDate) {
+      upcoming.push(task)
+    } else if (task.dueDate < todayStr && task.status !== 'completed') {
+      overdue.push(task)
+    } else if (task.dueDate === todayStr) {
+      todayList.push(task)
+    } else {
+      upcoming.push(task)
+    }
+  }
+
+  return { overdue, today: todayList, upcoming }
+}
+
+// ===== Task Card for full page =====
+function TaskCard({ task, onToggle, onDelete }: {
+  task: Task
+  onToggle: (id: string) => void
+  onDelete: (id: string) => void
+}) {
+  const isCompleted = task.status === 'completed'
+  const today = new Date()
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+  const isOverdue = task.dueDate ? task.dueDate < todayStr && !isCompleted : false
+  const isToday = task.dueDate === todayStr
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, x: -100, transition: { duration: 0.2 } }}
+      transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+      className={`flex items-center gap-3 p-4 rounded-3xl border transition-colors group ${
+        isOverdue
+          ? 'bg-destructive/5 border-destructive/20 hover:border-destructive/40'
+          : isToday && !isCompleted
+            ? 'bg-primary/5 border-primary/20 hover:border-primary/40'
+            : 'bg-card border-border hover:border-outline'
+      }`}
+    >
+      <Checkbox
+        checked={isCompleted}
+        onCheckedChange={() => onToggle(task.id)}
+        className={`size-5 rounded-lg ${
+          isOverdue
+            ? 'data-[state=unchecked]:border-destructive data-[state=unchecked]:hover:border-destructive/80'
+            : ''
+        } data-[state=checked]:bg-primary data-[state=checked]:border-primary`}
+      />
+      <span
+        className={`flex-1 text-sm min-w-0 truncate ${
+          isCompleted
+            ? 'line-through text-outline'
+            : 'text-foreground'
+        }`}
+      >
+        {task.title}
+      </span>
+      <div className="flex items-center gap-2 shrink-0">
+        {/* Overdue indicator */}
+        {isOverdue && (
+          <Badge className="rounded-xl text-[0.6rem] bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20 gap-1">
+            <AlertTriangle className="size-2.5" />
+            Overdue
+          </Badge>
+        )}
+        {/* Today indicator */}
+        {isToday && !isCompleted && !isOverdue && (
+          <Badge className="rounded-xl text-[0.6rem] bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 gap-1">
+            <Clock className="size-2.5" />
+            Today
+          </Badge>
+        )}
+        {task.dueDate && (
+          <Badge
+            variant="outline"
+            className={`rounded-xl text-[0.65rem] ${
+              isOverdue
+                ? 'border-destructive/30 text-destructive'
+                : isToday && !isCompleted
+                  ? 'border-primary/30 text-primary'
+                  : 'border-border text-on-surface-variant'
+            }`}
+          >
+            {format(new Date(task.dueDate + 'T12:00:00'), 'MMM d')}
+          </Badge>
+        )}
+        <Badge
+          variant="outline"
+          className={`rounded-xl text-[0.65rem] border ${priorityConfig[task.priority].className}`}
+        >
+          {priorityConfig[task.priority].label}
+        </Badge>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-8 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+          onClick={() => onDelete(task.id)}
+        >
+          <Trash2 className="size-4" />
+        </Button>
+      </div>
+    </motion.div>
+  )
+}
+
+// ===== Section Header =====
+function SectionHeader({ label, icon, count, variant }: {
+  label: string
+  icon: React.ReactNode
+  count: number
+  variant: 'overdue' | 'today' | 'upcoming'
+}) {
+  const colorClass = variant === 'overdue'
+    ? 'text-destructive'
+    : variant === 'today'
+      ? 'text-primary'
+      : 'text-muted-foreground'
+
+  return (
+    <div className={`flex items-center gap-2 mb-2 ${colorClass}`}>
+      {icon}
+      <span className="text-xs font-semibold uppercase tracking-wider">{label}</span>
+      {count > 0 && (
+        <span className={`text-[0.6rem] tabular-nums ${variant === 'overdue' ? 'text-destructive/70' : 'opacity-60'}`}>
+          {count}
+        </span>
+      )}
+    </div>
+  )
+}
+
 export default function TasksPage() {
   const { tasks, addTask, toggleTaskStatus, deleteTask } = useAppStore()
   const [filter, setFilter] = useState<FilterType>('all')
@@ -46,11 +204,18 @@ export default function TasksPage() {
   const [priority, setPriority] = useState<Priority>('medium')
   const [calendarOpen, setCalendarOpen] = useState(false)
 
-  const filteredTasks = tasks.filter((task) => {
+  // Filter tasks first
+  const filteredTasks = useMemo(() => tasks.filter((task) => {
     if (filter === 'pending') return task.status === 'pending'
     if (filter === 'completed') return task.status === 'completed'
     return true
-  })
+  }), [tasks, filter])
+
+  // Then categorize
+  const { overdue, today: todayTasks, upcoming } = useMemo(
+    () => categorizeTasks(filteredTasks),
+    [filteredTasks]
+  )
 
   const handleAddTask = () => {
     if (!title.trim()) return
@@ -85,6 +250,11 @@ export default function TasksPage() {
             <ListTodo className="size-6 text-primary" />
           </div>
           <h1 className="text-2xl font-bold">Daily Tasks</h1>
+          {overdue.length > 0 && (
+            <Badge className="rounded-xl text-[0.6rem] bg-destructive/10 text-destructive border-destructive/20">
+              {overdue.length} overdue
+            </Badge>
+          )}
         </div>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -185,8 +355,8 @@ export default function TasksPage() {
         ))}
       </motion.div>
 
-      {/* Task List */}
-      <div className="flex flex-col gap-2">
+      {/* Task List — Sectioned */}
+      <div className="flex flex-col gap-6">
         <AnimatePresence mode="popLayout">
           {filteredTasks.length === 0 ? (
             <motion.div
@@ -206,56 +376,85 @@ export default function TasksPage() {
               </p>
             </motion.div>
           ) : (
-            filteredTasks.map((task) => (
-              <motion.div
-                key={task.id}
-                layout
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, x: -100, transition: { duration: 0.2 } }}
-                transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                className="flex items-center gap-3 p-4 rounded-3xl bg-card border border-border hover:border-outline transition-colors group"
-              >
-                <Checkbox
-                  checked={task.status === 'completed'}
-                  onCheckedChange={() => toggleTaskStatus(task.id)}
-                  className="size-5 rounded-lg data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                />
-                <span
-                  className={`flex-1 text-sm ${
-                    task.status === 'completed'
-                      ? 'line-through text-outline'
-                      : 'text-foreground'
-                  }`}
+            <>
+              {/* Overdue Section */}
+              {overdue.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="rounded-3xl bg-destructive/5 border border-destructive/15 p-4"
                 >
-                  {task.title}
-                </span>
-                <div className="flex items-center gap-2">
-                  {task.dueDate && (
-                    <Badge
-                      variant="outline"
-                      className="rounded-xl text-[0.65rem] border-border text-on-surface-variant"
-                    >
-                      {format(new Date(task.dueDate), 'MMM d')}
-                    </Badge>
-                  )}
-                  <Badge
-                    variant="outline"
-                    className={`rounded-xl text-[0.65rem] border ${priorityConfig[task.priority].className}`}
-                  >
-                    {priorityConfig[task.priority].label}
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-8 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => deleteTask(task.id)}
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
-              </motion.div>
-            ))
+                  <SectionHeader
+                    label="Overdue"
+                    icon={<AlertTriangle className="size-3.5" />}
+                    count={overdue.length}
+                    variant="overdue"
+                  />
+                  <div className="flex flex-col gap-2">
+                    {overdue.map((task) => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        onToggle={toggleTaskStatus}
+                        onDelete={deleteTask}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Today Section */}
+              {todayTasks.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.05 }}
+                >
+                  <SectionHeader
+                    label="Today"
+                    icon={<div className="size-2 rounded-full bg-primary animate-pulse" />}
+                    count={todayTasks.length}
+                    variant="today"
+                  />
+                  <div className="flex flex-col gap-2">
+                    {todayTasks.map((task) => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        onToggle={toggleTaskStatus}
+                        onDelete={deleteTask}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Upcoming Section */}
+              {upcoming.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <SectionHeader
+                    label="Upcoming"
+                    icon={<CalendarDays className="size-3.5" />}
+                    count={upcoming.length}
+                    variant="upcoming"
+                  />
+                  <div className="flex flex-col gap-2">
+                    {upcoming.map((task) => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        onToggle={toggleTaskStatus}
+                        onDelete={deleteTask}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </>
           )}
         </AnimatePresence>
       </div>

@@ -7,7 +7,7 @@ import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import { useAppStore, MAX_GRID_W, MAX_GRID_H } from '@/lib/store'
 import { WidgetCard } from './WidgetCard'
-import type { WidgetType, Layout, ActivePage, FileItem, ClockConfig } from '@/lib/store'
+import type { WidgetType, Layout, ActivePage, FileItem, ClockConfig, Task } from '@/lib/store'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { Switch } from '@/components/ui/switch'
 import { Slider } from '@/components/ui/slider'
@@ -84,39 +84,216 @@ function getFileIcon(category: FileItem['category']) {
 function DailyTasksContent({ h }: { w: number; h: number }) {
   const tasks = useAppStore((s) => s.tasks)
   const toggleTaskStatus = useAppStore((s) => s.toggleTaskStatus)
-  const maxTasks = Math.min(tasks.length, h >= 4 ? 10 : h >= 3 ? 7 : h >= 2 ? 5 : 4)
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true))
+    return () => cancelAnimationFrame(id)
+  }, [])
+
+  // Categorize & sort tasks (client-only to avoid hydration mismatch)
+  const { overdueTasks, todayTasks, upcomingTasks } = React.useMemo(() => {
+    if (!mounted) return { overdueTasks: [] as Task[], todayTasks: [] as Task[], upcomingTasks: [] as Task[] }
+
+    const today = new Date()
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+
+    const overdue: Task[] = []
+    const todayList: Task[] = []
+    const upcoming: Task[] = []
+
+    // Sort all tasks by dueDate ascending (nulls last), then by priority (high first)
+    const priorityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 }
+    const sorted = [...tasks].sort((a, b) => {
+      // Completed tasks go to the bottom
+      if (a.status !== b.status) return a.status === 'completed' ? 1 : -1
+      // Sort by due date
+      if (a.dueDate && b.dueDate) {
+        const cmp = a.dueDate.localeCompare(b.dueDate)
+        if (cmp !== 0) return cmp
+      } else if (a.dueDate) {
+        return -1
+      } else if (b.dueDate) {
+        return 1
+      }
+      // Same date → sort by priority
+      return (priorityOrder[a.priority] ?? 2) - (priorityOrder[b.priority] ?? 2)
+    })
+
+    for (const task of sorted) {
+      if (!task.dueDate) {
+        upcoming.push(task)
+      } else if (task.dueDate < todayStr && task.status !== 'completed') {
+        overdue.push(task)
+      } else if (task.dueDate === todayStr) {
+        todayList.push(task)
+      } else {
+        upcoming.push(task)
+      }
+    }
+
+    return { overdueTasks: overdue, todayTasks: todayList, upcomingTasks: upcoming }
+  }, [tasks, mounted])
+
+  // How many tasks to show per section based on card height
+  const showSections = h >= 2
+  const maxOverdue = Math.min(overdueTasks.length, h >= 4 ? 3 : 2)
+  const maxToday = Math.min(todayTasks.length, h >= 3 ? 4 : 2)
+  const maxUpcoming = Math.min(upcomingTasks.length, h >= 4 ? 4 : h >= 3 ? 3 : 2)
+
+  // Format a date string to short form (e.g. "May 8")
+  const formatDueDate = (dateStr: string) => {
+    const d = new Date(dateStr + 'T12:00:00')
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }
+
+  // Pre-mount placeholder
+  if (!mounted) {
+    return (
+      <div className="space-y-2">
+        <div className="h-4 w-16 rounded bg-muted animate-pulse" />
+        <div className="h-8 w-full rounded-xl bg-muted/50 animate-pulse" />
+        <div className="h-8 w-full rounded-xl bg-muted/50 animate-pulse" />
+      </div>
+    )
+  }
+
+  // Compact mode for 1-row cards
+  if (!showSections) {
+    const allTasks = [...overdueTasks, ...todayTasks, ...upcomingTasks]
+    return (
+      <div className="space-y-1.5">
+        {allTasks.slice(0, 4).map((task) => (
+          <TaskRow key={task.id} task={task} onToggle={toggleTaskStatus} compact />
+        ))}
+      </div>
+    )
+  }
+
+  // Sectioned mode
+  const hasOverdue = overdueTasks.length > 0
+  const hasToday = todayTasks.length > 0
+  const hasUpcoming = upcomingTasks.length > 0
+
   return (
-    <div className="space-y-1.5">
-      {tasks.slice(0, maxTasks).map((task) => (
-        <div
-          key={task.id}
-          className="flex items-center gap-3 p-2 rounded-xl hover:bg-accent transition-colors cursor-pointer"
-          onClick={(e) => { e.stopPropagation(); toggleTaskStatus(task.id) }}
-        >
-          <div
-            className={
-              task.status === 'completed'
-                ? 'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 border-primary bg-primary'
-                : 'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 border-outline hover:border-primary transition-colors'
-            }
-          >
-            {task.status === 'completed' && (
-              <svg className="w-3 h-3 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            )}
+    <div className="flex flex-col gap-3">
+      {/* Overdue */}
+      {hasOverdue && (
+        <div>
+          <div className="flex items-center gap-2 mb-1.5">
+            <div className="size-2 rounded-full bg-destructive" />
+            <span className="text-[0.65rem] font-semibold text-destructive uppercase tracking-wider">Overdue</span>
+            <span className="text-[0.6rem] text-destructive/70 tabular-nums">{overdueTasks.length}</span>
           </div>
-          <span
-            className={
-              task.status === 'completed'
-                ? 'text-sm truncate line-through text-muted-foreground'
-                : 'text-sm truncate text-foreground'
-            }
-          >
-            {task.title}
-          </span>
+          <div className="space-y-1">
+            {overdueTasks.slice(0, maxOverdue).map((task) => (
+              <TaskRow key={task.id} task={task} onToggle={toggleTaskStatus} isOverdue />
+            ))}
+          </div>
         </div>
-      ))}
+      )}
+
+      {/* Today */}
+      {hasToday && (
+        <div>
+          <div className="flex items-center gap-2 mb-1.5">
+            <div className="size-2 rounded-full bg-primary animate-pulse" />
+            <span className="text-[0.65rem] font-semibold text-primary uppercase tracking-wider">Today</span>
+          </div>
+          <div className="space-y-1">
+            {todayTasks.slice(0, maxToday).map((task) => (
+              <TaskRow key={task.id} task={task} onToggle={toggleTaskStatus} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Upcoming */}
+      {hasUpcoming && (
+        <div>
+          <div className="flex items-center gap-2 mb-1.5">
+            <CalendarDays className="size-2.5 text-muted-foreground" />
+            <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-wider">Upcoming</span>
+          </div>
+          <div className="space-y-1">
+            {upcomingTasks.slice(0, maxUpcoming).map((task) => (
+              <TaskRow key={task.id} task={task} onToggle={toggleTaskStatus} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Empty state */}
+      {!hasOverdue && !hasToday && !hasUpcoming && (
+        <p className="text-sm text-muted-foreground text-center py-2">No tasks</p>
+      )}
+    </div>
+  )
+}
+
+// ===== Task Row Sub-component =====
+function TaskRow({ task, onToggle, compact, isOverdue }: {
+  task: Task
+  onToggle: (id: string) => void
+  compact?: boolean
+  isOverdue?: boolean
+}) {
+  const formatDueDate = (dateStr: string) => {
+    const d = new Date(dateStr + 'T12:00:00')
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }
+
+  const isCompleted = task.status === 'completed'
+
+  return (
+    <div
+      className={`flex items-center gap-2.5 p-2 rounded-xl hover:bg-accent transition-colors cursor-pointer ${
+        isOverdue && !isCompleted ? 'bg-destructive/5 hover:bg-destructive/10' : ''
+      }`}
+      onClick={(e) => { e.stopPropagation(); onToggle(task.id) }}
+    >
+      <div
+        className={
+          isCompleted
+            ? 'w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 border-primary bg-primary'
+            : isOverdue
+              ? 'w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 border-destructive hover:border-destructive/80 transition-colors'
+              : 'w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 border-outline hover:border-primary transition-colors'
+        }
+      >
+        {isCompleted && (
+          <svg className="w-2.5 h-2.5 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        )}
+      </div>
+      <span
+        className={
+          isCompleted
+            ? 'text-sm truncate line-through text-muted-foreground flex-1 min-w-0'
+            : isOverdue
+              ? 'text-sm truncate text-foreground flex-1 min-w-0'
+              : 'text-sm truncate text-foreground flex-1 min-w-0'
+        }
+      >
+        {task.title}
+      </span>
+      {task.dueDate && !compact && (
+        <span className={`text-[0.6rem] font-medium shrink-0 tabular-nums ${
+          isOverdue && !isCompleted
+            ? 'text-destructive'
+            : isCompleted
+              ? 'text-muted-foreground line-through'
+              : 'text-muted-foreground'
+        }`}>
+          {formatDueDate(task.dueDate)}
+        </span>
+      )}
+      {isOverdue && !isCompleted && (
+        <span className="text-[0.5rem] font-bold uppercase tracking-wider text-destructive bg-destructive/10 px-1.5 py-0.5 rounded-md shrink-0">
+          Due
+        </span>
+      )}
     </div>
   )
 }

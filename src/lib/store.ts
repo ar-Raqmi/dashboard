@@ -140,13 +140,22 @@ const defaultMobileLayouts: Layout[] = [
   { i: 'files', x: 0, y: 12, w: 1, h: 1, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
 ]
 
+// Helper: local date string to avoid UTC shift from toISOString()
+const localDateStr = (date: Date) => {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
 // ===== SAMPLE DATA =====
 const sampleTasks: Task[] = [
-  { id: crypto.randomUUID(), title: 'Review project proposal', dueDate: new Date().toISOString().split('T')[0], priority: 'high', status: 'pending', createdAt: new Date().toISOString() },
-  { id: crypto.randomUUID(), title: 'Update documentation', dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], priority: 'medium', status: 'pending', createdAt: new Date().toISOString() },
-  { id: crypto.randomUUID(), title: 'Team standup meeting', dueDate: new Date().toISOString().split('T')[0], priority: 'low', status: 'completed', createdAt: new Date().toISOString() },
-  { id: crypto.randomUUID(), title: 'Fix API endpoint bug', dueDate: new Date(Date.now() + 172800000).toISOString().split('T')[0], priority: 'high', status: 'pending', createdAt: new Date().toISOString() },
-  { id: crypto.randomUUID(), title: 'Write unit tests', dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], priority: 'medium', status: 'pending', createdAt: new Date().toISOString() },
+  { id: crypto.randomUUID(), title: 'Submit quarterly report', dueDate: localDateStr(new Date(Date.now() - 86400000 * 2)), priority: 'high', status: 'pending', createdAt: new Date().toISOString() },
+  { id: crypto.randomUUID(), title: 'Review project proposal', dueDate: localDateStr(new Date()), priority: 'high', status: 'pending', createdAt: new Date().toISOString() },
+  { id: crypto.randomUUID(), title: 'Update documentation', dueDate: localDateStr(new Date(Date.now() + 86400000)), priority: 'medium', status: 'pending', createdAt: new Date().toISOString() },
+  { id: crypto.randomUUID(), title: 'Team standup meeting', dueDate: localDateStr(new Date()), priority: 'low', status: 'completed', createdAt: new Date().toISOString() },
+  { id: crypto.randomUUID(), title: 'Fix API endpoint bug', dueDate: localDateStr(new Date(Date.now() + 86400000 * 2)), priority: 'high', status: 'pending', createdAt: new Date().toISOString() },
+  { id: crypto.randomUUID(), title: 'Write unit tests', dueDate: localDateStr(new Date(Date.now() + 86400000)), priority: 'medium', status: 'pending', createdAt: new Date().toISOString() },
 ]
 
 const sampleGoals: Goal[] = [
@@ -187,13 +196,6 @@ const sampleNotes: Note[] = [
   { id: crypto.randomUUID(), title: 'Design Inspiration', content: 'Material 3 Expressive: bouncy animations, bold colors, rounded shapes', color: '#80CBC4', pinned: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
 ]
 
-// Helper: local date string to avoid UTC shift from toISOString()
-const localDateStr = (date: Date) => {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
-}
 
 const sampleEvents: CalendarEvent[] = [
   { id: crypto.randomUUID(), title: 'Team Meeting', date: localDateStr(new Date()), color: '#A5D6A7' },
