@@ -2,65 +2,20 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthedUserId } from "./auth";
 
+// List files in a given directory (parentId null for root)
 export const list = query({
-  args: { sessionToken: v.string() },
-  handler: async (ctx, { sessionToken }) => {
-    const userId = await getAuthedUserId(ctx, sessionToken);
-    const files = await ctx.db
-      .query("files")
-      .withIndex("by_user", (q: any) => q.eq("userId", userId))
-      .collect();
-
-    return files.map(f => ({
-      id: f._id,
-      name: f.name,
-      type: f.type,
-      category: f.category,
-      parentId: f.parentId ?? null,
-      size: f.size,
-      createdAt: f.createdAt,
-      updatedAt: f.updatedAt,
-      content: f.content ?? undefined,
-    }));
-  },
-});
-
-export const create = mutation({
-  args: {
+  args: { 
     sessionToken: v.string(),
-    name: v.string(),
-    type: v.string(),
-    category: v.string(),
-    parentId: v.optional(v.id("files")),
-    size: v.number(),
-    content: v.optional(v.string()),
+    parentId: v.optional(v.id("files"))
   },
-  handler: async (ctx, { sessionToken, name, type, category, parentId, size, content }) => {
+  handler: async (ctx, { sessionToken, parentId }) => {
     const userId = await getAuthedUserId(ctx, sessionToken);
-    const now = new Date().toISOString();
-    return await ctx.db.insert("files", {
-      userId,
-      name,
-      type,
-      category,
-      parentId,
-      size,
-      createdAt: now,
-      updatedAt: now,
-      content,
-    });
-  },
-});
-
-export const rename = mutation({
-  args: { sessionToken: v.string(), fileId: v.id("files"), name: v.string() },
-  handler: async (ctx, { sessionToken, fileId, name }) => {
-    const userId = await getAuthedUserId(ctx, sessionToken);
-    const file = await ctx.db.get(fileId);
-    if (!file || file.userId !== userId) {
-      throw new Error("File not found or unauthorized");
-    }
-    await ctx.db.patch(fileId, { name, updatedAt: new Date().toISOString() });
+    
+    return await ctx.db
+      .query("files")
+      .withIndex("by_parent", (q) => q.eq("parentId", parentId))
+      .filter((q) => q.eq(q.field("userId"), userId))
+      .collect();
   },
 });
 
@@ -68,56 +23,71 @@ export const generateUploadUrl = mutation(async (ctx) => {
   return await ctx.storage.generateUploadUrl();
 });
 
-export const saveFile = mutation({
+export const createFile = mutation({
   args: {
     sessionToken: v.string(),
     name: v.string(),
-    type: v.string(),
-    category: v.string(),
+    type: v.union(v.literal("file"), v.literal("folder")),
+    category: v.optional(v.union(v.literal("image"), v.literal("audio"), v.literal("pdf"), v.literal("doc"), v.literal("video"), v.literal("other"))),
     parentId: v.optional(v.id("files")),
-    size: v.number(),
-    storageId: v.id("_storage"),
+    size: v.optional(v.number()),
+    storageId: v.optional(v.id("_storage")),
   },
-  handler: async (ctx, { sessionToken, name, type, category, parentId, size, storageId }) => {
+  handler: async (ctx, args) => {
+    const { sessionToken, ...fileData } = args;
     const userId = await getAuthedUserId(ctx, sessionToken);
-    const now = new Date().toISOString();
+    const now = Date.now();
+    
     return await ctx.db.insert("files", {
+      ...fileData,
       userId,
-      name,
-      type,
-      category,
-      parentId,
-      size,
       createdAt: now,
       updatedAt: now,
-      storageId,
     });
+  },
+});
+
+export const rename = mutation({
+  args: { sessionToken: v.string(), id: v.id("files"), name: v.string() },
+  handler: async (ctx, { sessionToken, id, name }) => {
+    const userId = await getAuthedUserId(ctx, sessionToken);
+    const file = await ctx.db.get(id);
+    if (!file || file.userId !== userId) throw new Error("Unauthorized");
+    
+    await ctx.db.patch(id, { name, updatedAt: Date.now() });
+  },
+});
+
+export const remove = mutation({
+  args: { sessionToken: v.string(), id: v.id("files") },
+  handler: async (ctx, { sessionToken, id }) => {
+    const userId = await getAuthedUserId(ctx, sessionToken);
+    const file = await ctx.db.get(id);
+    if (!file || file.userId !== userId) throw new Error("Unauthorized");
+    
+    const deleteRecursive = async (fileId: any) => {
+      const children = await ctx.db
+        .query("files")
+        .withIndex("by_parent", (q) => q.eq("parentId", fileId))
+        .collect();
+        
+      for (const child of children) {
+        if (child.type === "folder") await deleteRecursive(child._id);
+        if (child.storageId) await ctx.storage.delete(child.storageId);
+        await ctx.db.delete(child._id);
+      }
+    };
+    
+    if (file.type === "folder") await deleteRecursive(id);
+    if (file.storageId) await ctx.storage.delete(file.storageId);
+    await ctx.db.delete(id);
   },
 });
 
 export const getFileUrl = query({
   args: { sessionToken: v.string(), storageId: v.id("_storage") },
   handler: async (ctx, { sessionToken, storageId }) => {
-    await getAuthedUserId(ctx, sessionToken); // Ensure auth
+    await getAuthedUserId(ctx, sessionToken);
     return await ctx.storage.getUrl(storageId);
-  },
-});
-
-export const move = mutation({
-  args: {
-    sessionToken: v.string(),
-    fileId: v.id("files"),
-    newParentId: v.optional(v.id("files")),
-  },
-  handler: async (ctx, { sessionToken, fileId, newParentId }) => {
-    const userId = await getAuthedUserId(ctx, sessionToken);
-    const file = await ctx.db.get(fileId);
-    if (!file || file.userId !== userId) {
-      throw new Error("File not found or unauthorized");
-    }
-    await ctx.db.patch(fileId, {
-      parentId: newParentId,
-      updatedAt: new Date().toISOString(),
-    });
   },
 });
