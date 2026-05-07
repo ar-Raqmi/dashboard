@@ -377,6 +377,33 @@ function FilesContent() {
   )
 }
 
+// ===== Timezone UTC offset helper =====
+function getTimezoneOffset(timezone: string): string {
+  try {
+    const now = new Date()
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      timeZoneName: 'shortOffset',
+    })
+    const parts = formatter.formatToParts(now)
+    const tzPart = parts.find(p => p.type === 'timeZoneName')
+    if (tzPart?.value) return tzPart.value
+    // Fallback: compute offset manually
+    const utcStr = now.toLocaleString('en-US', { timeZone: 'UTC' })
+    const tzStr = now.toLocaleString('en-US', { timeZone: timezone })
+    const utcDate = new Date(utcStr)
+    const tzDate = new Date(tzStr)
+    const diffMin = Math.round((tzDate.getTime() - utcDate.getTime()) / 60000)
+    const sign = diffMin >= 0 ? '+' : '-'
+    const absMin = Math.abs(diffMin)
+    const hrs = Math.floor(absMin / 60)
+    const mins = absMin % 60
+    return `UTC${sign}${hrs}${mins > 0 ? `:${String(mins).padStart(2, '0')}` : ''}`
+  } catch {
+    return timezone
+  }
+}
+
 // ===== Popular timezone presets for the Add Clock dialog =====
 const POPULAR_TIMEZONES = [
   { label: 'Kuala Lumpur', timezone: 'Asia/Kuala_Lumpur', value: 'Asia/Kuala_Lumpur|KL' },
@@ -583,7 +610,7 @@ function ClockSettingsPopover() {
                 {clocks.map((c, i) => (
                   <div key={c.id} className="flex items-center gap-2 px-2 py-1.5 rounded-xl bg-muted/50">
                     <span className="text-xs text-foreground flex-1 truncate">{c.label}</span>
-                    <span className="text-[0.6rem] text-muted-foreground">{c.timezone}</span>
+                    <span className="text-[0.6rem] text-muted-foreground tabular-nums">{getTimezoneOffset(c.timezone)}</span>
                     {i > 0 && (
                       <button
                         onClick={() => removeClock(c.id)}
