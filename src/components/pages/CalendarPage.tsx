@@ -211,9 +211,8 @@ export default function CalendarPage() {
                   {EVENT_COLORS.map((c) => (
                     <button
                       key={c.value}
-                      className={`size-8 rounded-xl transition-all ${
-                        eventColor === c.value ? 'ring-2 ring-white ring-offset-2 ring-offset-card scale-110' : 'opacity-60 hover:opacity-100'
-                      }`}
+                      className={`size-8 rounded-xl transition-all ${eventColor === c.value ? 'ring-2 ring-white ring-offset-2 ring-offset-card scale-110' : 'opacity-60 hover:opacity-100'
+                        }`}
                       style={{ backgroundColor: c.value }}
                       onClick={() => setEventColor(c.value)}
                       title={c.label}
@@ -248,180 +247,179 @@ export default function CalendarPage() {
           <div className="rounded-3xl bg-card border border-border p-5 lg:w-80 min-h-[200px]" />
         </div>
       ) : (
-      <div className="flex flex-col lg:flex-row gap-5">
-        {/* Calendar Card */}
-        <div className="rounded-3xl bg-card border border-border p-5 flex-1">
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={(date) => { if (date) setSelectedDate(date) }}
-            className="w-full"
-            modifiers={{
-              hasEvents: (date) => eventDateMap.has(toLocalDateString(date)),
-            }}
-            modifiersStyles={{
-              hasEvents: { fontWeight: 'bold' },
-            }}
-            components={{
-              DayButton: ({ day, modifiers, ...props }) => {
-                const dateStr = toLocalDateString(day.date)
-                const dayEvents = eventDateMap.get(dateStr)
-                const isSelected = modifiers.selected
-                const isTodayDate = modifiers.today
-                return (
-                  <div className="flex flex-col items-center gap-0.5 w-full h-full">
-                    <button
-                      {...props}
-                      className={`flex items-center justify-center w-full aspect-square rounded-full text-sm transition-all ${
-                        isSelected
+        <div className="flex flex-col lg:flex-row gap-5">
+          {/* Calendar Card */}
+          <div className="rounded-3xl bg-card border border-border p-5 flex-1">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={(date) => { if (date) setSelectedDate(date) }}
+              className="w-full"
+              modifiers={{
+                hasEvents: (date) => eventDateMap.has(toLocalDateString(date)),
+              }}
+              modifiersStyles={{
+                hasEvents: { fontWeight: 'bold' },
+              }}
+              components={{
+                DayButton: ({ day, modifiers, ...props }) => {
+                  const dateStr = toLocalDateString(day.date)
+                  const dayEvents = eventDateMap.get(dateStr)
+                  const isSelected = modifiers.selected
+                  const isTodayDate = modifiers.today
+                  return (
+                    <div className="flex flex-col items-center gap-0.5 w-full h-full">
+                      <button
+                        {...props}
+                        className={`flex items-center justify-center w-full aspect-square rounded-full text-sm transition-all ${isSelected
                           ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
                           : isTodayDate
-                          ? 'bg-primary/15 text-primary font-semibold'
-                          : 'hover:bg-accent text-foreground'
-                      } ${modifiers.outside ? 'text-outline' : ''}`}
-                      onClick={(e) => {
-                        props.onClick?.(e)
-                        setSelectedDate(day.date)
-                      }}
-                    >
-                      {day.date.getDate()}
-                    </button>
-                    {dayEvents && dayEvents.length > 0 && (
-                      <div className="flex gap-0.5">
-                        {dayEvents.slice(0, 3).map((ev, i) => (
-                          <div
-                            key={i}
-                            className="size-1.5 rounded-full"
-                            style={{ backgroundColor: isSelected ? 'white' : ev.color }}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )
-              },
-            }}
-          />
-        </div>
-
-        {/* Events Sidebar */}
-        <div className="rounded-3xl bg-card border border-border p-5 lg:w-80 flex flex-col gap-4 min-h-0">
-          {/* Selected Date Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-bold text-foreground">
-                {format(selectedDate, 'd')}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {format(selectedDate, 'EEEE, MMMM yyyy')}
-              </p>
-            </div>
-            <Button
-              size="sm"
-              className="rounded-xl bg-primary/15 text-primary hover:bg-primary/25 shadow-none"
-              onClick={openAddDialog}
-            >
-              <Plus className="size-3.5 mr-1" />
-              Add
-            </Button>
+                            ? 'bg-primary/15 text-primary font-semibold'
+                            : 'hover:bg-accent text-foreground'
+                          } ${modifiers.outside ? 'text-outline' : ''}`}
+                        onClick={(e) => {
+                          props.onClick?.(e)
+                          setSelectedDate(day.date)
+                        }}
+                      >
+                        {day.date.getDate()}
+                      </button>
+                      {dayEvents && dayEvents.length > 0 && (
+                        <div className="flex gap-0.5">
+                          {dayEvents.slice(0, 3).map((ev, i) => (
+                            <div
+                              key={i}
+                              className="size-1.5 rounded-full"
+                              style={{ backgroundColor: isSelected ? 'white' : ev.color }}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                },
+              }}
+            />
           </div>
 
-          {/* Events for selected date */}
-          <ScrollArea className="flex-1 min-h-0 max-h-[40vh] lg:max-h-none">
-            <div className="flex flex-col gap-2 pr-2">
-              {eventsForSelectedDate.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 gap-3">
-                  <div className="p-3 rounded-2xl bg-muted">
-                    <CalendarDays className="size-6 text-muted-foreground" />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm font-medium text-muted-foreground">No events</p>
-                    <p className="text-xs text-outline mt-0.5">Tap + to add one</p>
-                  </div>
-                </div>
-              ) : (
-                eventsForSelectedDate.map((event) => (
-                  <div
-                    key={event.id}
-                    className="flex items-center gap-3 p-3 rounded-2xl bg-muted/80 group hover:bg-muted transition-colors"
-                  >
-                    <div
-                      className="size-3 rounded-full shrink-0 shadow-sm"
-                      style={{ backgroundColor: event.color || EVENT_COLORS[0].value }}
-                    />
-                    <span className="flex-1 text-sm text-foreground font-medium">{event.title}</span>
-                    <button
-                      className="size-7 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                      onClick={() => deleteEvent(event.id)}
-                    >
-                      <Trash2 className="size-3.5" />
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-          </ScrollArea>
-
-          {/* Today section (only when not viewing today) */}
-          {todayEvents.length > 0 && (
-            <>
-              <div className="border-t border-border/50" />
+          {/* Events Sidebar */}
+          <div className="rounded-3xl bg-card border border-border p-5 lg:w-80 flex flex-col gap-4 min-h-0">
+            {/* Selected Date Header */}
+            <div className="flex items-center justify-between">
               <div>
-                <div className="flex items-center gap-2 mb-2.5">
-                  <div className="size-2 rounded-full bg-primary animate-pulse" />
-                  <span className="text-xs font-semibold text-primary uppercase tracking-wider">Today</span>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  {todayEvents.map((event) => (
-                    <div
-                      key={event.id}
-                      className="flex items-center gap-2.5 p-2 rounded-xl bg-primary/5 hover:bg-primary/10 cursor-pointer transition-colors"
-                      onClick={() => setSelectedDate(new Date())}
-                    >
-                      <div
-                        className="size-2 rounded-full shrink-0"
-                        style={{ backgroundColor: event.color || EVENT_COLORS[0].value }}
-                      />
-                      <span className="text-xs text-foreground truncate flex-1 min-w-0 font-medium">{event.title}</span>
-                    </div>
-                  ))}
-                </div>
+                <h2 className="text-lg font-bold text-foreground">
+                  {format(selectedDate, 'MMMM d')}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {format(selectedDate, 'EEEE')}
+                </p>
               </div>
-            </>
-          )}
+              <Button
+                size="sm"
+                className="rounded-xl bg-primary/15 text-primary hover:bg-primary/25 shadow-none"
+                onClick={openAddDialog}
+              >
+                <Plus className="size-3.5 mr-1" />
+                Add
+              </Button>
+            </div>
 
-          {/* Divider + Upcoming Events */}
-          {upcomingEvents.length > 0 && (
-            <>
-              <div className="border-t border-border/50 mt-1" />
-              <div className="mt-1">
-                <div className="flex items-center gap-2 mb-2.5">
-                  <Clock className="size-3.5 text-muted-foreground" />
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Upcoming</span>
-                </div>
-                <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto">
-                  {upcomingEvents.map((event) => (
+            {/* Events for selected date */}
+            <ScrollArea className="flex-1 min-h-0 max-h-[40vh] lg:max-h-none">
+              <div className="flex flex-col gap-2 pr-2">
+                {eventsForSelectedDate.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 gap-3">
+                    <div className="p-3 rounded-2xl bg-muted">
+                      <CalendarDays className="size-6 text-muted-foreground" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-muted-foreground">No events</p>
+                      <p className="text-xs text-outline mt-0.5">Tap + to add one</p>
+                    </div>
+                  </div>
+                ) : (
+                  eventsForSelectedDate.map((event) => (
                     <div
                       key={event.id}
-                      className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-accent/50 cursor-pointer transition-colors"
-                      onClick={() => setSelectedDate(parseLocalDateString(event.date))}
+                      className="flex items-center gap-3 p-3 rounded-2xl bg-muted/80 group hover:bg-muted transition-colors"
                     >
                       <div
-                        className="size-2 rounded-full shrink-0"
+                        className="size-3 rounded-full shrink-0 shadow-sm"
                         style={{ backgroundColor: event.color || EVENT_COLORS[0].value }}
                       />
-                      <span className="text-xs text-foreground truncate flex-1 min-w-0">{event.title}</span>
-                      <span className="text-[0.65rem] text-muted-foreground shrink-0">
-                        {format(parseLocalDateString(event.date), 'MMM d')}
-                      </span>
+                      <span className="flex-1 text-sm text-foreground font-medium">{event.title}</span>
+                      <button
+                        className="size-7 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => deleteEvent(event.id)}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
                     </div>
-                  ))}
-                </div>
+                  ))
+                )}
               </div>
-            </>
-          )}
+            </ScrollArea>
+
+            {/* Today section (only when not viewing today) */}
+            {todayEvents.length > 0 && (
+              <>
+                <div className="border-t border-border/50" />
+                <div>
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <div className="size-2 rounded-full bg-primary animate-pulse" />
+                    <span className="text-xs font-semibold text-primary uppercase tracking-wider">Today</span>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    {todayEvents.map((event) => (
+                      <div
+                        key={event.id}
+                        className="flex items-center gap-2.5 p-2 rounded-xl bg-primary/5 hover:bg-primary/10 cursor-pointer transition-colors"
+                        onClick={() => setSelectedDate(new Date())}
+                      >
+                        <div
+                          className="size-2 rounded-full shrink-0"
+                          style={{ backgroundColor: event.color || EVENT_COLORS[0].value }}
+                        />
+                        <span className="text-xs text-foreground truncate flex-1 min-w-0 font-medium">{event.title}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Divider + Upcoming Events */}
+            {upcomingEvents.length > 0 && (
+              <>
+                <div className="border-t border-border/50 mt-1" />
+                <div className="mt-1">
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <Clock className="size-3.5 text-muted-foreground" />
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Upcoming</span>
+                  </div>
+                  <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto">
+                    {upcomingEvents.map((event) => (
+                      <div
+                        key={event.id}
+                        className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-accent/50 cursor-pointer transition-colors"
+                        onClick={() => setSelectedDate(parseLocalDateString(event.date))}
+                      >
+                        <div
+                          className="size-2 rounded-full shrink-0"
+                          style={{ backgroundColor: event.color || EVENT_COLORS[0].value }}
+                        />
+                        <span className="text-xs text-foreground truncate flex-1 min-w-0">{event.title}</span>
+                        <span className="text-[0.65rem] text-muted-foreground shrink-0">
+                          {format(parseLocalDateString(event.date), 'MMM d')}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
-      </div>
       )}
     </div>
   )

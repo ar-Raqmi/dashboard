@@ -63,6 +63,7 @@ export default function RootLayout({
             {children}
           </Providers>
           <Toaster richColors position="bottom-right" />
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" async />
         </ThemeProvider>
       </body>
     </html>
