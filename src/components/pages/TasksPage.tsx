@@ -200,7 +200,7 @@ export default function TasksPage() {
   const [filter, setFilter] = useState<FilterType>('all')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [title, setTitle] = useState('')
-  const [dueDate, setDueDate] = useState<Date | undefined>(undefined)
+  const [dueDate, setDueDate] = useState<Date | undefined>(new Date())
   const [priority, setPriority] = useState<Priority>('medium')
   const [calendarOpen, setCalendarOpen] = useState(false)
 
@@ -226,7 +226,7 @@ export default function TasksPage() {
       status: 'pending',
     })
     setTitle('')
-    setDueDate(undefined)
+    setDueDate(new Date())
     setPriority('medium')
     setDialogOpen(false)
   }
