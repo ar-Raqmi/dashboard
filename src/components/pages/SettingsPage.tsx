@@ -287,35 +287,47 @@ export default function SettingsPage() {
           <User className="size-5 text-primary" />
           <h2 className="text-lg font-semibold text-foreground">Profile</h2>
         </div>
-        <div className="flex flex-col sm:flex-row items-center gap-4">
-          <div className="relative group">
-            <Avatar className="size-20 rounded-2xl">
-              <AvatarImage src={profilePicture} alt="Profile" />
-              <AvatarFallback className="bg-muted text-primary text-2xl rounded-2xl">
-                {localName?.charAt(0)?.toUpperCase() || 'U'}
-              </AvatarFallback>
-            </Avatar>
-            <button
-              onClick={() => avatarInputRef.current?.click()}
-              className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <Upload className="size-5 text-white" />
-            </button>
-            <input
-              ref={avatarInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleAvatarUpload}
-            />
+        <div className="flex flex-col gap-4 w-full">
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="relative group">
+              <Avatar className="size-20 rounded-2xl">
+                <AvatarImage src={profilePicture} alt="Profile" />
+                <AvatarFallback className="bg-muted text-primary text-2xl rounded-2xl">
+                  {localName?.charAt(0)?.toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <button
+                onClick={() => avatarInputRef.current?.click()}
+                className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <Upload className="size-5 text-white" />
+              </button>
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarUpload}
+              />
+            </div>
+            <div className="flex-1 w-full flex flex-col gap-2">
+              <label className="text-sm text-on-surface-variant">Display Name</label>
+              <Input
+                value={localName}
+                onChange={(e) => setLocalName(e.target.value)}
+                placeholder="Your name"
+                className="rounded-2xl bg-input border-border"
+              />
+            </div>
           </div>
-          <div className="flex-1 w-full flex flex-col gap-2">
-            <label className="text-sm text-on-surface-variant">Display Name</label>
+          {/* Avatar URL input */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm text-on-surface-variant">Profile Picture URL</label>
             <Input
-              value={localName}
-              onChange={(e) => setLocalName(e.target.value)}
-              placeholder="Your name"
-              className="rounded-2xl bg-input border-border"
+              value={profilePicture && !profilePicture.startsWith('blob:') ? profilePicture : ''}
+              onChange={(e) => setProfilePicture(e.target.value)}
+              className="rounded-2xl bg-input border-border text-sm"
+              placeholder="https://example.com/avatar.jpg"
             />
           </div>
         </div>
