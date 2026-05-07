@@ -974,8 +974,6 @@ function ClockSettingsPopover() {
 
 function ClockContent({ w, h }: { w: number; h: number }) {
   const clocks = useAppStore((s) => s.clocks)
-  const hijriVisible = useAppStore((s) => s.hijriVisible)
-  const hijriOffset = useAppStore((s) => s.hijriOffset)
   const showSeconds = useAppStore((s) => s.showSeconds)
   const [mounted, setMounted] = React.useState(false)
 
@@ -987,8 +985,7 @@ function ClockContent({ w, h }: { w: number; h: number }) {
   const primary = clocks[0]
   const secondary = clocks.slice(1)
 
-  // Size-adaptive: 1×1 = primary only, 1×2+ = primary + hijri, 2×2+ = full
-  const showHijri = hijriVisible && h >= 2
+  // Size-adaptive: 1×1 = primary only, 2×2+ = full with secondary clocks
   const showSecondary = secondary.length > 0 && (h >= 2 || w >= 2)
 
   // Pre-mount placeholder
@@ -1002,27 +999,10 @@ function ClockContent({ w, h }: { w: number; h: number }) {
     )
   }
 
-  const hijri = showHijri ? getHijriDate(hijriOffset) : null
-
   return (
     <div className="flex flex-col h-full gap-2">
       {/* Primary Clock */}
       {primary && <ClockDisplay clock={primary} isPrimary showSeconds={showSeconds} />}
-
-      {/* Hijri Date */}
-      {hijri && (
-        <div className="flex flex-col items-center gap-0.5 mt-1">
-          <div className="flex items-center gap-1.5">
-            <MoonStar className="size-3 text-primary/70" />
-            <span className="text-xs font-semibold text-primary">
-              {hijri.day} {hijri.month} {hijri.year} AH
-            </span>
-          </div>
-          <p className="text-[0.7rem] text-muted-foreground arabic-text" style={{ fontFamily: 'var(--font-arabic)' }}>
-            {hijri.monthAr}
-          </p>
-        </div>
-      )}
 
       {/* Secondary Clocks */}
       {showSecondary && secondary.length > 0 && (
