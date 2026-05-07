@@ -221,7 +221,7 @@ export default function TasksPage() {
     if (!title.trim()) return
     addTask({
       title: title.trim(),
-      dueDate: dueDate ? dueDate.toISOString().split('T')[0] : null,
+      dueDate: dueDate ? `${dueDate.getFullYear()}-${String(dueDate.getMonth() + 1).padStart(2, '0')}-${String(dueDate.getDate()).padStart(2, '0')}` : null,
       priority,
       status: 'pending',
     })

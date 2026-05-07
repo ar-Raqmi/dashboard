@@ -16,7 +16,8 @@ export default function DailyTasksWidget() {
   const { tasks, addTask, toggleTaskStatus, setActivePage } = useAppStore()
   const [quickAdd, setQuickAdd] = useState('')
 
-  const today = new Date().toISOString().split('T')[0]
+  const todayDate = new Date()
+  const today = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, '0')}-${String(todayDate.getDate()).padStart(2, '0')}`
   const todaysTasks = tasks.filter(
     (t) => t.dueDate === today || t.status === 'pending'
   )
