@@ -648,20 +648,50 @@ export const useAppStore = create<AppStore>()(
     }),
     {
       name: 'ar-raqmi-store',
-      version: 2,
+      version: 3,
       migrate: (persistedState: Record<string, unknown>, version: number) => {
+        const state = persistedState as Record<string, unknown>
+
         // Migration v1 → v2: Replace single timezone with clocks array
         if (version < 2) {
-          const oldTimezone = (persistedState as Record<string, unknown>).timezone as string | undefined
+          const oldTimezone = state.timezone as string | undefined
           const tz = oldTimezone || 'Asia/Kuala_Lumpur'
           const label = tz.split('/').pop()?.replace(/_/g, ' ') || 'Local'
-          ;(persistedState as Record<string, unknown>).clocks = [
-            { id: 'clock-1', label, timezone: tz },
-          ]
-          delete (persistedState as Record<string, unknown>).timezone
-          ;(persistedState as Record<string, unknown>).hijriVisible = true
-          ;(persistedState as Record<string, unknown>).hijriOffset = 0
+          state.clocks = [{ id: 'clock-1', label, timezone: tz }]
+          delete state.timezone
+          state.hijriVisible = true
+          state.hijriOffset = 0
         }
+
+        // Migration v2 → v3: Add Clipboard widget + layout entries
+        if (version < 3) {
+          // Add clipboard to widgets array if not present
+          const widgets = state.widgets as Array<{ type: string; label: string; icon: string; visible: boolean }> | undefined
+          if (widgets && !widgets.some((w) => w.type === 'clipboard')) {
+            widgets.push({ type: 'clipboard', label: 'Clipboard', icon: 'content_paste', visible: true })
+          }
+
+          // Add clipboard layout entry to desktop layouts
+          const layouts = state.layouts as Array<{ i: string; x: number; y: number; w: number; h: number; minW: number; maxW: number; minH: number; maxH: number }> | undefined
+          if (layouts && !layouts.some((l) => l.i === 'clipboard')) {
+            // Find max Y to place the new widget below existing ones
+            const maxY = layouts.reduce((max, l) => Math.max(max, l.y + l.h), 0)
+            layouts.push({ i: 'clipboard', x: 2, y: maxY, w: 1, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 6 })
+          }
+
+          // Add clipboard layout entry to mobile layouts
+          const mobileLayouts = state.mobileLayouts as Array<{ i: string; x: number; y: number; w: number; h: number; minW: number; maxW: number; minH: number; maxH: number }> | undefined
+          if (mobileLayouts && !mobileLayouts.some((l) => l.i === 'clipboard')) {
+            const maxY = mobileLayouts.reduce((max, l) => Math.max(max, l.y + l.h), 0)
+            mobileLayouts.push({ i: 'clipboard', x: 0, y: maxY, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: 6 })
+          }
+
+          // Initialize clips array
+          if (!state.clips) {
+            state.clips = []
+          }
+        }
+
         return persistedState
       },
       partialize: (state) => ({
