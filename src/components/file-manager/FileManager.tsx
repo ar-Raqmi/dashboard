@@ -280,6 +280,111 @@ function UploadModal({
   )
 }
 
+// ===== MOVE TO FOLDER MODAL =====
+function MoveToFolderModal({
+  open,
+  onClose,
+  fileIds,
+}: {
+  open: boolean
+  onClose: () => void
+  fileIds: string[]
+}) {
+  const { files, moveFile } = useAppStore()
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
+
+  const folders = useMemo(() => files.filter(f => f.type === 'folder'), [files])
+
+  const descendantIds = useMemo(() => {
+    const ids = new Set<string>()
+    const collectChildren = (parentId: string) => {
+      files.filter(f => f.parentId === parentId).forEach(child => {
+        ids.add(child.id)
+        if (child.type === 'folder') collectChildren(child.id)
+      })
+    }
+    fileIds.forEach(id => {
+      ids.add(id)
+      collectChildren(id)
+    })
+    return ids
+  }, [files, fileIds])
+
+  const renderFolderTree = (parentId: string | null, depth: number = 0) => {
+    const children = folders.filter(
+      f => f.parentId === parentId && !descendantIds.has(f.id)
+    )
+    return children.map(folder => (
+      <div key={folder.id}>
+        <button
+          onClick={() => setSelectedFolderId(folder.id)}
+          className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-2xl text-sm transition-all ${
+            selectedFolderId === folder.id
+              ? 'bg-primary/15 text-primary font-medium'
+              : 'text-foreground/70 hover:bg-muted/50 hover:text-foreground'
+          }`}
+          style={{ paddingLeft: `${depth * 20 + 12}px` }}
+        >
+          <Folder className="size-4 shrink-0" />
+          <span className="truncate">{folder.name}</span>
+        </button>
+        {renderFolderTree(folder.id, depth + 1)}
+      </div>
+    ))
+  }
+
+  const handleMove = () => {
+    fileIds.forEach(id => moveFile(id, selectedFolderId))
+    onClose()
+    setSelectedFolderId(null)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) { onClose(); setSelectedFolderId(null) } }}>
+      <DialogContent className="bg-card border-border text-foreground sm:max-w-md rounded-3xl">
+        <DialogHeader>
+          <DialogTitle className="text-foreground">Move to Folder</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            Select a destination folder for {fileIds.length} item{fileIds.length > 1 ? 's' : ''}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-1">
+          <button
+            onClick={() => setSelectedFolderId(null)}
+            className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-2xl text-sm transition-all ${
+              selectedFolderId === null
+                ? 'bg-primary/15 text-primary font-medium'
+                : 'text-foreground/70 hover:bg-muted/50 hover:text-foreground'
+            }`}
+          >
+            <Home className="size-4 shrink-0" />
+            <span>Root (Home)</span>
+          </button>
+          <ScrollArea className="max-h-64">
+            {renderFolderTree(null)}
+          </ScrollArea>
+        </div>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => { onClose(); setSelectedFolderId(null) }}
+            className="rounded-2xl border-border text-foreground hover:bg-accent"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleMove}
+            className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            <ArrowRight className="size-4" />
+            Move Here
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 // ===== FILE CARD (GRID VIEW) =====
 function FileCard({
   file,
