@@ -64,11 +64,6 @@ export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [logoError, setLogoError] = useState(false)
 
-  // Reset logo error when appLogo changes
-  useEffect(() => {
-    setLogoError(false)
-  }, [appLogo])
-
   const updateTime = useCallback(() => setTick((t) => t + 1), [])
 
   // Set mounted on next tick to avoid hydration mismatch
@@ -102,7 +97,7 @@ export default function Header() {
     >
       {/* Left: Logo + Title */}
       <div className="flex items-center gap-3 min-w-0">
-        <div className="w-9 h-9 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+        <div key={appLogo} className="w-9 h-9 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
           {appLogo && !logoError ? (
             <img
               src={appLogo}

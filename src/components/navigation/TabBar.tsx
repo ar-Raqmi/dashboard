@@ -48,12 +48,13 @@ export default function TabBar() {
   }
 
   useEffect(() => {
-    checkScroll()
+    const id = requestAnimationFrame(checkScroll)
     const el = scrollRef.current
     if (!el) return
     el.addEventListener('scroll', checkScroll, { passive: true })
     window.addEventListener('resize', checkScroll)
     return () => {
+      cancelAnimationFrame(id)
       el.removeEventListener('scroll', checkScroll)
       window.removeEventListener('resize', checkScroll)
     }

@@ -101,7 +101,7 @@ export default function Home() {
 
   // Authenticated: Show the main app with Convex sync
   return (
-    <ConvexSync>
+    <ConvexSync key={user?.id || 'public'}>
       <AuthenticatedApp
         activePage={activePage}
         background={background}
