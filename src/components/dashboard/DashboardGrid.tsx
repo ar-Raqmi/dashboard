@@ -431,9 +431,8 @@ function getHijriDate(offset: number): { day: number; month: string; year: numbe
 }
 
 // ===== Single Clock Display =====
-function ClockDisplay({ clock, isPrimary }: { clock: ClockConfig; isPrimary: boolean }) {
-  const [time, setTime] = React.useState('')
-  const [seconds, setSeconds] = React.useState('')
+function ClockDisplay({ clock, isPrimary, showSeconds }: { clock: ClockConfig; isPrimary: boolean; showSeconds: boolean }) {
+  const [timeStr, setTimeStr] = React.useState('')
   const [dateStr, setDateStr] = React.useState('')
   const [mounted, setMounted] = React.useState(false)
 
@@ -446,12 +445,8 @@ function ClockDisplay({ clock, isPrimary }: { clock: ClockConfig; isPrimary: boo
           timeZone: clock.timezone,
           hour: 'numeric',
           minute: '2-digit',
+          ...(showSeconds ? { second: '2-digit' } : {}),
           hour12: true,
-        })
-        const secFmt = new Intl.DateTimeFormat('en-US', {
-          timeZone: clock.timezone,
-          second: '2-digit',
-          hour12: false,
         })
         const dateFmt = new Intl.DateTimeFormat('en-US', {
           timeZone: clock.timezone,
@@ -459,19 +454,17 @@ function ClockDisplay({ clock, isPrimary }: { clock: ClockConfig; isPrimary: boo
           month: 'short',
           day: 'numeric',
         })
-        setTime(timeFmt.format(now))
-        setSeconds(secFmt.format(now))
+        setTimeStr(timeFmt.format(now))
         setDateStr(dateFmt.format(now))
       } catch {
-        setTime(now.toLocaleTimeString('en-US', { hour12: true }))
-        setSeconds(String(now.getSeconds()).padStart(2, '0'))
+        setTimeStr(now.toLocaleTimeString('en-US', { hour12: true, ...(showSeconds ? { second: '2-digit' } : {}) }))
         setDateStr(now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }))
       }
     }
     update()
     const interval = setInterval(update, 1000)
     return () => clearInterval(interval)
-  }, [clock.timezone])
+  }, [clock.timezone, showSeconds])
 
   if (!mounted) {
     return (
@@ -486,14 +479,9 @@ function ClockDisplay({ clock, isPrimary }: { clock: ClockConfig; isPrimary: boo
   if (isPrimary) {
     return (
       <div className="flex flex-col items-center justify-center">
-        <div className="flex items-baseline gap-1">
-          <p className="text-3xl font-bold text-primary tabular-nums tracking-wider leading-none">
-            {time}
-          </p>
-          <span className="text-sm font-medium text-pink-300 tabular-nums leading-none">
-            :{seconds}
-          </span>
-        </div>
+        <p className="text-3xl font-bold text-primary tabular-nums tracking-wider leading-none">
+          {timeStr}
+        </p>
         <p className="text-sm text-muted-foreground mt-1.5">{dateStr}</p>
         <p className="text-[0.65rem] text-outline mt-0.5">{clock.label}</p>
       </div>
@@ -503,8 +491,7 @@ function ClockDisplay({ clock, isPrimary }: { clock: ClockConfig; isPrimary: boo
   // Secondary clock — compact row
   return (
     <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl bg-muted/50">
-      <p className="text-sm font-bold text-primary tabular-nums leading-none">{time}</p>
-      <span className="text-[0.65rem] font-medium text-pink-300 tabular-nums leading-none">:{seconds}</span>
+      <p className="text-sm font-bold text-primary tabular-nums leading-none">{timeStr}</p>
       <span className="flex-1" />
       <span className="text-[0.65rem] text-muted-foreground">{clock.label}</span>
     </div>
@@ -520,6 +507,8 @@ function ClockSettingsPopover() {
   const setHijriVisible = useAppStore((s) => s.setHijriVisible)
   const hijriOffset = useAppStore((s) => s.hijriOffset)
   const setHijriOffset = useAppStore((s) => s.setHijriOffset)
+  const showSeconds = useAppStore((s) => s.showSeconds)
+  const setShowSeconds = useAppStore((s) => s.setShowSeconds)
   const [selectedValue, setSelectedValue] = React.useState(POPULAR_TIMEZONES[0].value)
   const [newTz, setNewTz] = React.useState(POPULAR_TIMEZONES[0].timezone)
   const [newLabel, setNewLabel] = React.useState(POPULAR_TIMEZONES[0].label)
@@ -609,6 +598,15 @@ function ClockSettingsPopover() {
             </div>
           )}
 
+          {/* Show Seconds toggle */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Settings2 className="size-3.5 text-muted-foreground" />
+              <span className="text-xs font-medium text-foreground">Show Seconds</span>
+            </div>
+            <Switch checked={showSeconds} onCheckedChange={setShowSeconds} className="data-[state=checked]:bg-primary" />
+          </div>
+
           {/* Hijri toggle */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -663,6 +661,7 @@ function ClockContent({ w, h }: { w: number; h: number }) {
   const clocks = useAppStore((s) => s.clocks)
   const hijriVisible = useAppStore((s) => s.hijriVisible)
   const hijriOffset = useAppStore((s) => s.hijriOffset)
+  const showSeconds = useAppStore((s) => s.showSeconds)
   const [mounted, setMounted] = React.useState(false)
 
   React.useEffect(() => {
@@ -693,7 +692,7 @@ function ClockContent({ w, h }: { w: number; h: number }) {
   return (
     <div className="flex flex-col h-full gap-2">
       {/* Primary Clock */}
-      {primary && <ClockDisplay clock={primary} isPrimary />}
+      {primary && <ClockDisplay clock={primary} isPrimary showSeconds={showSeconds} />}
 
       {/* Hijri Date */}
       {hijri && (
@@ -714,7 +713,7 @@ function ClockContent({ w, h }: { w: number; h: number }) {
       {showSecondary && secondary.length > 0 && (
         <div className="flex flex-col gap-1 mt-1">
           {secondary.slice(0, h >= 3 ? 4 : 2).map((clock) => (
-            <ClockDisplay key={clock.id} clock={clock} isPrimary={false} />
+            <ClockDisplay key={clock.id} clock={clock} isPrimary={false} showSeconds={showSeconds} />
           ))}
         </div>
       )}
