@@ -521,23 +521,42 @@ function VerseContent() {
 }
 
 function GoalsContent() {
-  const goals = useAppStore((s) => s.goals)
+  const { goals } = useAppStore()
+
+  const sortedGoals = useMemo(() => {
+    return [...goals].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+  }, [goals])
+
   return (
-    <div className="space-y-3">
-      {goals.slice(0, 3).map((goal) => (
-        <div key={goal.id} className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-foreground truncate">{goal.title}</span>
-            <span className="text-xs text-primary font-medium ml-2">{goal.progress}%</span>
+    <div className="space-y-4 pr-1">
+      {sortedGoals.map((goal) => (
+        <div key={goal.id} className="p-3 rounded-2xl bg-muted/30 border border-border/50">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold text-foreground truncate flex-1 mr-2">{goal.title}</span>
+            <span className="text-xs text-primary font-bold">{goal.progress}%</span>
           </div>
-          <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+          <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden mb-3">
             <div
               className="h-full bg-primary rounded-full transition-all duration-500"
               style={{ width: `${goal.progress}%` }}
             />
           </div>
+          {/* Milestones */}
+          <div className="flex flex-col gap-1.5 pl-1">
+            {goal.milestones.map((ms) => (
+              <div key={ms.id} className="flex items-start gap-2">
+                <div className={`w-2 h-2 mt-1 rounded-full shrink-0 ${ms.completed ? 'bg-primary' : 'bg-muted border border-border'}`} />
+                <span className={`text-[11px] leading-tight ${ms.completed ? 'text-muted-foreground line-through' : 'text-foreground/80'}`}>
+                  {ms.label}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       ))}
+      {sortedGoals.length === 0 && (
+        <p className="text-xs text-muted-foreground text-center py-4">No goals yet</p>
+      )}
     </div>
   )
 }

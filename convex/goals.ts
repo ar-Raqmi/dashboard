@@ -31,6 +31,7 @@ export const list = query({
               completed: m.completed,
             })),
           createdAt: g.createdAt,
+          order: g.order,
         };
       })
     );
@@ -44,6 +45,7 @@ export const create = mutation({
     sessionToken: v.string(),
     title: v.string(),
     progress: v.number(),
+    order: v.optional(v.number()),
     milestones: v.array(v.object({
       label: v.string(),
       completed: v.boolean(),
@@ -56,6 +58,7 @@ export const create = mutation({
       userId,
       title,
       progress,
+      order: order ?? 0,
       createdAt: new Date().toISOString(),
     });
 
@@ -79,13 +82,14 @@ export const update = mutation({
     goalId: v.id("goals"),
     title: v.optional(v.string()),
     progress: v.optional(v.number()),
+    order: v.optional(v.number()),
     milestones: v.optional(v.array(v.object({
       id: v.optional(v.string()),
       label: v.string(),
       completed: v.boolean(),
     }))),
   },
-  handler: async (ctx, { sessionToken, goalId, title, progress, milestones }) => {
+  handler: async (ctx, { sessionToken, goalId, title, progress, order, milestones }) => {
     const userId = await getAuthedUserId(ctx, sessionToken);
     const goal = await ctx.db.get(goalId);
     if (!goal || goal.userId !== userId) {
@@ -142,6 +146,10 @@ export const update = mutation({
     } else if (progress !== undefined) {
       await ctx.db.patch(goalId, { progress });
     }
+
+    if (order !== undefined) {
+      await ctx.db.patch(goalId, { order });
+    }
   },
 });
 
@@ -196,5 +204,21 @@ export const toggleMilestone = mutation({
     const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
 
     await ctx.db.patch(goalId, { progress });
+  },
+});
+
+export const reorder = mutation({
+  args: {
+    sessionToken: v.string(),
+    goalIds: v.array(v.id("goals")),
+  },
+  handler: async (ctx, { sessionToken, goalIds }) => {
+    const userId = await getAuthedUserId(ctx, sessionToken);
+    for (let i = 0; i < goalIds.length; i++) {
+      const goal = await ctx.db.get(goalIds[i]);
+      if (goal && goal.userId === userId) {
+        await ctx.db.patch(goalIds[i], { order: i });
+      }
+    }
   },
 });

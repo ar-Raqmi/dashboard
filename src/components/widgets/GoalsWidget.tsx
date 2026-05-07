@@ -1,11 +1,16 @@
 'use client'
 
+import { useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { Target } from 'lucide-react'
+import { Target, CheckCircle2, Circle } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 
 export default function GoalsWidget() {
   const { goals, setActivePage } = useAppStore()
+
+  const sortedGoals = useMemo(() => {
+    return [...goals].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+  }, [goals])
 
   return (
     <div className="flex flex-col h-full">
@@ -18,8 +23,8 @@ export default function GoalsWidget() {
       </div>
 
       {/* Goals List */}
-      <div className="flex-1 space-y-3 overflow-y-auto scrollbar-thin">
-        {goals.map((goal, index) => (
+      <div className="flex-1 space-y-4 overflow-y-auto scrollbar-thin pr-1">
+        {sortedGoals.map((goal, index) => (
           <motion.div
             key={goal.id}
             initial={{ opacity: 0, x: -10 }}
@@ -47,22 +52,20 @@ export default function GoalsWidget() {
               />
             </div>
 
-            {/* Milestones */}
-            <div className="flex items-center gap-1.5 mt-2">
+            {/* Milestones List - Vertically stacked to show all */}
+            <div className="flex flex-col gap-1.5 mt-3">
               {goal.milestones.map((ms) => (
-                <div key={ms.id} className="flex items-center gap-1" title={ms.label}>
+                <div key={ms.id} className="flex items-start gap-2 group/ms" title={ms.label}>
+                  {ms.completed ? (
+                    <CheckCircle2 className="w-2.5 h-2.5 mt-0.5 text-[oklch(0.72_0.19_142)] shrink-0" />
+                  ) : (
+                    <Circle className="w-2.5 h-2.5 mt-0.5 text-[oklch(0.35_0.01_155)] shrink-0" />
+                  )}
                   <span
-                    className={`w-2 h-2 rounded-full shrink-0 ${
+                    className={`text-[10px] leading-tight ${
                       ms.completed
-                        ? 'bg-[oklch(0.72_0.19_142)]'
-                        : 'bg-[oklch(0.25_0.01_155)] border border-[oklch(0.35_0.01_155)]'
-                    }`}
-                  />
-                  <span
-                    className={`text-[9px] ${
-                      ms.completed
-                        ? 'text-[oklch(0.6_0.01_155)]'
-                        : 'text-[oklch(0.35_0.01_155)]'
+                        ? 'text-[oklch(0.5_0.01_155)] line-through'
+                        : 'text-[oklch(0.7_0.005_155)]'
                     }`}
                   >
                     {ms.label}
@@ -72,12 +75,18 @@ export default function GoalsWidget() {
             </div>
           </motion.div>
         ))}
+        {sortedGoals.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-8 opacity-50">
+            <Target className="size-8 mb-2 text-[oklch(0.35_0.01_155)]" />
+            <p className="text-[10px] uppercase tracking-widest">No goals set</p>
+          </div>
+        )}
       </div>
 
       {/* View All */}
       <button
         onClick={() => setActivePage('goals')}
-        className="mt-2 text-[10px] text-[oklch(0.72_0.19_142)] hover:underline text-center"
+        className="mt-2 text-[10px] text-[oklch(0.72_0.19_142)] hover:underline text-center font-medium"
       >
         View All Goals →
       </button>

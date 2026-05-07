@@ -31,6 +31,8 @@ export function ConvexSync({ children }: { children: React.ReactNode }) {
   const notesMobileLayouts = useQuery(api.dashboard.getLayout, sessionToken ? { sessionToken, layoutType: 'notesMobile' } : 'skip')
   const pinnedDesktopLayouts = useQuery(api.dashboard.getLayout, sessionToken ? { sessionToken, layoutType: 'pinnedDesktop' } : 'skip')
   const pinnedMobileLayouts = useQuery(api.dashboard.getLayout, sessionToken ? { sessionToken, layoutType: 'pinnedMobile' } : 'skip')
+  const goalDesktopLayouts = useQuery(api.dashboard.getLayout, sessionToken ? { sessionToken, layoutType: 'goalsDesktop' } : 'skip')
+  const goalMobileLayouts = useQuery(api.dashboard.getLayout, sessionToken ? { sessionToken, layoutType: 'goalsMobile' } : 'skip')
   const settings = useQuery(api.settings.get, sessionToken ? { sessionToken } : 'skip')
 
   // Check if initial sync is complete
@@ -68,6 +70,7 @@ export function ConvexSync({ children }: { children: React.ReactNode }) {
   const updateGoal = useMutation(api.goals.update)
   const deleteGoalMut = useMutation(api.goals.remove)
   const toggleMilestoneMut = useMutation(api.goals.toggleMilestone)
+  const reorderGoalsMut = useMutation(api.goals.reorder)
 
   const createNote = useMutation(api.notes.create)
   const updateNote = useMutation(api.notes.update)
@@ -169,6 +172,18 @@ export function ConvexSync({ children }: { children: React.ReactNode }) {
       useAppStore.setState({ pinnedNoteMobileLayouts: pinnedMobileLayouts })
     }
   }, [pinnedMobileLayouts])
+  
+  useEffect(() => {
+    if (goalDesktopLayouts !== undefined) {
+      useAppStore.setState({ goalLayouts: goalDesktopLayouts })
+    }
+  }, [goalDesktopLayouts])
+
+  useEffect(() => {
+    if (goalMobileLayouts !== undefined) {
+      useAppStore.setState({ goalMobileLayouts })
+    }
+  }, [goalMobileLayouts])
 
   useEffect(() => {
     if (settings !== undefined && settings !== null) {
@@ -235,17 +250,40 @@ export function ConvexSync({ children }: { children: React.ReactNode }) {
         const id = crypto.randomUUID()
         const createdAt = new Date().toISOString()
         const newGoal = { ...goal, id, createdAt }
-        store.setState((state) => ({ goals: [...state.goals, newGoal] }))
-        createGoal({ sessionToken, ...goal }).catch(console.error)
+        const layoutEntry = {
+          i: id, x: 0, y: 0, w: 1, h: 2,
+          minW: 1, maxW: 3, minH: 1, maxH: 6,
+        }
+        store.setState((state) => ({ 
+          goals: [...state.goals, newGoal],
+          goalLayouts: [layoutEntry, ...state.goalLayouts.map((l) => ({ ...l, y: l.y + 2 }))],
+          goalMobileLayouts: [layoutEntry, ...state.goalMobileLayouts.map((l) => ({ ...l, y: l.y + 2 }))],
+        }))
+        createGoal({ sessionToken, ...goal, order: goal.order ?? 0 }).catch(console.error)
       },
       updateGoal: (id, updates) => {
         store.setState((state) => ({
           goals: state.goals.map((g) => (g.id === id ? { ...g, ...updates } : g)),
         }))
-        updateGoal({ sessionToken, goalId: id as any, ...updates }).catch(console.error)
+        updateGoalMut({ sessionToken, goalId: id as any, ...updates }).catch(console.error)
+      },
+      reorderGoals: (goalIds) => {
+        store.setState((state) => {
+          const newGoals = [...state.goals].sort((a, b) => {
+            const idxA = goalIds.indexOf(a.id)
+            const idxB = goalIds.indexOf(b.id)
+            return idxA - idxB
+          }).map((g, idx) => ({ ...g, order: idx }))
+          return { goals: newGoals }
+        })
+        reorderGoalsMut({ sessionToken, goalIds: goalIds as any }).catch(console.error)
       },
       deleteGoal: (id) => {
-        store.setState((state) => ({ goals: state.goals.filter((g) => g.id !== id) }))
+        store.setState((state) => ({ 
+          goals: state.goals.filter((g) => g.id !== id),
+          goalLayouts: state.goalLayouts.filter((l) => l.i !== id),
+          goalMobileLayouts: state.goalMobileLayouts.filter((l) => l.i !== id),
+        }))
         deleteGoalMut({ sessionToken, goalId: id as any }).catch(console.error)
       },
       toggleMilestone: (goalId, milestoneId) => {
@@ -394,6 +432,14 @@ export function ConvexSync({ children }: { children: React.ReactNode }) {
       setPinnedNoteMobileLayouts: (layouts) => {
         store.setState({ pinnedNoteMobileLayouts: layouts })
         setLayoutMut({ sessionToken, layoutType: 'pinnedMobile', layouts: JSON.stringify(layouts) }).catch(console.error)
+      },
+      setGoalLayouts: (layouts) => {
+        store.setState({ goalLayouts: layouts })
+        setLayoutMut({ sessionToken, layoutType: 'goalsDesktop', layouts: JSON.stringify(layouts) }).catch(console.error)
+      },
+      setGoalMobileLayouts: (layouts) => {
+        store.setState({ goalMobileLayouts: layouts })
+        setLayoutMut({ sessionToken, layoutType: 'goalsMobile', layouts: JSON.stringify(layouts) }).catch(console.error)
       },
 
       // Settings actions

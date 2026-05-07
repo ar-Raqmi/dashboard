@@ -33,6 +33,7 @@ export default defineSchema({
     userId: v.id("users"),
     title: v.string(),
     progress: v.number(),
+    order: v.optional(v.number()),
     createdAt: v.string(),
   }).index("by_user", ["userId"]),
 
