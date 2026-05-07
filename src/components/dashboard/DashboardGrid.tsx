@@ -543,10 +543,8 @@ function GoalsContent() {
 }
 
 function FilesContent() {
-  const { sessionToken } = useAuth()
   const { setPreviewFile } = useAppStore()
-  
-  const files = useQuery(api.files.list, sessionToken ? { sessionToken } : 'skip')
+  const files = useAppStore((s) => s.files)
   
   const recentFiles = useMemo(() => {
     if (!files) return []
