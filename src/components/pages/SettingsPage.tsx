@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Settings, User, AppWindow, Globe, Info, Upload, Save, ImageIcon, Palette, Paintbrush, Droplets, Image as ImageLucide, Mountain, Square, Lock, KeyRound } from 'lucide-react'
+import { Settings, User, AppWindow, Globe, Info, Upload, Save, ImageIcon, Palette, Paintbrush, Droplets, Image as ImageLucide, Mountain, Square, Lock, KeyRound, LogOut } from 'lucide-react'
 import { useAppStore, type BackgroundType } from '@/lib/store'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/use-toast'
@@ -81,7 +81,7 @@ export default function SettingsPage() {
     background, setBackground,
   } = useAppStore()
 
-  const { user, updateCredentials } = useAuth()
+  const { user, updateCredentials, logout } = useAuth()
   const { toast } = useToast()
 
   const [localName, setLocalName] = useState(profileName)
@@ -207,12 +207,22 @@ export default function SettingsPage() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-3"
+        className="flex items-center justify-between"
       >
-        <div className="p-2 rounded-2xl bg-primary/15">
-          <Settings className="size-6 text-primary" />
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-2xl bg-primary/15">
+            <Settings className="size-6 text-primary" />
+          </div>
+          <h1 className="text-2xl font-bold">Settings</h1>
         </div>
-        <h1 className="text-2xl font-bold">Settings</h1>
+        <Button
+          variant="ghost"
+          onClick={() => logout()}
+          className="rounded-2xl text-destructive hover:text-destructive hover:bg-destructive/10 gap-2"
+        >
+          <LogOut className="size-5" />
+          <span>Logout</span>
+        </Button>
       </motion.div>
 
       {/* Profile Section */}
