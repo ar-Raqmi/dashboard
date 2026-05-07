@@ -18,6 +18,7 @@ export interface Goal {
   id: string
   title: string
   progress: number // 0-100
+  order?: number
   milestones: { id: string; label: string; completed: boolean }[]
   createdAt: string
 }
@@ -182,6 +183,7 @@ interface AppStore {
   updateGoal: (id: string, updates: Partial<Goal>) => void
   deleteGoal: (id: string) => void
   toggleMilestone: (goalId: string, milestoneId: string) => void
+  reorderGoals: (goalIds: string[]) => void
 
   // Notes
   notes: Note[]
@@ -201,6 +203,12 @@ interface AppStore {
   pinnedNoteMobileLayouts: Layout[]
   setPinnedNoteLayouts: (layouts: Layout[]) => void
   setPinnedNoteMobileLayouts: (layouts: Layout[]) => void
+
+  // Goal Layouts
+  goalLayouts: Layout[]
+  goalMobileLayouts: Layout[]
+  setGoalLayouts: (layouts: Layout[]) => void
+  setGoalMobileLayouts: (layouts: Layout[]) => void
 
   // Calendar
   events: CalendarEvent[]
@@ -341,15 +349,38 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   // Goals
   goals: [],
   addGoal: (goal) =>
-    set((state) => ({
-      goals: [...state.goals, { ...goal, id: genId(), createdAt: new Date().toISOString() }],
-    })),
+    set((state) => {
+      const newId = genId()
+      const newGoal = { ...goal, id: newId, createdAt: new Date().toISOString() }
+      const layoutEntry: Layout = {
+        i: newId, x: 0, y: 0, w: 1, h: 2,
+        minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H,
+      }
+      return {
+        goals: [...state.goals, newGoal],
+        goalLayouts: [layoutEntry, ...state.goalLayouts.map((l) => ({ ...l, y: l.y + 2 }))],
+        goalMobileLayouts: [layoutEntry, ...state.goalMobileLayouts.map((l) => ({ ...l, y: l.y + 2 }))],
+      }
+    }),
   updateGoal: (id, updates) =>
     set((state) => ({
       goals: state.goals.map((g) => (g.id === id ? { ...g, ...updates } : g)),
     })),
   deleteGoal: (id) =>
-    set((state) => ({ goals: state.goals.filter((g) => g.id !== id) })),
+    set((state) => ({
+      goals: state.goals.filter((g) => g.id !== id),
+      goalLayouts: state.goalLayouts.filter((l) => l.i !== id),
+      goalMobileLayouts: state.goalMobileLayouts.filter((l) => l.i !== id),
+    })),
+  reorderGoals: (goalIds) =>
+    set((state) => {
+      const newGoals = [...state.goals].sort((a, b) => {
+        const idxA = goalIds.indexOf(a.id)
+        const idxB = goalIds.indexOf(b.id)
+        return idxA - idxB
+      }).map((g, idx) => ({ ...g, order: idx }))
+      return { goals: newGoals }
+    }),
   toggleMilestone: (goalId, milestoneId) =>
     set((state) => ({
       goals: state.goals.map((g) => {
@@ -444,6 +475,12 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   pinnedNoteMobileLayouts: [],
   setPinnedNoteLayouts: (layouts) => set({ pinnedNoteLayouts: layouts }),
   setPinnedNoteMobileLayouts: (layouts) => set({ pinnedNoteMobileLayouts: layouts }),
+
+  // Goal Layouts
+  goalLayouts: [],
+  goalMobileLayouts: [],
+  setGoalLayouts: (layouts) => set({ goalLayouts: layouts }),
+  setGoalMobileLayouts: (layouts) => set({ goalMobileLayouts: layouts }),
 
   // Calendar
   events: [],
