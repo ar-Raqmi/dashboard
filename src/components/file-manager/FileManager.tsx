@@ -185,106 +185,94 @@ function BreadcrumbNav() {
   )
 }
 
-// ===== MOVE TO FOLDER MODAL =====
-function MoveToFolderModal({
+// ===== UPLOAD MODAL =====
+function UploadModal({
   open,
   onClose,
-  fileIds,
+  folderId,
 }: {
   open: boolean
   onClose: () => void
-  fileIds: string[]
+  folderId: string | null
 }) {
-  const { files, moveFile } = useAppStore()
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
+  const [file, setFile] = useState<File | null>(null)
+  const [progress, setProgress] = useState(0)
+  const [uploading, setUploading] = useState(false)
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl)
+  const saveFile = useMutation(api.files.saveFile)
+  const { sessionToken } = useAuth()
 
-  const folders = useMemo(() => files.filter(f => f.type === 'folder'), [files])
+  const handleUpload = async () => {
+    if (!file || !sessionToken) return
+    setUploading(true)
+    setProgress(10)
 
-  const descendantIds = useMemo(() => {
-    const ids = new Set<string>()
-    const collectChildren = (parentId: string) => {
-      files.filter(f => f.parentId === parentId).forEach(child => {
-        ids.add(child.id)
-        if (child.type === 'folder') collectChildren(child.id)
+    try {
+      const postUrl = await generateUploadUrl()
+      setProgress(30)
+
+      const result = await fetch(postUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
       })
+      setProgress(70)
+
+      const { storageId } = await result.json()
+
+      const ext = file.name.split('.').pop()?.toLowerCase() || ''
+      let category: FileCategory = 'other'
+      if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(ext)) category = 'image'
+      else if (['mp3', 'wav', 'ogg', 'flac', 'aac'].includes(ext)) category = 'audio'
+      else if (ext === 'pdf') category = 'pdf'
+      else if (['doc', 'docx', 'txt', 'xlsx', 'xls', 'csv'].includes(ext)) category = 'doc'
+      else if (['mp4', 'avi', 'mov', 'mkv', 'webm'].includes(ext)) category = 'video'
+
+      await saveFile({
+        sessionToken,
+        name: file.name,
+        type: 'file',
+        category,
+        parentId: folderId ?? undefined,
+        size: file.size,
+        storageId: storageId,
+      })
+      setProgress(100)
+      onClose()
+      setFile(null)
+      setProgress(0)
+    } catch (err) {
+      console.error('Upload failed:', err)
+    } finally {
+      setUploading(false)
     }
-    fileIds.forEach(id => {
-      ids.add(id)
-      collectChildren(id)
-    })
-    return ids
-  }, [files, fileIds])
-
-  const rootFolders = folders.filter(f => f.parentId === null && !descendantIds.has(f.id))
-
-  const renderFolderTree = (parentId: string | null, depth: number = 0) => {
-    const children = folders.filter(
-      f => f.parentId === parentId && !descendantIds.has(f.id)
-    )
-    return children.map(folder => (
-      <div key={folder.id}>
-        <button
-          onClick={() => setSelectedFolderId(folder.id)}
-          className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-2xl text-sm transition-all ${
-            selectedFolderId === folder.id
-              ? 'bg-primary/15 text-primary font-medium'
-              : 'text-foreground/70 hover:bg-muted/50 hover:text-foreground'
-          }`}
-          style={{ paddingLeft: `${depth * 20 + 12}px` }}
-        >
-          <Folder className="size-4 shrink-0" />
-          <span className="truncate">{folder.name}</span>
-        </button>
-        {renderFolderTree(folder.id, depth + 1)}
-      </div>
-    ))
-  }
-
-  const handleMove = () => {
-    fileIds.forEach(id => moveFile(id, selectedFolderId))
-    onClose()
-    setSelectedFolderId(null)
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) { onClose(); setSelectedFolderId(null) } }}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
       <DialogContent className="bg-card border-border text-foreground sm:max-w-md rounded-3xl">
         <DialogHeader>
-          <DialogTitle className="text-foreground">Move to Folder</DialogTitle>
-          <DialogDescription className="text-muted-foreground">
-            Select a destination folder for {fileIds.length} item{fileIds.length > 1 ? 's' : ''}
-          </DialogDescription>
+          <DialogTitle>Upload File</DialogTitle>
         </DialogHeader>
-        <div className="space-y-1">
-          <button
-            onClick={() => setSelectedFolderId(null)}
-            className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-2xl text-sm transition-all ${
-              selectedFolderId === null
-                ? 'bg-primary/15 text-primary font-medium'
-                : 'text-foreground/70 hover:bg-muted/50 hover:text-foreground'
-            }`}
-          >
-            <Home className="size-4 shrink-0" />
-            <span>Root (Home)</span>
-          </button>
-          <ScrollArea className="max-h-64">
-            {renderFolderTree(null)}
-          </ScrollArea>
+        <div className="space-y-4 py-4">
+          <input
+            type="file"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            className="w-full text-sm text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+          />
+          {uploading && (
+            <div className="space-y-2">
+              <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                <div className="h-full bg-primary transition-all duration-300" style={{ width: `${progress}%` }} />
+              </div>
+              <p className="text-xs text-muted-foreground text-center">{progress}% uploaded</p>
+            </div>
+          )}
         </div>
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => { onClose(); setSelectedFolderId(null) }}
-            className="rounded-2xl border-border text-foreground hover:bg-accent"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleMove}
-            className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            <ArrowRight className="size-4" />
-            Move Here
+          <Button variant="ghost" onClick={onClose} className="rounded-2xl">Cancel</Button>
+          <Button onClick={handleUpload} disabled={!file || uploading} className="rounded-2xl">
+            {uploading ? 'Uploading...' : 'Upload'}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -727,48 +715,6 @@ export default function FileManager() {
   const saveFile = useMutation(api.files.saveFile)
   const { sessionToken } = useAuth()
 
-  const handleUploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file || !sessionToken) return
-
-    try {
-      // 1. Get upload URL
-      const postUrl = await generateUploadUrl()
-
-      // 2. Upload file
-      const result = await fetch(postUrl, {
-        method: "POST",
-        headers: { "Content-Type": file.type },
-        body: file,
-      })
-      const { storageId } = await result.json()
-
-      // 3. Save file metadata
-      const ext = file.name.split('.').pop()?.toLowerCase() || ''
-      let category: FileCategory = 'other'
-      if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(ext)) category = 'image'
-      else if (['mp3', 'wav', 'ogg', 'flac', 'aac'].includes(ext)) category = 'audio'
-      else if (ext === 'pdf') category = 'pdf'
-      else if (['doc', 'docx', 'txt', 'xlsx', 'xls', 'csv'].includes(ext)) category = 'doc'
-      else if (['mp4', 'avi', 'mov', 'mkv', 'webm'].includes(ext)) category = 'video'
-
-      await saveFile({
-        sessionToken,
-        name: file.name,
-        type: 'file',
-        category,
-        parentId: currentFolderId ?? undefined,
-        size: file.size,
-        storageId: storageId,
-      })
-
-      setShowUpload(false)
-    } catch (err) {
-      console.error('Upload failed:', err)
-      // TODO: Add toast notification
-    }
-  }
-
   const handleDelete = () => {
     if (deleteTarget) {
       deleteFile(deleteTarget.id)
@@ -879,22 +825,12 @@ export default function FileManager() {
         </div>
       )}
 
-      {/* Upload Input */}
-      {showUpload && (
-        <div className="mb-3">
-          <div className="flex items-center gap-2 p-3 rounded-2xl bg-muted/30 border border-border/40">
-              <Upload className="size-5 text-muted-foreground shrink-0" />
-              <input
-                type="file"
-                onChange={handleUploadFile}
-                className="flex-1 text-sm text-foreground file:mr-4 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-              />
-              <Button size="sm" variant="ghost" onClick={() => setShowUpload(false)} className="rounded-2xl text-muted-foreground hover:text-foreground hover:bg-accent size-8 shrink-0">
-                <X className="size-4" />
-              </Button>
-          </div>
-        </div>
-      )}
+      {/* Upload Modal */}
+      <UploadModal
+        open={showUpload}
+        onClose={() => setShowUpload(false)}
+        folderId={currentFolderId}
+      />
 
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto min-h-0">
