@@ -639,7 +639,7 @@ export default function SettingsPage() {
               className="rounded-2xl bg-input border-border"
             />
           </div>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-4">
             <label className="text-sm text-on-surface-variant">App Logo</label>
             <div className="flex items-center gap-4">
               <div className="size-16 rounded-2xl bg-muted border border-border flex items-center justify-center overflow-hidden">
@@ -649,20 +649,32 @@ export default function SettingsPage() {
                   <ImageIcon className="size-6 text-outline" />
                 )}
               </div>
-              <Button
-                variant="outline"
-                className="rounded-2xl border-border"
-                onClick={() => logoInputRef.current?.click()}
-              >
-                <Upload className="size-4 mr-2" />
-                Upload Logo
-              </Button>
-              <input
-                ref={logoInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleLogoUpload}
+              <div className="flex flex-col gap-2">
+                <Button
+                  variant="outline"
+                  className="rounded-2xl border-border"
+                  onClick={() => logoInputRef.current?.click()}
+                >
+                  <Upload className="size-4 mr-2" />
+                  Upload Logo
+                </Button>
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleLogoUpload}
+                />
+              </div>
+            </div>
+            {/* Logo URL input */}
+            <div className="flex flex-col gap-2">
+              <label className="text-sm text-on-surface-variant">Or paste image URL</label>
+              <Input
+                value={appLogo && !appLogo.startsWith('blob:') ? appLogo : ''}
+                onChange={(e) => setAppLogo(e.target.value)}
+                className="rounded-2xl bg-input border-border text-sm"
+                placeholder="https://example.com/logo.png"
               />
             </div>
           </div>
