@@ -237,6 +237,7 @@ interface AppStore {
   addTask: (task: Omit<Task, 'id' | 'createdAt'>) => void
   updateTask: (id: string, updates: Partial<Task>) => void
   deleteTask: (id: string) => void
+  deleteCompletedTasks: () => void
   toggleTaskStatus: (id: string) => void
 
   // Goals
@@ -377,6 +378,8 @@ export const useAppStore = create<AppStore>()(
         })),
       deleteTask: (id) =>
         set((state) => ({ tasks: state.tasks.filter((t) => t.id !== id) })),
+      deleteCompletedTasks: () =>
+        set((state) => ({ tasks: state.tasks.filter((t) => t.status !== 'completed') })),
       toggleTaskStatus: (id) =>
         set((state) => ({
           tasks: state.tasks.map((t) =>
