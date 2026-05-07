@@ -107,25 +107,75 @@ export default function SettingsPage() {
   const logoInputRef = useRef<HTMLInputElement>(null)
   const bgImageInputRef = useRef<HTMLInputElement>(null)
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const url = URL.createObjectURL(file)
-    setProfilePicture(url)
+  // Helper to convert file to base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = (error) => reject(error)
+    })
   }
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const url = URL.createObjectURL(file)
-    setAppLogo(url)
+    try {
+      if (file.size > 300000) {
+        toast({ 
+          title: 'Image too large', 
+          description: 'Please use an image smaller than 300KB for the profile picture.',
+          variant: 'destructive' 
+        })
+        return
+      }
+      const base64 = await fileToBase64(file)
+      setProfilePicture(base64)
+      toast({ title: 'Avatar updated' })
+    } catch (err) {
+      toast({ title: 'Upload failed', variant: 'destructive' })
+    }
   }
 
-  const handleBgImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const url = URL.createObjectURL(file)
-    setBackground({ image: url })
+    try {
+      if (file.size > 300000) {
+        toast({ 
+          title: 'Image too large', 
+          description: 'Please use an image smaller than 300KB for the app logo.',
+          variant: 'destructive' 
+        })
+        return
+      }
+      const base64 = await fileToBase64(file)
+      setAppLogo(base64)
+      toast({ title: 'Logo updated' })
+    } catch (err) {
+      toast({ title: 'Upload failed', variant: 'destructive' })
+    }
+  }
+
+  const handleBgImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      // For background images, we should be careful with size
+      if (file.size > 600000) { 
+        toast({ 
+          title: 'Image too large', 
+          description: 'Please use an image smaller than 600KB for the background.',
+          variant: 'destructive' 
+        })
+        return
+      }
+      const base64 = await fileToBase64(file)
+      setBackground({ image: base64 })
+      toast({ title: 'Background updated' })
+    } catch (err) {
+      toast({ title: 'Upload failed', variant: 'destructive' })
+    }
   }
 
   const handleSave = () => {

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAppStore } from '@/lib/store'
 
 /**
@@ -8,8 +8,6 @@ import { useAppStore } from '@/lib/store'
  * - document.title from appTitle store
  * - Favicon <link> elements from appLogo store (with iconBackgroundColor compositing)
  * - PWA manifest <link> with dynamic title/logo
- * 
- * Uses React 19's native head hoisting.
  */
 export default function DynamicHead() {
   const appTitle = useAppStore((s) => s.appTitle)
@@ -40,7 +38,6 @@ export default function DynamicHead() {
           ctx.fillStyle = iconBackgroundColor || '#A5D6A7'
           const r = size * 0.2
           ctx.beginPath()
-          // roundRect with fallback
           if (ctx.roundRect) {
             ctx.roundRect(0, 0, size, size, r)
           } else {
@@ -71,15 +68,16 @@ export default function DynamicHead() {
             const padding = size * 0.12
             const imgSize = size - padding * 2
             ctx.drawImage(img, padding, padding, imgSize, imgSize)
-          } catch {
+            finalIconUrl = canvas.toDataURL('image/png')
+          } catch (err) {
+            console.warn('Failed to draw logo to canvas, falling back to initial:', err)
             ctx.fillStyle = '#ffffff'
             ctx.font = `bold ${size * 0.4}px sans-serif`
             ctx.textAlign = 'center'
             ctx.textBaseline = 'middle'
             ctx.fillText(appTitle?.charAt(0)?.toUpperCase() || 'A', size / 2, size / 2)
+            finalIconUrl = canvas.toDataURL('image/png')
           }
-
-          finalIconUrl = canvas.toDataURL('image/png')
         } else {
           finalIconUrl = appLogo
         }
@@ -109,7 +107,7 @@ export default function DynamicHead() {
           {
             src: finalIconUrl,
             sizes: 'any',
-            type: finalIconUrl.endsWith('.svg') ? 'image/svg+xml' : 'image/png',
+            type: finalIconUrl.startsWith('data:image/svg') ? 'image/svg+xml' : 'image/png',
             purpose: 'any maskable',
           },
         ],
@@ -131,6 +129,43 @@ export default function DynamicHead() {
     }
   }, [appTitle, appLogo, iconBackgroundColor])
 
+  // 2. Direct DOM manipulation to ensure updates are applied
+  // This bypasses potential conflicts with Next.js static metadata
+  useEffect(() => {
+    // Update document title
+    document.title = appTitle || 'ar-Raqmi Database'
+
+    // Update Favicon
+    let link = document.querySelector("link[rel*='icon']") as HTMLLinkElement
+    if (!link) {
+      link = document.createElement('link')
+      link.rel = 'icon'
+      document.head.appendChild(link)
+    }
+    link.type = faviconUrl.startsWith('data:image/svg') || faviconUrl.endsWith('.svg') ? 'image/svg+xml' : 'image/png'
+    link.href = faviconUrl
+
+    // Update Apple Touch Icon
+    let appleLink = document.querySelector("link[rel='apple-touch-icon']") as HTMLLinkElement
+    if (!appleLink) {
+      appleLink = document.createElement('link')
+      appleLink.rel = 'apple-touch-icon'
+      document.head.appendChild(appleLink)
+    }
+    appleLink.href = faviconUrl
+
+    // Update Manifest
+    if (manifestUrl) {
+      let manifestLink = document.querySelector("link[rel='manifest']") as HTMLLinkElement
+      if (!manifestLink) {
+        manifestLink = document.createElement('link')
+        manifestLink.rel = 'manifest'
+        document.head.appendChild(manifestLink)
+      }
+      manifestLink.href = manifestUrl
+    }
+  }, [appTitle, faviconUrl, manifestUrl])
+
   // Cleanup manifest blob on unmount
   useEffect(() => {
     return () => {
@@ -140,13 +175,7 @@ export default function DynamicHead() {
     }
   }, [])
 
-  return (
-    <>
-      <title>{appTitle || 'ar-Raqmi Database'}</title>
-      <link rel="icon" type={faviconUrl.endsWith('.svg') ? 'image/svg+xml' : 'image/png'} href={faviconUrl} />
-      <link rel="apple-touch-icon" href={faviconUrl} />
-      {manifestUrl && <link rel="manifest" href={manifestUrl} />}
-    </>
-  )
+  return null // We handle everything via side effects for maximum reliability
 }
+
 

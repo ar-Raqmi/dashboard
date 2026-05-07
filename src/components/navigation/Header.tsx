@@ -64,6 +64,11 @@ export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [logoError, setLogoError] = useState(false)
 
+  // Reset logo error when appLogo changes
+  useEffect(() => {
+    setLogoError(false)
+  }, [appLogo])
+
   const updateTime = useCallback(() => setTick((t) => t + 1), [])
 
   // Set mounted on next tick to avoid hydration mismatch
