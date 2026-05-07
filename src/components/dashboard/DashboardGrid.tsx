@@ -2,12 +2,12 @@
 
 import React, { useCallback, useMemo, useRef } from 'react'
 import { ResponsiveGridLayout, useContainerWidth } from 'react-grid-layout'
-import { CheckCircle, CalendarDays, StickyNote, BookOpen, Flag, Folder, FileText, Image as ImageIcon, Music, Film, Pencil, Check, Plus, Settings2, Trash2, ChevronUp, ChevronDown, MoonStar } from 'lucide-react'
+import { CheckCircle, CalendarDays, StickyNote, BookOpen, Flag, Folder, FileText, Image as ImageIcon, Music, Film, Pencil, Check, Plus, Settings2, Trash2, ChevronUp, ChevronDown, MoonStar, ClipboardList, Copy, CheckCheck } from 'lucide-react'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import { useAppStore, MAX_GRID_W, MAX_GRID_H } from '@/lib/store'
 import { WidgetCard } from './WidgetCard'
-import type { WidgetType, Layout, ActivePage, FileItem, ClockConfig, Task } from '@/lib/store'
+import type { WidgetType, Layout, ActivePage, FileItem, ClockConfig, Task, ClipboardItem } from '@/lib/store'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { Switch } from '@/components/ui/switch'
 import { Slider } from '@/components/ui/slider'
@@ -22,6 +22,7 @@ const widgetIcons: Record<WidgetType, React.ReactNode> = {
   goals: <Flag className="w-4 h-4" />,
   clock: <MoonStar className="w-4 h-4" />,
   files: <Folder className="w-4 h-4" />,
+  clipboard: <ClipboardList className="w-4 h-4" />,
 }
 
 // Widget title mapping
@@ -33,6 +34,7 @@ const widgetTitles: Record<WidgetType, string> = {
   goals: 'Goals',
   clock: 'World Clock',
   files: 'Files',
+  clipboard: 'Clipboard',
 }
 
 // Widget navigation mapping
@@ -44,6 +46,7 @@ const widgetPageMap: Record<WidgetType, ActivePage> = {
   goals: 'goals',
   clock: 'dashboard',
   files: 'files',
+  clipboard: 'dashboard',
 }
 
 // Helper to format file size
@@ -554,6 +557,115 @@ function FilesContent() {
   )
 }
 
+// ===== Clipboard Content =====
+function ClipboardContent({ h }: { w: number; h: number }) {
+  const clips = useAppStore((s) => s.clips)
+  const addClip = useAppStore((s) => s.addClip)
+  const deleteClip = useAppStore((s) => s.deleteClip)
+  const [newLabel, setNewLabel] = React.useState('')
+  const [newContent, setNewContent] = React.useState('')
+  const [copiedId, setCopiedId] = React.useState<string | null>(null)
+
+  const handleAdd = (e: React.FormEvent) => {
+    e.preventDefault()
+    const content = newContent.trim()
+    if (!content) return
+    addClip({ label: newLabel.trim() || 'Untitled', content })
+    setNewLabel('')
+    setNewContent('')
+  }
+
+  const handleCopy = async (clip: ClipboardItem) => {
+    try {
+      await navigator.clipboard.writeText(clip.content)
+      setCopiedId(clip.id)
+      setTimeout(() => setCopiedId(null), 1500)
+    } catch {
+      // Fallback for older browsers
+      const ta = document.createElement('textarea')
+      ta.value = clip.content
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+      setCopiedId(clip.id)
+      setTimeout(() => setCopiedId(null), 1500)
+    }
+  }
+
+  const maxClips = h >= 3 ? 8 : h >= 2 ? 5 : 3
+  const showInput = h >= 2
+
+  return (
+    <div className="flex flex-col h-full gap-2">
+      {/* Add new clip */}
+      {showInput && (
+        <form onSubmit={handleAdd} className="flex flex-col gap-1.5">
+          <input
+            value={newLabel}
+            onChange={(e) => setNewLabel(e.target.value)}
+            placeholder="Label (optional)"
+            className="h-7 text-xs bg-input border border-border rounded-xl px-2.5 placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
+          />
+          <div className="flex gap-1.5">
+            <input
+              value={newContent}
+              onChange={(e) => setNewContent(e.target.value)}
+              placeholder="Paste or type text..."
+              className="flex-1 h-7 text-xs bg-input border border-border rounded-xl px-2.5 placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
+            />
+            <button
+              type="submit"
+              disabled={!newContent.trim()}
+              className="shrink-0 size-7 rounded-xl bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 disabled:opacity-40 transition-colors"
+            >
+              <Plus className="size-3.5" />
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* Clip list */}
+      <div className="flex-1 overflow-y-auto space-y-1.5 max-h-64 pr-1 scrollbar-thin">
+        {clips.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-6 gap-2">
+            <ClipboardList className="size-8 text-muted-foreground/40" />
+            <p className="text-xs text-muted-foreground text-center">No clips yet.<br />Paste text to get started.</p>
+          </div>
+        ) : (
+          clips.slice(0, maxClips).map((clip) => (
+            <div
+              key={clip.id}
+              className="group flex items-start gap-2 p-2 rounded-xl hover:bg-accent/50 transition-colors"
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-[0.65rem] font-semibold text-muted-foreground truncate">{clip.label}</p>
+                <p className="text-xs text-foreground line-clamp-2 break-all">{clip.content}</p>
+              </div>
+              <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={() => handleCopy(clip)}
+                  className="size-6 rounded-lg flex items-center justify-center text-primary hover:bg-primary/10 transition-colors"
+                  title="Copy"
+                >
+                  {copiedId === clip.id ? <CheckCheck className="size-3.5" /> : <Copy className="size-3.5" />}
+                </button>
+                <button
+                  onClick={() => deleteClip(clip.id)}
+                  className="size-6 rounded-lg flex items-center justify-center text-destructive hover:bg-destructive/10 transition-colors"
+                  title="Delete"
+                >
+                  <Trash2 className="size-3" />
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ===== Timezone UTC offset helper =====
 function getTimezoneOffset(timezone: string): string {
   try {
@@ -686,8 +798,7 @@ function ClockDisplay({ clock, isPrimary, showSeconds }: { clock: ClockConfig; i
         <p className="text-3xl font-bold text-primary tabular-nums tracking-wider leading-none">
           {timeStr}
         </p>
-        <p className="text-sm text-muted-foreground mt-1.5">{dateStr}</p>
-        <p className="text-[0.65rem] text-outline mt-0.5">{clock.label}</p>
+        <p className="text-[0.65rem] text-outline mt-1.5">{clock.label}</p>
       </div>
     )
   }
@@ -935,6 +1046,7 @@ const widgetComponents: Record<WidgetType, React.ComponentType<WidgetContentProp
   goals: GoalsContent as React.ComponentType<WidgetContentProps>,
   clock: ClockContent as React.ComponentType<WidgetContentProps>,
   files: FilesContent as React.ComponentType<WidgetContentProps>,
+  clipboard: ClipboardContent as React.ComponentType<WidgetContentProps>,
 }
 
 export function DashboardGrid() {
