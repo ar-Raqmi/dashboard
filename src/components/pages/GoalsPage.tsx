@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Trash2, Flag, CheckCircle2, Circle, Pencil, GripVertical, Check, Layout as LayoutIcon } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
@@ -88,13 +88,22 @@ function SortableMilestoneItem({ milestone, index, onRemove, onLabelChange }: Mi
 }
 
 // --- Goal Card Component ---
-function SortableGoalCard({ goal, isRearranging, onEdit, onDelete, onToggleMilestone }: {
+function SortableGoalCard({ goal, isRearranging, onEdit, onDelete, onToggleMilestone, isHighlighted }: {
   goal: any
   isRearranging: boolean
   onEdit: (goal: any) => void
   onDelete: (id: string) => void
   onToggleMilestone: (goalId: string, msId: string) => void
+  isHighlighted: boolean
 }) {
+  const cardRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (isHighlighted && cardRef.current) {
+      cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [isHighlighted])
+
   const {
     attributes,
     listeners,
@@ -112,11 +121,17 @@ function SortableGoalCard({ goal, isRearranging, onEdit, onDelete, onToggleMiles
 
   return (
     <div
-      ref={setNodeRef}
+      ref={(node) => {
+        setNodeRef(node)
+        // @ts-ignore
+        cardRef.current = node
+      }}
       style={style}
       className={`group rounded-3xl bg-card border flex flex-col transition-all duration-300 ${
         isDragging ? 'opacity-50 shadow-2xl scale-[1.02] border-primary ring-4 ring-primary/10' : 'border-border'
-      } ${isRearranging ? 'hover:border-primary/50' : ''}`}
+      } ${isRearranging ? 'hover:border-primary/50' : ''} ${
+        isHighlighted ? 'ring-2 ring-primary ring-offset-2 border-primary bg-primary/5 shadow-lg shadow-primary/20 scale-[1.01]' : ''
+      }`}
     >
       <div className="p-6 flex flex-col gap-5">
         {/* Goal Header */}
@@ -511,6 +526,7 @@ export default function GoalsPage() {
                     onEdit={handleEditClick}
                     onDelete={deleteGoal}
                     onToggleMilestone={toggleMilestone}
+                    isHighlighted={highlightedGoalId === goal.id}
                   />
                 ))}
               </div>
