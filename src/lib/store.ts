@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import { Layout } from 'react-grid-layout'
 
 // ===== TYPES =====
@@ -151,7 +150,7 @@ const localDateStr = (date: Date) => {
   return `${y}-${m}-${d}`
 }
 
-// ===== SAMPLE DATA =====
+// ===== SAMPLE DATA (used as fallback before Convex loads) =====
 const sampleTasks: Task[] = [
   { id: crypto.randomUUID(), title: 'Submit quarterly report', dueDate: localDateStr(new Date(Date.now() - 86400000 * 2)), priority: 'high', status: 'pending', createdAt: new Date().toISOString() },
   { id: crypto.randomUUID(), title: 'Review project proposal', dueDate: localDateStr(new Date()), priority: 'high', status: 'pending', createdAt: new Date().toISOString() },
@@ -219,6 +218,9 @@ const sampleFiles: FileItem[] = [
   { id: 'f9', name: 'Adhan.mp3', type: 'file', category: 'audio', parentId: 'f3', size: 4200000, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
   { id: 'f10', name: 'Budget.xlsx', type: 'file', category: 'doc', parentId: 'f1', size: 89000, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
 ]
+
+// ===== GENERATE ID =====
+const genId = () => crypto.randomUUID()
 
 // ===== STORE INTERFACE =====
 interface AppStore {
@@ -340,368 +342,286 @@ interface AppStore {
   setBackground: (settings: Partial<BackgroundSettings>) => void
 }
 
-// ===== GENERATE ID =====
-const genId = () => crypto.randomUUID()
-
 // ===== STORE =====
-export const useAppStore = create<AppStore>()(
-  persist(
-    (set, get) => ({
-      // Navigation
-      activePage: 'dashboard',
-      setActivePage: (page) => set({ activePage: page }),
+// Note: This store uses sample data as initial values.
+// When authenticated with Convex, ConvexSync component will:
+// 1. Override all write actions with Convex-aware versions
+// 2. Sync Convex query results to the store state
+export const useAppStore = create<AppStore>()((set, get) => ({
+  // Navigation
+  activePage: 'dashboard',
+  setActivePage: (page) => set({ activePage: page }),
 
-      // Dashboard
-      widgets: defaultWidgets,
-      layouts: defaultLayouts,
-      mobileLayouts: defaultMobileLayouts,
-      setLayouts: (layouts) => set({ layouts }),
-      setMobileLayouts: (layouts) => set({ mobileLayouts: layouts }),
-      toggleWidgetVisibility: (type) =>
-        set((state) => ({
-          widgets: state.widgets.map((w) =>
-            w.type === type ? { ...w, visible: !w.visible } : w
-          ),
-        })),
-      updateWidgetSize: (widgetId, w, h) =>
-        set((state) => ({
-          layouts: state.layouts.map((l) =>
-            l.i === widgetId ? { ...l, w: Math.min(Math.max(w, 1), MAX_W), h: Math.min(Math.max(h, 1), MAX_H) } : l
-          ),
-          mobileLayouts: state.mobileLayouts.map((l) =>
-            l.i === widgetId ? { ...l, h: Math.min(Math.max(h, 1), MAX_H) } : l
-          ),
-        })),
+  // Dashboard
+  widgets: defaultWidgets,
+  layouts: defaultLayouts,
+  mobileLayouts: defaultMobileLayouts,
+  setLayouts: (layouts) => set({ layouts }),
+  setMobileLayouts: (layouts) => set({ mobileLayouts: layouts }),
+  toggleWidgetVisibility: (type) =>
+    set((state) => ({
+      widgets: state.widgets.map((w) =>
+        w.type === type ? { ...w, visible: !w.visible } : w
+      ),
+    })),
+  updateWidgetSize: (widgetId, w, h) =>
+    set((state) => ({
+      layouts: state.layouts.map((l) =>
+        l.i === widgetId ? { ...l, w: Math.min(Math.max(w, 1), MAX_W), h: Math.min(Math.max(h, 1), MAX_H) } : l
+      ),
+      mobileLayouts: state.mobileLayouts.map((l) =>
+        l.i === widgetId ? { ...l, h: Math.min(Math.max(h, 1), MAX_H) } : l
+      ),
+    })),
 
-      // Tasks
-      tasks: sampleTasks,
-      addTask: (task) =>
-        set((state) => ({
-          tasks: [...state.tasks, { ...task, id: genId(), createdAt: new Date().toISOString() }],
-        })),
-      updateTask: (id, updates) =>
-        set((state) => ({
-          tasks: state.tasks.map((t) => (t.id === id ? { ...t, ...updates } : t)),
-        })),
-      deleteTask: (id) =>
-        set((state) => ({ tasks: state.tasks.filter((t) => t.id !== id) })),
-      deleteCompletedTasks: () =>
-        set((state) => ({ tasks: state.tasks.filter((t) => t.status !== 'completed') })),
-      toggleTaskStatus: (id) =>
-        set((state) => ({
-          tasks: state.tasks.map((t) =>
-            t.id === id
-              ? { ...t, status: t.status === 'pending' ? 'completed' : 'pending' }
-              : t
-          ),
-        })),
+  // Tasks
+  tasks: sampleTasks,
+  addTask: (task) =>
+    set((state) => ({
+      tasks: [...state.tasks, { ...task, id: genId(), createdAt: new Date().toISOString() }],
+    })),
+  updateTask: (id, updates) =>
+    set((state) => ({
+      tasks: state.tasks.map((t) => (t.id === id ? { ...t, ...updates } : t)),
+    })),
+  deleteTask: (id) =>
+    set((state) => ({ tasks: state.tasks.filter((t) => t.id !== id) })),
+  deleteCompletedTasks: () =>
+    set((state) => ({ tasks: state.tasks.filter((t) => t.status !== 'completed') })),
+  toggleTaskStatus: (id) =>
+    set((state) => ({
+      tasks: state.tasks.map((t) =>
+        t.id === id
+          ? { ...t, status: t.status === 'pending' ? 'completed' : 'pending' }
+          : t
+      ),
+    })),
 
-      // Goals
-      goals: sampleGoals,
-      addGoal: (goal) =>
-        set((state) => ({
-          goals: [...state.goals, { ...goal, id: genId(), createdAt: new Date().toISOString() }],
-        })),
-      updateGoal: (id, updates) =>
-        set((state) => ({
-          goals: state.goals.map((g) => (g.id === id ? { ...g, ...updates } : g)),
-        })),
-      deleteGoal: (id) =>
-        set((state) => ({ goals: state.goals.filter((g) => g.id !== id) })),
-      toggleMilestone: (goalId, milestoneId) =>
-        set((state) => ({
-          goals: state.goals.map((g) => {
-            if (g.id !== goalId) return g
-            const milestones = g.milestones.map((m) =>
-              m.id === milestoneId ? { ...m, completed: !m.completed } : m
-            )
-            const completed = milestones.filter((m) => m.completed).length
-            const progress = Math.round((completed / milestones.length) * 100)
-            return { ...g, milestones, progress }
+  // Goals
+  goals: sampleGoals,
+  addGoal: (goal) =>
+    set((state) => ({
+      goals: [...state.goals, { ...goal, id: genId(), createdAt: new Date().toISOString() }],
+    })),
+  updateGoal: (id, updates) =>
+    set((state) => ({
+      goals: state.goals.map((g) => (g.id === id ? { ...g, ...updates } : g)),
+    })),
+  deleteGoal: (id) =>
+    set((state) => ({ goals: state.goals.filter((g) => g.id !== id) })),
+  toggleMilestone: (goalId, milestoneId) =>
+    set((state) => ({
+      goals: state.goals.map((g) => {
+        if (g.id !== goalId) return g
+        const milestones = g.milestones.map((m) =>
+          m.id === milestoneId ? { ...m, completed: !m.completed } : m
+        )
+        const completed = milestones.filter((m) => m.completed).length
+        const progress = Math.round((completed / milestones.length) * 100)
+        return { ...g, milestones, progress }
+      }),
+    })),
+
+  // Notes
+  notes: sampleNotes,
+  addNote: (note) =>
+    set((state) => {
+      const newId = genId()
+      const newNote = {
+        ...note,
+        id: newId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+      const isPinned = note.pinned ?? false
+      const layoutEntry: Layout = {
+        i: newId, x: 0, y: 0, w: 1, h: 1,
+        minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H,
+      }
+      return {
+        notes: [newNote, ...state.notes],
+        ...(isPinned
+          ? {
+            pinnedNoteLayouts: [layoutEntry, ...state.pinnedNoteLayouts.map((l) => ({ ...l, y: l.y + 1 }))],
+            pinnedNoteMobileLayouts: [layoutEntry, ...state.pinnedNoteMobileLayouts.map((l) => ({ ...l, y: l.y + 1 }))],
+          }
+          : {
+            noteLayouts: [layoutEntry, ...state.noteLayouts.map((l) => ({ ...l, y: l.y + 1 }))],
+            noteMobileLayouts: [layoutEntry, ...state.noteMobileLayouts.map((l) => ({ ...l, y: l.y + 1 }))],
           }),
-        })),
-
-      // Notes
-      notes: sampleNotes,
-      addNote: (note) =>
-        set((state) => {
-          const newId = genId()
-          const newNote = {
-            ...note,
-            id: newId,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          }
-          // Add layout entry at the top of the appropriate section
-          const isPinned = note.pinned ?? false
-          const layoutEntry: Layout = {
-            i: newId, x: 0, y: 0, w: 1, h: 1,
-            minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H,
-          }
-          return {
-            // New notes go to the TOP
-            notes: [newNote, ...state.notes],
-            ...(isPinned
-              ? {
-                pinnedNoteLayouts: [layoutEntry, ...state.pinnedNoteLayouts.map((l) => ({ ...l, y: l.y + 1 }))],
-                pinnedNoteMobileLayouts: [layoutEntry, ...state.pinnedNoteMobileLayouts.map((l) => ({ ...l, y: l.y + 1 }))],
-              }
-              : {
-                noteLayouts: [layoutEntry, ...state.noteLayouts.map((l) => ({ ...l, y: l.y + 1 }))],
-                noteMobileLayouts: [layoutEntry, ...state.noteMobileLayouts.map((l) => ({ ...l, y: l.y + 1 }))],
-              }),
-          }
-        }),
-      updateNote: (id, updates) =>
-        set((state) => ({
-          notes: state.notes.map((n) =>
-            n.id === id ? { ...n, ...updates, updatedAt: new Date().toISOString() } : n
-          ),
-        })),
-      deleteNote: (id) =>
-        set((state) => ({
-          notes: state.notes.filter((n) => n.id !== id),
+      }
+    }),
+  updateNote: (id, updates) =>
+    set((state) => ({
+      notes: state.notes.map((n) =>
+        n.id === id ? { ...n, ...updates, updatedAt: new Date().toISOString() } : n
+      ),
+    })),
+  deleteNote: (id) =>
+    set((state) => ({
+      notes: state.notes.filter((n) => n.id !== id),
+      noteLayouts: state.noteLayouts.filter((l) => l.i !== id),
+      noteMobileLayouts: state.noteMobileLayouts.filter((l) => l.i !== id),
+      pinnedNoteLayouts: state.pinnedNoteLayouts.filter((l) => l.i !== id),
+      pinnedNoteMobileLayouts: state.pinnedNoteMobileLayouts.filter((l) => l.i !== id),
+    })),
+  toggleNotePinned: (id) =>
+    set((state) => {
+      const note = state.notes.find((n) => n.id === id)
+      if (!note) return state
+      const newPinned = !note.pinned
+      const layoutEntry: Layout = {
+        i: id, x: 0, y: 0, w: 1, h: 1,
+        minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H,
+      }
+      if (newPinned) {
+        return {
+          notes: state.notes.map((n) => n.id === id ? { ...n, pinned: true } : n),
           noteLayouts: state.noteLayouts.filter((l) => l.i !== id),
           noteMobileLayouts: state.noteMobileLayouts.filter((l) => l.i !== id),
+          pinnedNoteLayouts: [layoutEntry, ...state.pinnedNoteLayouts.map((l) => ({ ...l, y: l.y + 1 }))],
+          pinnedNoteMobileLayouts: [layoutEntry, ...state.pinnedNoteMobileLayouts.map((l) => ({ ...l, y: l.y + 1 }))],
+        }
+      } else {
+        return {
+          notes: state.notes.map((n) => n.id === id ? { ...n, pinned: false } : n),
           pinnedNoteLayouts: state.pinnedNoteLayouts.filter((l) => l.i !== id),
           pinnedNoteMobileLayouts: state.pinnedNoteMobileLayouts.filter((l) => l.i !== id),
-        })),
-      toggleNotePinned: (id) =>
-        set((state) => {
-          const note = state.notes.find((n) => n.id === id)
-          if (!note) return state
-          const newPinned = !note.pinned
-          const layoutEntry: Layout = {
-            i: id, x: 0, y: 0, w: 1, h: 1,
-            minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H,
-          }
-          // Remove from old section, add to new section at top
-          if (newPinned) {
-            return {
-              notes: state.notes.map((n) => n.id === id ? { ...n, pinned: true } : n),
-              noteLayouts: state.noteLayouts.filter((l) => l.i !== id),
-              noteMobileLayouts: state.noteMobileLayouts.filter((l) => l.i !== id),
-              pinnedNoteLayouts: [layoutEntry, ...state.pinnedNoteLayouts.map((l) => ({ ...l, y: l.y + 1 }))],
-              pinnedNoteMobileLayouts: [layoutEntry, ...state.pinnedNoteMobileLayouts.map((l) => ({ ...l, y: l.y + 1 }))],
-            }
-          } else {
-            return {
-              notes: state.notes.map((n) => n.id === id ? { ...n, pinned: false } : n),
-              pinnedNoteLayouts: state.pinnedNoteLayouts.filter((l) => l.i !== id),
-              pinnedNoteMobileLayouts: state.pinnedNoteMobileLayouts.filter((l) => l.i !== id),
-              noteLayouts: [layoutEntry, ...state.noteLayouts.map((l) => ({ ...l, y: l.y + 1 }))],
-              noteMobileLayouts: [layoutEntry, ...state.noteMobileLayouts.map((l) => ({ ...l, y: l.y + 1 }))],
-            }
-          }
-        }),
-
-      // Note Layouts
-      noteLayouts: [],
-      noteMobileLayouts: [],
-      setNoteLayouts: (layouts) => set({ noteLayouts: layouts }),
-      setNoteMobileLayouts: (layouts) => set({ noteMobileLayouts: layouts }),
-
-      pinnedNoteLayouts: [],
-      pinnedNoteMobileLayouts: [],
-      setPinnedNoteLayouts: (layouts) => set({ pinnedNoteLayouts: layouts }),
-      setPinnedNoteMobileLayouts: (layouts) => set({ pinnedNoteMobileLayouts: layouts }),
-
-      // Calendar
-      events: sampleEvents,
-      addEvent: (event) =>
-        set((state) => ({ events: [...state.events, { ...event, id: genId() }] })),
-      deleteEvent: (id) =>
-        set((state) => ({ events: state.events.filter((e) => e.id !== id) })),
-
-      // Clipboard
-      clipboardText: '',
-      setClipboardText: (text) => set({ clipboardText: text }),
-
-      // File Manager
-      files: sampleFiles,
-      currentFolderId: null,
-      setCurrentFolderId: (id) => set({ currentFolderId: id }),
-      addFile: (file) =>
-        set((state) => ({
-          files: [
-            ...state.files,
-            {
-              ...file,
-              id: genId(),
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            },
-          ],
-        })),
-      renameFile: (id, name) =>
-        set((state) => ({
-          files: state.files.map((f) =>
-            f.id === id ? { ...f, name, updatedAt: new Date().toISOString() } : f
-          ),
-        })),
-      deleteFile: (id) => {
-        const { files } = get()
-        // Recursively find all children
-        const getChildrenIds = (parentId: string): string[] => {
-          const children = files.filter((f) => f.parentId === parentId)
-          return children.flatMap((c) => [c.id, ...getChildrenIds(c.id)])
+          noteLayouts: [layoutEntry, ...state.noteLayouts.map((l) => ({ ...l, y: l.y + 1 }))],
+          noteMobileLayouts: [layoutEntry, ...state.noteMobileLayouts.map((l) => ({ ...l, y: l.y + 1 }))],
         }
-        const idsToDelete = [id, ...getChildrenIds(id)]
-        set({ files: files.filter((f) => !idsToDelete.includes(f.id)) })
-      },
-      moveFile: (fileId, newParentId) =>
-        set((state) => ({
-          files: state.files.map((f) =>
-            f.id === fileId ? { ...f, parentId: newParentId, updatedAt: new Date().toISOString() } : f
-          ),
-        })),
-      previewFile: null,
-      setPreviewFile: (file) => set({ previewFile: file }),
-
-      // Spiritual
-      verse: null,
-      setVerse: (verse) => set({ verse }),
-      hadith: null,
-      setHadith: (hadith) => set({ hadith }),
-      verseLoading: false,
-      setVerseLoading: (loading) => set({ verseLoading: loading }),
-      hadithLoading: false,
-      setHadithLoading: (loading) => set({ hadithLoading: loading }),
-
-      // Clock
-      clocks: [
-        { id: 'clock-1', label: 'Kuala Lumpur', timezone: 'Asia/Kuala_Lumpur' },
-      ],
-      addClock: (clock) =>
-        set((state) => ({
-          clocks: [...state.clocks, { ...clock, id: genId() }],
-        })),
-      removeClock: (id) =>
-        set((state) => ({
-          clocks: state.clocks.filter((c) => c.id !== id),
-        })),
-      updateClock: (id, updates) =>
-        set((state) => ({
-          clocks: state.clocks.map((c) => (c.id === id ? { ...c, ...updates } : c)),
-        })),
-      hijriVisible: true,
-      setHijriVisible: (visible) => set({ hijriVisible: visible }),
-      hijriOffset: 0,
-      setHijriOffset: (offset) => set({ hijriOffset: Math.max(-2, Math.min(2, offset)) }),
-      showSeconds: true,
-      setShowSeconds: (show) => set({ showSeconds: show }),
-      iconBackgroundColor: '#A5D6A7',
-      setIconBackgroundColor: (color) => set({ iconBackgroundColor: color }),
-
-      // Settings
-      profileName: 'User',
-      setProfileName: (name) => set({ profileName: name }),
-      profilePicture: '',
-      setProfilePicture: (url) => set({ profilePicture: url }),
-      appTitle: 'ar-Raqmi Database',
-      setAppTitle: (title) => set({ appTitle: title }),
-      appLogo: '',
-      setAppLogo: (url) => set({ appLogo: url }),
-
-      // Search
-      searchQuery: '',
-      setSearchQuery: (query) => set({ searchQuery: query }),
-
-      // Dashboard Manager
-      showDashboardManager: false,
-      setShowDashboardManager: (show) => set({ showDashboardManager: show }),
-
-      // Dashboard Edit Mode
-      dashboardEditMode: false,
-      setDashboardEditMode: (edit) => set({ dashboardEditMode: edit }),
-
-      // Background
-      background: {
-        type: 'default',
-        color: '#A5D6A7',
-        gradient: 'citrus-dawn',
-        image: '',
-        opacity: 30,
-      },
-      setBackground: (updates) =>
-        set((state) => ({
-          background: { ...state.background, ...updates },
-        })),
+      }
     }),
-    {
-      name: 'ar-raqmi-store',
-      version: 3,
-      migrate: (persistedState: Record<string, unknown>, version: number) => {
-        const state = persistedState as Record<string, unknown>
 
-        // Migration v1 → v2: Replace single timezone with clocks array
-        if (version < 2) {
-          const oldTimezone = state.timezone as string | undefined
-          const tz = oldTimezone || 'Asia/Kuala_Lumpur'
-          const label = tz.split('/').pop()?.replace(/_/g, ' ') || 'Local'
-          state.clocks = [{ id: 'clock-1', label, timezone: tz }]
-          delete state.timezone
-          state.hijriVisible = true
-          state.hijriOffset = 0
-        }
+  // Note Layouts
+  noteLayouts: [],
+  noteMobileLayouts: [],
+  setNoteLayouts: (layouts) => set({ noteLayouts: layouts }),
+  setNoteMobileLayouts: (layouts) => set({ noteMobileLayouts: layouts }),
 
-        // Migration v2 → v3: Add Clipboard widget + layout entries
-        if (version < 3) {
-          // Add clipboard to widgets array if not present
-          const widgets = state.widgets as Array<{ type: string; label: string; icon: string; visible: boolean }> | undefined
-          if (widgets && !widgets.some((w) => w.type === 'clipboard')) {
-            widgets.push({ type: 'clipboard', label: 'Clipboard', icon: 'content_paste', visible: true })
-          }
+  pinnedNoteLayouts: [],
+  pinnedNoteMobileLayouts: [],
+  setPinnedNoteLayouts: (layouts) => set({ pinnedNoteLayouts: layouts }),
+  setPinnedNoteMobileLayouts: (layouts) => set({ pinnedNoteMobileLayouts: layouts }),
 
-          // Add clipboard layout entry to desktop layouts
-          const layouts = state.layouts as Array<{ i: string; x: number; y: number; w: number; h: number; minW: number; maxW: number; minH: number; maxH: number }> | undefined
-          if (layouts && !layouts.some((l) => l.i === 'clipboard')) {
-            // Find max Y to place the new widget below existing ones
-            const maxY = layouts.reduce((max, l) => Math.max(max, l.y + l.h), 0)
-            layouts.push({ i: 'clipboard', x: 2, y: maxY, w: 1, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 6 })
-          }
+  // Calendar
+  events: sampleEvents,
+  addEvent: (event) =>
+    set((state) => ({ events: [...state.events, { ...event, id: genId() }] })),
+  deleteEvent: (id) =>
+    set((state) => ({ events: state.events.filter((e) => e.id !== id) })),
 
-          // Add clipboard layout entry to mobile layouts
-          const mobileLayouts = state.mobileLayouts as Array<{ i: string; x: number; y: number; w: number; h: number; minW: number; maxW: number; minH: number; maxH: number }> | undefined
-          if (mobileLayouts && !mobileLayouts.some((l) => l.i === 'clipboard')) {
-            const maxY = mobileLayouts.reduce((max, l) => Math.max(max, l.y + l.h), 0)
-            mobileLayouts.push({ i: 'clipboard', x: 0, y: maxY, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: 6 })
-          }
+  // Clipboard
+  clipboardText: '',
+  setClipboardText: (text) => set({ clipboardText: text }),
 
-          // Initialize clipboardText (remove old clips array if present)
-          if (!state.clipboardText) {
-            state.clipboardText = ''
-          }
-          delete state.clips
-        }
-
-        return persistedState
-      },
-      partialize: (state) => ({
-        widgets: state.widgets,
-        layouts: state.layouts,
-        mobileLayouts: state.mobileLayouts,
-        tasks: state.tasks,
-        goals: state.goals,
-        notes: state.notes,
-        events: state.events,
-        files: state.files,
-        clocks: state.clocks,
-        hijriVisible: state.hijriVisible,
-        hijriOffset: state.hijriOffset,
-        showSeconds: state.showSeconds,
-        iconBackgroundColor: state.iconBackgroundColor,
-        profileName: state.profileName,
-        profilePicture: state.profilePicture,
-        appTitle: state.appTitle,
-        appLogo: state.appLogo,
-        background: state.background,
-        noteLayouts: state.noteLayouts,
-        noteMobileLayouts: state.noteMobileLayouts,
-        pinnedNoteLayouts: state.pinnedNoteLayouts,
-        pinnedNoteMobileLayouts: state.pinnedNoteMobileLayouts,
-        clipboardText: state.clipboardText,
-      }),
+  // File Manager
+  files: sampleFiles,
+  currentFolderId: null,
+  setCurrentFolderId: (id) => set({ currentFolderId: id }),
+  addFile: (file) =>
+    set((state) => ({
+      files: [
+        ...state.files,
+        {
+          ...file,
+          id: genId(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ],
+    })),
+  renameFile: (id, name) =>
+    set((state) => ({
+      files: state.files.map((f) =>
+        f.id === id ? { ...f, name, updatedAt: new Date().toISOString() } : f
+      ),
+    })),
+  deleteFile: (id) => {
+    const { files } = get()
+    const getChildrenIds = (parentId: string): string[] => {
+      const children = files.filter((f) => f.parentId === parentId)
+      return children.flatMap((c) => [c.id, ...getChildrenIds(c.id)])
     }
-  )
-)
+    const idsToDelete = [id, ...getChildrenIds(id)]
+    set({ files: files.filter((f) => !idsToDelete.includes(f.id)) })
+  },
+  moveFile: (fileId, newParentId) =>
+    set((state) => ({
+      files: state.files.map((f) =>
+        f.id === fileId ? { ...f, parentId: newParentId, updatedAt: new Date().toISOString() } : f
+      ),
+    })),
+  previewFile: null,
+  setPreviewFile: (file) => set({ previewFile: file }),
+
+  // Spiritual
+  verse: null,
+  setVerse: (verse) => set({ verse }),
+  hadith: null,
+  setHadith: (hadith) => set({ hadith }),
+  verseLoading: false,
+  setVerseLoading: (loading) => set({ verseLoading: loading }),
+  hadithLoading: false,
+  setHadithLoading: (loading) => set({ hadithLoading: loading }),
+
+  // Clock
+  clocks: [
+    { id: 'clock-1', label: 'Kuala Lumpur', timezone: 'Asia/Kuala_Lumpur' },
+  ],
+  addClock: (clock) =>
+    set((state) => ({
+      clocks: [...state.clocks, { ...clock, id: genId() }],
+    })),
+  removeClock: (id) =>
+    set((state) => ({
+      clocks: state.clocks.filter((c) => c.id !== id),
+    })),
+  updateClock: (id, updates) =>
+    set((state) => ({
+      clocks: state.clocks.map((c) => (c.id === id ? { ...c, ...updates } : c)),
+    })),
+  hijriVisible: true,
+  setHijriVisible: (visible) => set({ hijriVisible: visible }),
+  hijriOffset: 0,
+  setHijriOffset: (offset) => set({ hijriOffset: Math.max(-2, Math.min(2, offset)) }),
+  showSeconds: true,
+  setShowSeconds: (show) => set({ showSeconds: show }),
+  iconBackgroundColor: '#A5D6A7',
+  setIconBackgroundColor: (color) => set({ iconBackgroundColor: color }),
+
+  // Settings
+  profileName: 'User',
+  setProfileName: (name) => set({ profileName: name }),
+  profilePicture: '',
+  setProfilePicture: (url) => set({ profilePicture: url }),
+  appTitle: 'ar-Raqmi Database',
+  setAppTitle: (title) => set({ appTitle: title }),
+  appLogo: '',
+  setAppLogo: (url) => set({ appLogo: url }),
+
+  // Search
+  searchQuery: '',
+  setSearchQuery: (query) => set({ searchQuery: query }),
+
+  // Dashboard Manager
+  showDashboardManager: false,
+  setShowDashboardManager: (show) => set({ showDashboardManager: show }),
+
+  // Dashboard Edit Mode
+  dashboardEditMode: false,
+  setDashboardEditMode: (edit) => set({ dashboardEditMode: edit }),
+
+  // Background
+  background: {
+    type: 'default',
+    color: '#A5D6A7',
+    gradient: 'citrus-dawn',
+    image: '',
+    opacity: 30,
+  },
+  setBackground: (updates) =>
+    set((state) => ({
+      background: { ...state.background, ...updates },
+    })),
+}))
