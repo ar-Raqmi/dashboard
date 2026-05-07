@@ -87,13 +87,7 @@ import { api } from '../../../convex/_generated/api'
 import { useAuth } from '@/hooks/useAuth'
 
 // ===== PREVIEW CONTENT =====
-function PreviewContent({ file }: { file: FileItem }) {
-  const { sessionToken } = useAuth()
-  const fileUrl = useQuery(
-    api.files.getFileUrl,
-    file.storageId ? { sessionToken: sessionToken!, storageId: file.storageId } : 'skip'
-  )
-
+function PreviewContent({ file, fileUrl }: { file: FileItem; fileUrl?: string | null }) {
   switch (file.category) {
     case 'image':
       return (
@@ -179,7 +173,13 @@ function PreviewContent({ file }: { file: FileItem }) {
 // ===== MAIN FILE PREVIEW =====
 export default function FilePreview() {
   const { previewFile, setPreviewFile, deleteFile } = useAppStore()
+  const { sessionToken } = useAuth()
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false)
+
+  const fileUrl = useQuery(
+    api.files.getFileUrl,
+    previewFile?.storageId ? { sessionToken: sessionToken!, storageId: previewFile.storageId } : 'skip'
+  )
 
   if (!previewFile) return null
 
@@ -228,7 +228,7 @@ export default function FilePreview() {
 
                 {/* Preview content */}
                 <div className="px-6 py-6">
-                  <PreviewContent file={previewFile} />
+                  <PreviewContent file={previewFile} fileUrl={fileUrl} />
                 </div>
 
                 {/* Metadata */}
