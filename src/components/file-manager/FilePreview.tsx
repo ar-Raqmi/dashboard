@@ -253,12 +253,16 @@ export default function FilePreview() {
                 <div className="px-6 pb-6 flex items-center gap-3">
                   <Button
                     className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
-                    onClick={() => {
-                      // Mock download
+                    onClick={async () => {
+                      if (!fileUrl) return
+                      const response = await fetch(fileUrl)
+                      const blob = await response.blob()
+                      const url = window.URL.createObjectURL(blob)
                       const a = document.createElement('a')
-                      a.href = previewFile.content || '#'
+                      a.href = url
                       a.download = previewFile.name
                       a.click()
+                      window.URL.revokeObjectURL(url)
                     }}
                   >
                     <Download className="size-4" />
