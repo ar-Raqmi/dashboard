@@ -47,6 +47,7 @@ export const create = mutation({
     milestones: v.array(v.object({
       label: v.string(),
       completed: v.boolean(),
+      id: v.optional(v.string()),
     })),
   },
   handler: async (ctx, { sessionToken, title, progress, milestones }) => {

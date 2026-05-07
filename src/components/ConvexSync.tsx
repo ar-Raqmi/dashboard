@@ -50,7 +50,7 @@ export function ConvexSync({ children }: { children: React.ReactNode }) {
       settings !== undefined
 
     if (isDataLoaded) {
-      setIsInitialSyncComplete(true)
+      requestAnimationFrame(() => setIsInitialSyncComplete(true))
     }
   }, [
     tasks, goals, notes, events, files, clocks, widgets,
@@ -453,7 +453,7 @@ export function ConvexSync({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!user) {
       initialized.current = false
-      setIsInitialSyncComplete(false)
+      requestAnimationFrame(() => setIsInitialSyncComplete(false))
     }
   }, [user])
 

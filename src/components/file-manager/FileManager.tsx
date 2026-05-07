@@ -20,7 +20,6 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
-import JSZip from 'jszip'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAppStore } from '@/lib/store'
@@ -187,7 +186,7 @@ export default function FileManager() {
     await toggleStar({ sessionToken, id: id as any })
   }
 
-  const displayFiles = useMemo(() => {
+  const getDisplayFiles = () => {
     let items = searchQuery ? searchResults : files
     if (!items) return items
 
@@ -199,7 +198,8 @@ export default function FileManager() {
       if (sortBy === 'size') return (b.size || 0) - (a.size || 0)
       return 0
     })
-  }, [files, searchResults, searchQuery, sortBy])
+  }
+  const displayFiles = getDisplayFiles()
 
   return (
     <div className="flex h-[calc(100vh-120px)] w-full overflow-hidden bg-background/50 backdrop-blur-xl rounded-3xl border border-white/10">
@@ -345,14 +345,8 @@ export default function FileManager() {
                   <Edit3 className="size-3.5" /> Move
                 </Button>
                 <Button variant="ghost" size="sm" onClick={async () => {
-                  try {
-                    const zip = new JSZip();
-                    toast.info("Preparing batch download...");
-                    // This is a simplified version, real implementation would fetch all files
-                    toast.warning("ZIP compression for multiple files coming soon!");
-                  } catch (e) {
-                    toast.error("Batch download failed");
-                  }
+                  toast.info("Preparing batch download...");
+                  toast.warning("ZIP compression for multiple files coming soon!");
                 }} className="h-8 hover:bg-white/10 text-primary-foreground gap-2">
                   <Download className="size-3.5" /> Download (.zip)
                 </Button>
