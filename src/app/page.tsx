@@ -3,6 +3,8 @@
 import { useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAppStore, type ActivePage } from '@/lib/store'
+import { useAuth } from '@/hooks/useAuth'
+import { ConvexSync } from '@/components/ConvexSync'
 import Header from '@/components/navigation/Header'
 import TabBar from '@/components/navigation/TabBar'
 import { DashboardGrid } from '@/components/dashboard/DashboardGrid'
@@ -15,7 +17,9 @@ import FileManagerPage from '@/components/pages/FileManagerPage'
 import SpiritualPage from '@/components/pages/SpiritualPage'
 import GoalsPage from '@/components/pages/GoalsPage'
 import SettingsPage from '@/components/pages/SettingsPage'
+import LoginPage from '@/components/pages/LoginPage'
 import DynamicHead from '@/components/DynamicHead'
+import { Loader2 } from 'lucide-react'
 
 const pageComponents: Record<ActivePage, React.ComponentType> = {
   dashboard: DashboardGrid,
@@ -41,6 +45,7 @@ const GRADIENT_MAP: Record<string, string> = {
 }
 
 export default function Home() {
+  const { user, loading } = useAuth()
   const activePage = useAppStore((s) => s.activePage)
   const setVerse = useAppStore((s) => s.setVerse)
   const setVerseLoading = useAppStore((s) => s.setVerseLoading)
@@ -76,6 +81,41 @@ export default function Home() {
     fetchSpiritual()
   }, [setVerse, setVerseLoading, setHadith, setHadithLoading])
 
+  // Show loading spinner while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="size-8 text-primary animate-spin" />
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show login page if not authenticated
+  if (!user) {
+    return <LoginPage />
+  }
+
+  // Authenticated: Show the main app with Convex sync
+  return (
+    <ConvexSync>
+      <AuthenticatedApp
+        activePage={activePage}
+        background={background}
+      />
+    </ConvexSync>
+  )
+}
+
+function AuthenticatedApp({
+  activePage,
+  background,
+}: {
+  activePage: ActivePage
+  background: any
+}) {
   const PageComponent = pageComponents[activePage]
 
   // Compute the background style for the decorative layer
