@@ -22,7 +22,7 @@ export function ConvexSync({ children }: { children: React.ReactNode }) {
   const goals = useQuery(api.goals.list, sessionToken ? { sessionToken } : 'skip')
   const notes = useQuery(api.notes.list, sessionToken ? { sessionToken } : 'skip')
   const events = useQuery(api.events.list, sessionToken ? { sessionToken } : 'skip')
-  const files = useQuery(api.files.list, sessionToken ? { sessionToken } : 'skip')
+  const files = useQuery(api.files.listAll, sessionToken ? { sessionToken } : 'skip')
   const clocks = useQuery(api.clocks.list, sessionToken ? { sessionToken } : 'skip')
   const widgets = useQuery(api.dashboard.listWidgets, sessionToken ? { sessionToken } : 'skip')
   const desktopLayouts = useQuery(api.dashboard.getLayout, sessionToken ? { sessionToken, layoutType: 'desktop' } : 'skip')

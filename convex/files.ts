@@ -34,6 +34,18 @@ export const list = query({
   },
 });
 
+// List all files for a user (for global search sync)
+export const listAll = query({
+  args: { sessionToken: v.string() },
+  handler: async (ctx, { sessionToken }) => {
+    const userId = await getAuthedUserId(ctx, sessionToken);
+    return await ctx.db
+      .query("files")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+  },
+});
+
 // Search files by name
 export const search = query({
   args: { 
