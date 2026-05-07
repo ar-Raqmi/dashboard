@@ -93,6 +93,15 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    // Always refresh the session token cookie to ensure it's kept alive and consistent
+    response.cookies.set('ar-raqmi-token', sessionToken, {
+      httpOnly: false, // Accessible by JS for Convex calls
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+      path: '/',
+    })
+
     return response
   } catch (error) {
     console.error('Update credentials error:', error)
