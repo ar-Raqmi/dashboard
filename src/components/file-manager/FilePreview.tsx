@@ -208,6 +208,7 @@ export default function FilePreview() {
   )
 
   const removeFile = useMutation(api.files.remove)
+  const renameFile = useMutation(api.files.rename)
   const toggleStar = useMutation(api.files.toggleStar)
 
   if (!previewFile) return null
@@ -248,8 +249,22 @@ export default function FilePreview() {
                       <div className="size-16 rounded-[1.25rem] bg-black/20 backdrop-blur-md flex items-center justify-center shadow-lg border border-white/5">
                         {getCategoryIcon(previewFile.category)}
                       </div>
-                      <div className="min-w-0">
-                        <h2 className="text-xl font-bold text-foreground truncate max-w-sm">{previewFile.name}</h2>
+                      <div className="min-w-0 flex-1">
+                        <input
+                          className="bg-transparent border-none text-xl font-bold text-foreground focus:outline-none focus:ring-0 w-full hover:bg-black/10 rounded px-1 transition-colors"
+                          defaultValue={previewFile.name}
+                          onBlur={async (e) => {
+                            if (e.target.value && e.target.value !== previewFile.name) {
+                              try {
+                                await renameFile({ sessionToken: sessionToken!, id: previewFile.id as any, name: e.target.value })
+                                setPreviewFile({ ...previewFile, name: e.target.value })
+                                toast.success('File renamed')
+                              } catch (e) {
+                                toast.error('Rename failed')
+                              }
+                            }
+                          }}
+                        />
                         <div className="flex items-center gap-2 mt-2">
                           <Badge className="bg-white/10 text-foreground hover:bg-white/20 border-0 rounded-xl px-3 py-0.5 text-[10px] font-bold uppercase tracking-widest">
                             {getCategoryLabel(previewFile.category)}

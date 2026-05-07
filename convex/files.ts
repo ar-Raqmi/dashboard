@@ -115,12 +115,10 @@ export const updateLastAccessed = mutation({
   },
 });
 
-export const remove = mutation({
-  args: { sessionToken: v.string(), id: v.id("files") },
-  handler: async (ctx, { sessionToken, id }) => {
+export const removeMultiple = mutation({
+  args: { sessionToken: v.string(), ids: v.array(v.id("files")) },
+  handler: async (ctx, { sessionToken, ids }) => {
     const userId = await getAuthedUserId(ctx, sessionToken);
-    const file = await ctx.db.get(id);
-    if (!file || file.userId !== userId) throw new Error("Unauthorized");
     
     const deleteRecursive = async (fileId: any) => {
       const children = await ctx.db
@@ -134,10 +132,15 @@ export const remove = mutation({
         await ctx.db.delete(child._id);
       }
     };
-    
-    if (file.type === "folder") await deleteRecursive(id);
-    if (file.storageId) await ctx.storage.delete(file.storageId);
-    await ctx.db.delete(id);
+
+    for (const id of ids) {
+      const file = await ctx.db.get(id);
+      if (!file || file.userId !== userId) continue;
+      
+      if (file.type === "folder") await deleteRecursive(id);
+      if (file.storageId) await ctx.storage.delete(file.storageId);
+      await ctx.db.delete(id);
+    }
   },
 });
 
@@ -166,5 +169,63 @@ export const getPath = query({
     }
     
     return path;
+  },
+});
+export const moveFiles = mutation({
+  args: { 
+    sessionToken: v.string(), 
+    ids: v.array(v.id("files")), 
+    newParentId: v.optional(v.id("files")) 
+  },
+  handler: async (ctx, { sessionToken, ids, newParentId }) => {
+    const userId = await getAuthedUserId(ctx, sessionToken);
+    
+    for (const id of ids) {
+      const file = await ctx.db.get(id);
+      if (!file || file.userId !== userId) continue;
+      
+      // Prevent moving a folder into itself or its children
+      if (newParentId) {
+        let current: any = newParentId;
+        let isCyclic = false;
+        while (current) {
+          if (current === id) {
+            isCyclic = true;
+            break;
+          }
+          const parent = await ctx.db.get(current);
+          current = parent?.parentId;
+        }
+        if (isCyclic) continue;
+      }
+
+      await ctx.db.patch(id, { parentId: newParentId, updatedAt: Date.now() });
+    }
+  },
+});
+
+export const remove = mutation({
+  args: { sessionToken: v.string(), id: v.id("files") },
+  handler: async (ctx, { sessionToken, id }) => {
+    const userId = await getAuthedUserId(ctx, sessionToken);
+    const file = await ctx.db.get(id);
+    if (!file || file.userId !== userId) throw new Error("Unauthorized");
+    
+    const deleteRecursive = async (fileId: any) => {
+      const children = await ctx.db
+        .query("files")
+        .withIndex("by_parent", (q) => q.eq("parentId", fileId))
+        .collect();
+        
+      for (const child of children) {
+        if (child.type === "folder") await deleteRecursive(child._id);
+        if (child.storageId) await ctx.storage.delete(child.storageId);
+        await ctx.db.delete(child._id);
+      }
+    };
+    
+    if (file.type === "folder") await deleteRecursive(id);
+    if (file.storageId) await ctx.storage.delete(file.storageId);
+    await ctx.db.delete(id);
   },
 });
