@@ -187,7 +187,7 @@ export default function LoginPage() {
                     {seedSuccess ? (
                       <div className="flex items-center gap-2 p-3 rounded-2xl bg-primary/10 text-primary text-sm">
                         <CheckCircle2 className="size-4" />
-                        <span>Admin user created! You can now sign in above.</span>
+                        <span>Admin user reset successfully! You can now sign in.</span>
                       </div>
                     ) : (
                       <Button
@@ -201,7 +201,7 @@ export default function LoginPage() {
                         ) : (
                           <Database className="size-4 mr-2" />
                         )}
-                        Seed Admin User & Sample Data
+                        Reset & Seed Admin User
                       </Button>
                     )}
                   </motion.div>
@@ -213,7 +213,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground mt-6">
-          ar-Raqmi Database &middot; Powered by Convex
+          ar-Raqmi Database &middot; Clean Reset Mode
         </p>
       </motion.div>
     </div>
