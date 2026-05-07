@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Trash2, Flag, CheckCircle2, Circle } from 'lucide-react'
+import { Plus, Trash2, Flag, CheckCircle2, Circle, Pencil } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,15 +17,16 @@ import {
 } from '@/components/ui/dialog'
 
 export default function GoalsPage() {
-  const { goals, addGoal, deleteGoal, toggleMilestone } = useAppStore()
+  const { goals, addGoal, deleteGoal, updateGoal, toggleMilestone } = useAppStore()
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingGoal, setEditingGoal] = useState<any>(null)
   const [goalTitle, setGoalTitle] = useState('')
   const [milestoneInput, setMilestoneInput] = useState('')
-  const [milestones, setMilestones] = useState<string[]>([])
+  const [milestones, setMilestones] = useState<{ id?: string; label: string; completed: boolean }[]>([])
 
   const handleAddMilestone = () => {
     if (!milestoneInput.trim()) return
-    setMilestones([...milestones, milestoneInput.trim()])
+    setMilestones([...milestones, { label: milestoneInput.trim(), completed: false }])
     setMilestoneInput('')
   }
 
@@ -35,19 +36,44 @@ export default function GoalsPage() {
 
   const handleAddGoal = () => {
     if (!goalTitle.trim() || milestones.length === 0) return
-    addGoal({
-      title: goalTitle.trim(),
-      progress: 0,
-      milestones: milestones.map((label, i) => ({
-        id: `m-${Date.now()}-${i}`,
-        label,
-        completed: false,
-      })),
-    })
+    
+    if (editingGoal) {
+      updateGoal(editingGoal.id, {
+        title: goalTitle.trim(),
+        milestones: milestones.map((m) => ({
+          id: m.id,
+          label: m.label,
+          completed: m.completed,
+        })),
+      })
+    } else {
+      addGoal({
+        title: goalTitle.trim(),
+        progress: 0,
+        milestones: milestones.map((m, i) => ({
+          id: `m-${Date.now()}-${i}`,
+          label: m.label,
+          completed: m.completed,
+        })),
+      })
+    }
+    
+    resetForm()
+    setDialogOpen(false)
+  }
+
+  const resetForm = () => {
     setGoalTitle('')
     setMilestones([])
     setMilestoneInput('')
-    setDialogOpen(false)
+    setEditingGoal(null)
+  }
+
+  const handleEditClick = (goal: any) => {
+    setEditingGoal(goal)
+    setGoalTitle(goal.title)
+    setMilestones(goal.milestones.map((m: any) => ({ ...m })))
+    setDialogOpen(true)
   }
 
   return (
@@ -65,7 +91,13 @@ export default function GoalsPage() {
           <h1 className="text-2xl font-bold">Goals</h1>
         </div>
 
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog 
+          open={dialogOpen} 
+          onOpenChange={(open) => {
+            setDialogOpen(open)
+            if (!open) resetForm()
+          }}
+        >
           <DialogTrigger asChild>
             <Button className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90">
               <Plus className="size-4 mr-1" />
@@ -74,7 +106,9 @@ export default function GoalsPage() {
           </DialogTrigger>
           <DialogContent className="bg-card border-border rounded-3xl">
             <DialogHeader>
-              <DialogTitle className="text-foreground">Add New Goal</DialogTitle>
+              <DialogTitle className="text-foreground">
+                {editingGoal ? 'Edit Goal' : 'Add New Goal'}
+              </DialogTitle>
             </DialogHeader>
             <div className="flex flex-col gap-4 py-2">
               <div className="flex flex-col gap-2">
@@ -111,14 +145,22 @@ export default function GoalsPage() {
                   </Button>
                 </div>
                 {milestones.length > 0 && (
-                  <div className="flex flex-col gap-1.5 mt-2">
+                  <div className="flex flex-col gap-1.5 mt-2 max-h-48 overflow-y-auto pr-1">
                     {milestones.map((m, i) => (
                       <div
                         key={i}
                         className="flex items-center gap-2 p-2 rounded-xl bg-muted text-sm"
                       >
                         <span className="text-primary text-xs font-mono">{i + 1}.</span>
-                        <span className="flex-1 text-foreground">{m}</span>
+                        <Input
+                          value={m.label}
+                          onChange={(e) => {
+                            const newMilestones = [...milestones]
+                            newMilestones[i] = { ...newMilestones[i], label: e.target.value }
+                            setMilestones(newMilestones)
+                          }}
+                          className="flex-1 bg-transparent border-none p-0 h-auto focus-visible:ring-0 text-foreground"
+                        />
                         <Button
                           variant="ghost"
                           size="icon"
@@ -142,7 +184,7 @@ export default function GoalsPage() {
                 disabled={!goalTitle.trim() || milestones.length === 0}
                 className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
-                Add Goal
+                {editingGoal ? 'Save Changes' : 'Add Goal'}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -185,6 +227,14 @@ export default function GoalsPage() {
                     <span className="text-sm font-bold text-primary">
                       {goal.progress}%
                     </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-8 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary/10"
+                      onClick={() => handleEditClick(goal)}
+                    >
+                      <Pencil className="size-4" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
