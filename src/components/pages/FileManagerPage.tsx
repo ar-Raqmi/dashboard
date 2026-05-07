@@ -11,7 +11,7 @@ export default function FileManagerPage() {
   const { currentFolderId, setCurrentFolderId, setActivePage } = useAppStore()
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex flex-col h-full min-h-0 p-4 md:p-6">
       {/* Header */}
       <div className="flex items-center gap-3 mb-3 shrink-0">
         <Button
