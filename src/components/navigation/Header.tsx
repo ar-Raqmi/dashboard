@@ -2,28 +2,38 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Search, LayoutGrid, Sun, Moon } from 'lucide-react'
+import { Search, LayoutGrid, Sun, Moon, MoonStar } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useAppStore } from '@/lib/store'
 
-function formatTimeInZone(timezone: string): string {
+// ===== Hijri Date helper (same logic as DashboardGrid) =====
+function getHijriDate(offset: number): { day: number; month: string; year: number; monthAr: string } | null {
   try {
     const now = new Date()
-    const formatter = new Intl.DateTimeFormat('en-GB', {
-      timeZone: timezone,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false,
-      timeZoneName: 'short',
+    now.setDate(now.getDate() + offset)
+
+    const hijriFmt = new Intl.DateTimeFormat('en-US-u-ca-islamic-umalqura', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
     })
-    return formatter.format(now)
+    const hijriFmtAr = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    })
+
+    const parts = hijriFmt.formatToParts(now)
+    const arParts = hijriFmtAr.formatToParts(now)
+
+    const day = parseInt(parts.find(p => p.type === 'day')?.value || '0', 10)
+    const month = parts.find(p => p.type === 'month')?.value || ''
+    const year = parseInt(parts.find(p => p.type === 'year')?.value || '0', 10)
+    const monthAr = arParts.find(p => p.type === 'month')?.value || ''
+
+    return { day, month, year, monthAr }
   } catch {
-    const now = new Date()
-    const h = String(now.getUTCHours()).padStart(2, '0')
-    const m = String(now.getUTCMinutes()).padStart(2, '0')
-    const s = String(now.getUTCSeconds()).padStart(2, '0')
-    return `${h}:${m}:${s} UTC`
+    return null
   }
 }
 
@@ -40,13 +50,13 @@ function getInitials(name: string): string {
 export default function Header() {
   const appLogo = useAppStore((s) => s.appLogo)
   const appTitle = useAppStore((s) => s.appTitle)
-  const clocks = useAppStore((s) => s.clocks)
-  const timezone = clocks.length > 0 ? clocks[0].timezone : 'Asia/Kuala_Lumpur'
   const profilePicture = useAppStore((s) => s.profilePicture)
   const profileName = useAppStore((s) => s.profileName)
   const setSearchQuery = useAppStore((s) => s.setSearchQuery)
   const showDashboardManager = useAppStore((s) => s.showDashboardManager)
   const setShowDashboardManager = useAppStore((s) => s.setShowDashboardManager)
+  const hijriVisible = useAppStore((s) => s.hijriVisible)
+  const hijriOffset = useAppStore((s) => s.hijriOffset)
 
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
@@ -58,16 +68,21 @@ export default function Header() {
   // Set mounted on next tick to avoid hydration mismatch
   useEffect(() => {
     const id = requestAnimationFrame(() => setMounted(true))
-    const interval = setInterval(updateTime, 1000)
+    const interval = setInterval(updateTime, 60000) // Update every minute for date changes
     return () => {
       cancelAnimationFrame(id)
       clearInterval(interval)
     }
   }, [updateTime])
 
-  // Suppress unused variable warning - tick drives re-renders
+  // Suppress unused variable warning - tick drives re-renders for date change
   void tick
-  const time = mounted ? formatTimeInZone(timezone) : ''
+
+  // Compute dates (client-only)
+  const hijri = mounted && hijriVisible ? getHijriDate(hijriOffset) : null
+  const gregorian = mounted
+    ? new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+    : ''
 
   return (
     <motion.header
@@ -109,11 +124,20 @@ export default function Header() {
         </h1>
       </div>
 
-      {/* Center: Clock */}
+      {/* Center: Dual Date (Hijri + Gregorian) */}
       <div className="hidden sm:flex items-center justify-center absolute left-1/2 -translate-x-1/2">
         <div className="flex items-center gap-2 px-4 py-1.5 rounded-2xl bg-muted border border-border">
-          <span className="text-primary text-xs font-medium tracking-wide">
-            {time}
+          {hijri && (
+            <>
+              <MoonStar className="size-3 text-primary shrink-0" />
+              <span className="text-primary text-xs font-medium tracking-wide">
+                {hijri.day} {hijri.month} {hijri.year} AH
+              </span>
+              <span className="text-muted-foreground/50 mx-1">·</span>
+            </>
+          )}
+          <span className="text-xs text-muted-foreground font-medium">
+            {gregorian}
           </span>
         </div>
       </div>
@@ -190,11 +214,20 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile Clock (shown below header on small screens) */}
+      {/* Mobile Date Chip (shown below header on small screens) */}
       <div className="sm:hidden absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2">
-        <div className="flex items-center gap-2 px-3 py-1 rounded-2xl bg-background/90 backdrop-blur-xl border border-border">
-          <span className="text-primary text-[10px] font-medium tracking-wide">
-            {time}
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-2xl bg-background/90 backdrop-blur-xl border border-border">
+          {hijri && (
+            <>
+              <MoonStar className="size-2.5 text-primary shrink-0" />
+              <span className="text-primary text-[10px] font-medium">
+                {hijri.day} {hijri.monthAr}
+              </span>
+              <span className="text-muted-foreground/50 mx-0.5">·</span>
+            </>
+          )}
+          <span className="text-[10px] text-muted-foreground font-medium">
+            {gregorian}
           </span>
         </div>
       </div>
