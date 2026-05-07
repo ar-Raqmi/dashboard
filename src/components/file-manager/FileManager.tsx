@@ -54,8 +54,8 @@ export default function FileManager() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
-        {files?.map(file => (
-          <div key={file._id} className="p-4 border rounded-2xl flex flex-col items-center hover:bg-muted/50 cursor-pointer">
+        {files?.map((file, index) => (
+          <div key={`${file._id}-${index}`} className="p-4 border rounded-2xl flex flex-col items-center hover:bg-muted/50 cursor-pointer">
             {file.type === 'folder' ? (
               <Folder className="size-12 text-primary mb-2" onClick={() => setCurrentFolderId(file._id)} />
             ) : (
