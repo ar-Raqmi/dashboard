@@ -22,11 +22,18 @@ export default function GoalsPage() {
   const [editingGoal, setEditingGoal] = useState<any>(null)
   const [goalTitle, setGoalTitle] = useState('')
   const [milestoneInput, setMilestoneInput] = useState('')
-  const [milestones, setMilestones] = useState<{ id?: string; label: string; completed: boolean }[]>([])
+  const [milestones, setMilestones] = useState<{ id: string; label: string; completed: boolean }[]>([])
 
   const handleAddMilestone = () => {
     if (!milestoneInput.trim()) return
-    setMilestones([...milestones, { label: milestoneInput.trim(), completed: false }])
+    setMilestones([
+      ...milestones,
+      {
+        id: `temp-${Date.now()}-${milestones.length}`,
+        label: milestoneInput.trim(),
+        completed: false,
+      },
+    ])
     setMilestoneInput('')
   }
 
@@ -148,7 +155,7 @@ export default function GoalsPage() {
                   <div className="flex flex-col gap-1.5 mt-2 max-h-48 overflow-y-auto pr-1">
                     {milestones.map((m, i) => (
                       <div
-                        key={i}
+                        key={m.id}
                         className="flex items-center gap-2 p-2 rounded-xl bg-muted text-sm"
                       >
                         <span className="text-primary text-xs font-mono">{i + 1}.</span>
