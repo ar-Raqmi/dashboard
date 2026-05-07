@@ -82,23 +82,33 @@ const getCategoryColor = (category: FileCategory): string => {
   }
 }
 
+import { useQuery } from 'convex/react'
+import { api } from '../../../convex/_generated/api'
+import { useAuth } from '@/hooks/useAuth'
+
 // ===== PREVIEW CONTENT =====
 function PreviewContent({ file }: { file: FileItem }) {
+  const { sessionToken } = useAuth()
+  const fileUrl = useQuery(
+    api.files.getFileUrl,
+    file.storageId ? { sessionToken: sessionToken!, storageId: file.storageId } : 'skip'
+  )
+
   switch (file.category) {
     case 'image':
       return (
         <div className="flex flex-col items-center gap-4">
           <div className="w-full max-w-md aspect-video rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/10 flex items-center justify-center border border-border overflow-hidden">
-            {file.content ? (
+            {fileUrl ? (
               <img
-                src={file.content}
+                src={fileUrl}
                 alt={file.name}
                 className="w-full h-full object-contain"
               />
             ) : (
               <div className="flex flex-col items-center gap-3 text-blue-400">
                 <ImageIcon className="size-20 opacity-50" />
-                <span className="text-sm opacity-50">Image Preview</span>
+                <span className="text-sm opacity-50">Loading Image...</span>
               </div>
             )}
           </div>
@@ -112,17 +122,11 @@ function PreviewContent({ file }: { file: FileItem }) {
               <Music className="size-10 text-purple-400" />
             </div>
             <p className="text-foreground/70 text-sm font-medium">{file.name}</p>
-            {/* Audio player mock */}
-            <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-              <div className="h-full w-1/3 rounded-full bg-gradient-to-r from-purple-400 to-pink-400" />
-            </div>
-            <div className="flex items-center gap-4 text-muted-foreground text-xs">
-              <span>0:00</span>
-              <span>3:45</span>
-            </div>
-            <audio controls className="w-full opacity-80" style={{ filter: 'hue-rotate(200deg)' }}>
-              {file.content && <source src={file.content} type="audio/mpeg" />}
-            </audio>
+            {fileUrl && (
+              <audio controls className="w-full opacity-80" style={{ filter: 'hue-rotate(200deg)' }}>
+                <source src={fileUrl} type="audio/mpeg" />
+              </audio>
+            )}
           </div>
         </div>
       )
@@ -132,39 +136,31 @@ function PreviewContent({ file }: { file: FileItem }) {
           <div className="w-full max-w-md rounded-2xl bg-gradient-to-br from-red-500/20 to-red-600/5 border border-border p-8 flex flex-col items-center gap-4">
             <FileText className="size-20 text-red-400 opacity-50" />
             <p className="text-muted-foreground text-sm">PDF Document</p>
-            <Button className="rounded-2xl bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30">
-              <FileText className="size-4" />
-              Open PDF
-            </Button>
-          </div>
-        </div>
-      )
-    case 'doc':
-      return (
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-full max-w-md rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-600/5 border border-border p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <FileEdit className="size-6 text-amber-400" />
-              <span className="text-foreground font-medium text-sm">Document Preview</span>
-            </div>
-            <div className="space-y-2 text-muted-foreground text-xs">
-              <div className="h-3 bg-muted/50 rounded-full w-full" />
-              <div className="h-3 bg-muted/50 rounded-full w-4/5" />
-              <div className="h-3 bg-muted/50 rounded-full w-full" />
-              <div className="h-3 bg-muted/50 rounded-full w-3/5" />
-              <div className="h-3 bg-muted/50 rounded-full w-full" />
-              <div className="h-3 bg-muted/50 rounded-full w-2/3" />
-            </div>
+            {fileUrl && (
+              <Button asChild className="rounded-2xl bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30">
+                <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+                  <FileText className="size-4" />
+                  Open PDF
+                </a>
+              </Button>
+            )}
           </div>
         </div>
       )
     case 'video':
       return (
         <div className="flex flex-col items-center gap-4">
-          <div className="w-full max-w-md aspect-video rounded-2xl bg-gradient-to-br from-pink-500/20 to-pink-600/5 border border-border flex items-center justify-center">
-            <div className="size-16 rounded-full bg-pink-500/20 flex items-center justify-center">
-              <Film className="size-8 text-pink-400" />
-            </div>
+          <div className="w-full max-w-md aspect-video rounded-2xl bg-gradient-to-br from-pink-500/20 to-pink-600/5 border border-border flex items-center justify-center overflow-hidden">
+            {fileUrl ? (
+              <video controls className="w-full h-full">
+                <source src={fileUrl} />
+                Your browser does not support the video tag.
+              </video>
+            ) : (
+              <div className="size-16 rounded-full bg-pink-500/20 flex items-center justify-center">
+                <Film className="size-8 text-pink-400" />
+              </div>
+            )}
           </div>
         </div>
       )
@@ -173,7 +169,7 @@ function PreviewContent({ file }: { file: FileItem }) {
         <div className="flex flex-col items-center gap-4">
           <div className="w-full max-w-md rounded-2xl bg-gradient-to-br from-gray-500/20 to-gray-600/5 border border-border p-8 flex flex-col items-center gap-4">
             <File className="size-20 text-gray-400 opacity-50" />
-            <p className="text-muted-foreground text-sm">File Preview</p>
+            <p className="text-muted-foreground text-sm">Preview not available</p>
           </div>
         </div>
       )
