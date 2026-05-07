@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Settings, User, AppWindow, Globe, Info, Upload, Save, ImageIcon, Palette, Paintbrush, Droplets, Image as ImageLucide, Mountain } from 'lucide-react'
+import { Settings, User, AppWindow, Globe, Info, Upload, Save, ImageIcon, Palette, Paintbrush, Droplets, Image as ImageLucide, Mountain, Square } from 'lucide-react'
 import { useAppStore, type BackgroundType } from '@/lib/store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -74,6 +74,7 @@ export default function SettingsPage() {
     profilePicture, setProfilePicture,
     appTitle, setAppTitle,
     appLogo, setAppLogo,
+    iconBackgroundColor, setIconBackgroundColor,
     clocks, updateClock,
     background, setBackground,
   } = useAppStore()
@@ -446,7 +447,7 @@ export default function SettingsPage() {
           <AppWindow className="size-5 text-primary" />
           <h2 className="text-lg font-semibold text-foreground">App</h2>
         </div>
-        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <label className="text-sm text-on-surface-variant">App Title</label>
             <Input
@@ -481,6 +482,57 @@ export default function SettingsPage() {
                 className="hidden"
                 onChange={handleLogoUpload}
               />
+            </div>
+          </div>
+          {/* Icon Background Color */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <Square className="size-4 text-primary" />
+              <label className="text-sm text-on-surface-variant">Icon Background</label>
+            </div>
+            <p className="text-xs text-muted-foreground -mt-1">Used for PWA icon & favicon when logo has transparency</p>
+            <div className="flex items-center gap-3">
+              {/* Preview */}
+              <div
+                className="size-12 rounded-xl border border-border flex items-center justify-center overflow-hidden shrink-0"
+                style={{ backgroundColor: iconBackgroundColor }}
+              >
+                {appLogo ? (
+                  <img src={appLogo} alt="Icon preview" className="size-8 object-contain" />
+                ) : (
+                  <span className="text-lg font-bold text-white/90">{localAppTitle?.charAt(0)?.toUpperCase() || 'A'}</span>
+                )}
+              </div>
+              {/* Color picker */}
+              <div className="relative">
+                <input
+                  type="color"
+                  value={iconBackgroundColor}
+                  onChange={(e) => setIconBackgroundColor(e.target.value)}
+                  className="size-10 rounded-xl cursor-pointer border-2 border-border p-0.5 bg-transparent"
+                />
+              </div>
+              {/* Hex input */}
+              <Input
+                value={iconBackgroundColor}
+                onChange={(e) => setIconBackgroundColor(e.target.value)}
+                className="rounded-2xl bg-input border-border font-mono text-sm flex-1"
+                placeholder="#A5D6A7"
+              />
+              {/* Preset swatches */}
+              <div className="flex gap-1.5">
+                {['#A5D6A7', '#1a2e1a', '#ffffff', '#26A69A', '#F48FB1', '#000000'].map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setIconBackgroundColor(c)}
+                    className={`size-7 rounded-lg border-2 transition-all hover:scale-110 ${
+                      iconBackgroundColor === c ? 'border-primary ring-2 ring-primary/30 scale-110' : 'border-border'
+                    }`}
+                    style={{ backgroundColor: c }}
+                    aria-label={`Select ${c}`}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>

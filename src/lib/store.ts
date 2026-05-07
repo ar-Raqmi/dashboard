@@ -300,6 +300,8 @@ interface AppStore {
   setHijriOffset: (offset: number) => void
   showSeconds: boolean
   setShowSeconds: (show: boolean) => void
+  iconBackgroundColor: string
+  setIconBackgroundColor: (color: string) => void
 
   // Settings
   profileName: string
@@ -572,6 +574,8 @@ export const useAppStore = create<AppStore>()(
       setHijriOffset: (offset) => set({ hijriOffset: Math.max(-2, Math.min(2, offset)) }),
       showSeconds: true,
       setShowSeconds: (show) => set({ showSeconds: show }),
+      iconBackgroundColor: '#A5D6A7',
+      setIconBackgroundColor: (color) => set({ iconBackgroundColor: color }),
 
       // Settings
       profileName: 'User',
@@ -639,6 +643,7 @@ export const useAppStore = create<AppStore>()(
         hijriVisible: state.hijriVisible,
         hijriOffset: state.hijriOffset,
         showSeconds: state.showSeconds,
+        iconBackgroundColor: state.iconBackgroundColor,
         profileName: state.profileName,
         profilePicture: state.profilePicture,
         appTitle: state.appTitle,
