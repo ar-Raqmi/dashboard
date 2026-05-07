@@ -72,7 +72,14 @@ export interface HadithData {
   grade: string
 }
 
-export type WidgetType = 'tasks' | 'calendar' | 'notes' | 'verse' | 'goals' | 'clock' | 'files'
+export interface ClipboardItem {
+  id: string
+  label: string
+  content: string
+  createdAt: string
+}
+
+export type WidgetType = 'tasks' | 'calendar' | 'notes' | 'verse' | 'goals' | 'clock' | 'files' | 'clipboard'
 
 export interface DashboardWidget {
   type: WidgetType
@@ -108,6 +115,7 @@ const defaultWidgets: DashboardWidget[] = [
   { type: 'goals', label: 'Goals', icon: 'flag', visible: true },
   { type: 'clock', label: 'World Clock', icon: 'schedule', visible: true },
   { type: 'files', label: 'Files', icon: 'folder', visible: true },
+  { type: 'clipboard', label: 'Clipboard', icon: 'content_paste', visible: true },
 ]
 
 // Max dimensions for grid widgets
@@ -127,6 +135,7 @@ const defaultLayouts: Layout[] = [
   { i: 'goals', x: 2, y: 2, w: 1, h: 2, minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H },
   { i: 'clock', x: 0, y: 4, w: 1, h: 2, minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H },
   { i: 'files', x: 1, y: 4, w: 1, h: 1, minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H },
+  { i: 'clipboard', x: 2, y: 4, w: 1, h: 2, minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H },
 ]
 
 // Mobile layouts: 1-column stack (preserves h, forces w:1, x:0)
@@ -138,6 +147,7 @@ const defaultMobileLayouts: Layout[] = [
   { i: 'goals', x: 0, y: 8, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
   { i: 'clock', x: 0, y: 10, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
   { i: 'files', x: 0, y: 12, w: 1, h: 1, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
+  { i: 'clipboard', x: 0, y: 13, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
 ]
 
 // Helper: local date string to avoid UTC shift from toISOString()
@@ -270,6 +280,12 @@ interface AppStore {
   events: CalendarEvent[]
   addEvent: (event: Omit<CalendarEvent, 'id'>) => void
   deleteEvent: (id: string) => void
+
+  // Clipboard
+  clips: ClipboardItem[]
+  addClip: (clip: Omit<ClipboardItem, 'id' | 'createdAt'>) => void
+  deleteClip: (id: string) => void
+  updateClip: (id: string, updates: Partial<ClipboardItem>) => void
 
   // File Manager
   files: FileItem[]
@@ -506,6 +522,19 @@ export const useAppStore = create<AppStore>()(
       deleteEvent: (id) =>
         set((state) => ({ events: state.events.filter((e) => e.id !== id) })),
 
+      // Clipboard
+      clips: [],
+      addClip: (clip) =>
+        set((state) => ({
+          clips: [...state.clips, { ...clip, id: genId(), createdAt: new Date().toISOString() }],
+        })),
+      deleteClip: (id) =>
+        set((state) => ({ clips: state.clips.filter((c) => c.id !== id) })),
+      updateClip: (id, updates) =>
+        set((state) => ({
+          clips: state.clips.map((c) => (c.id === id ? { ...c, ...updates } : c)),
+        })),
+
       // File Manager
       files: sampleFiles,
       currentFolderId: null,
@@ -658,6 +687,7 @@ export const useAppStore = create<AppStore>()(
         noteMobileLayouts: state.noteMobileLayouts,
         pinnedNoteLayouts: state.pinnedNoteLayouts,
         pinnedNoteMobileLayouts: state.pinnedNoteMobileLayouts,
+        clips: state.clips,
       }),
     }
   )
