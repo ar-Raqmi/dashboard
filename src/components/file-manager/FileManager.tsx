@@ -28,6 +28,9 @@ import {
   HardDrive,
 } from 'lucide-react'
 import { useAppStore, type FileItem, type FileCategory } from '@/lib/store'
+import { useMutation } from 'convex/react'
+import { api } from '../../../convex/_generated/api'
+import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
