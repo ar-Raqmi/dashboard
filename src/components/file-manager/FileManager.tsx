@@ -779,107 +779,180 @@ function FileListItem({
 
 function UploadModal({ open, onClose, folderId }: { open: boolean, onClose: () => void, folderId: string | undefined }) {
   const { sessionToken } = useAuth()
-  const [file, setFile] = useState<File | null>(null)
+  const [files, setFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
-  const [progress, setProgress] = useState(0)
+  const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({})
+  const [currentFileIndex, setCurrentFileIndex] = useState(-1)
+  
   const generateUploadUrl = useMutation(api.files.generateUploadUrl)
   const saveFile = useMutation(api.files.createFile)
 
   const handleUpload = async () => {
-    if (!file || !sessionToken) return
+    if (files.length === 0 || !sessionToken) return
     setUploading(true)
-    setProgress(10)
     
-    try {
-      const url = await generateUploadUrl()
-      setProgress(30)
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      setCurrentFileIndex(i)
+      setUploadProgress(prev => ({ ...prev, [file.name]: 10 }))
       
-      const result = await fetch(url, { method: 'POST', body: file })
-      const { storageId } = await result.json()
-      setProgress(70)
-      
-      // Determine category
-      let category: any = 'other'
-      if (file.type.startsWith('image/')) category = 'image'
-      else if (file.type.startsWith('audio/')) category = 'audio'
-      else if (file.type.startsWith('video/')) category = 'video'
-      else if (file.type === 'application/pdf') category = 'pdf'
-      else if (file.type.includes('word') || file.type.includes('text')) category = 'doc'
+      try {
+        const url = await generateUploadUrl()
+        setUploadProgress(prev => ({ ...prev, [file.name]: 30 }))
+        
+        const result = await fetch(url, { method: 'POST', body: file })
+        const { storageId } = await result.json()
+        setUploadProgress(prev => ({ ...prev, [file.name]: 70 }))
+        
+        // Determine category
+        let category: any = 'other'
+        if (file.type.startsWith('image/')) category = 'image'
+        else if (file.type.startsWith('audio/')) category = 'audio'
+        else if (file.type.startsWith('video/')) category = 'video'
+        else if (file.type === 'application/pdf') category = 'pdf'
+        else if (file.type.includes('word') || file.type.includes('text')) category = 'doc'
 
-      await saveFile({
-        sessionToken,
-        name: file.name,
-        type: 'file',
-        category,
-        storageId,
-        parentId: folderId as any,
-        size: file.size,
-      })
-      
-      setProgress(100)
-      toast.success('Upload complete')
-      setTimeout(() => {
-        setFile(null)
-        setUploading(false)
-        setProgress(0)
-        onClose()
-      }, 500)
-    } catch (error) {
-      toast.error('Upload failed')
-      setUploading(false)
+        await saveFile({
+          sessionToken,
+          name: file.name,
+          type: 'file',
+          category,
+          storageId,
+          parentId: folderId as any,
+          size: file.size,
+        })
+        
+        setUploadProgress(prev => ({ ...prev, [file.name]: 100 }))
+      } catch (error) {
+        console.error(`Failed to upload ${file.name}:`, error)
+        toast.error(`Failed to upload ${file.name}`)
+      }
     }
+    
+    toast.success(`Successfully uploaded ${files.length} file(s)`)
+    setTimeout(() => {
+      setFiles([])
+      setUploading(false)
+      setUploadProgress({})
+      setCurrentFileIndex(-1)
+      onClose()
+    }, 500)
   }
+
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const totalProgress = files.length > 0 
+    ? Object.values(uploadProgress).reduce((a, b) => a + b, 0) / files.length 
+    : 0
 
   return (
     <Dialog open={open} onOpenChange={(o) => !uploading && onClose()}>
-      <DialogContent className="rounded-3xl border-white/10 bg-background/95 backdrop-blur-2xl sm:max-w-md">
+      <DialogContent className="rounded-3xl border-white/10 bg-background/95 backdrop-blur-2xl sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Upload New File</DialogTitle>
-          <DialogDescription>Select a file to upload to the current folder.</DialogDescription>
+          <DialogTitle>Upload Files</DialogTitle>
+          <DialogDescription>Select one or more files to upload to the current folder.</DialogDescription>
         </DialogHeader>
         
-        <div className="py-8 flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors relative cursor-pointer group">
+        <div className={`
+          relative py-8 flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-2xl bg-white/5 
+          transition-colors group min-h-[160px]
+          ${!uploading ? 'hover:bg-white/10 cursor-pointer' : 'opacity-50 pointer-events-none'}
+        `}>
           <input 
             type="file" 
+            multiple
             className="absolute inset-0 opacity-0 cursor-pointer" 
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            onChange={(e) => {
+              const newFiles = Array.from(e.target.files || [])
+              setFiles(prev => [...prev, ...newFiles])
+            }}
             disabled={uploading}
           />
-          <div className="flex flex-col items-center gap-4">
-            <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-              {file ? <Check className="size-8" /> : <Upload className="size-8" />}
+          <div className="flex flex-col items-center gap-3">
+            <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+              <Upload className="size-6" />
             </div>
             <div className="text-center">
-              <p className="font-semibold">{file ? file.name : 'Click or drag to upload'}</p>
-              <p className="text-xs text-muted-foreground mt-1">{file ? `${formatSize(file.size)} • ${file.type || 'Unknown type'}` : 'Any file up to 50MB'}</p>
+              <p className="font-semibold text-sm">Click or drag files to upload</p>
+              <p className="text-xs text-muted-foreground mt-1">Select multiple files at once</p>
             </div>
           </div>
         </div>
 
+        {files.length > 0 && (
+          <ScrollArea className="max-h-[240px] mt-4 rounded-xl border border-white/5 bg-white/5 p-2">
+            <div className="space-y-2">
+              {files.map((f, i) => (
+                <div key={`${f.name}-${i}`} className="flex items-center justify-between gap-3 p-2 rounded-lg bg-white/5 border border-white/5">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="size-8 rounded bg-primary/10 flex items-center justify-center shrink-0">
+                      {f.type.startsWith('image/') ? <Image className="size-4 text-primary" /> : <File className="size-4 text-primary" />}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium truncate max-w-[200px]">{f.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{formatSize(f.size)}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    {uploading ? (
+                      <div className="flex items-center gap-2">
+                        {uploadProgress[f.name] === 100 ? (
+                          <Check className="size-4 text-emerald-500" />
+                        ) : i === currentFileIndex ? (
+                          <Loader2 className="size-4 animate-spin text-primary" />
+                        ) : (
+                          <div className="size-4 rounded-full border border-white/20" />
+                        )}
+                      </div>
+                    ) : (
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg"
+                        onClick={() => removeFile(i)}
+                      >
+                        <X className="size-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        )}
+
         {uploading && (
           <div className="space-y-2 mt-4">
             <div className="flex justify-between text-xs font-medium">
-              <span>Uploading...</span>
-              <span>{Math.round(progress)}%</span>
+              <span>{currentFileIndex >= 0 ? `Uploading: ${files[currentFileIndex]?.name}` : 'Preparing...'}</span>
+              <span>{Math.round(totalProgress)}%</span>
             </div>
             <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
               <motion.div 
                 className="h-full bg-primary" 
                 initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
+                animate={{ width: `${totalProgress}%` }}
               />
             </div>
           </div>
         )}
 
-        <DialogFooter className="mt-4">
+        <DialogFooter className="mt-4 gap-2">
           <Button variant="ghost" onClick={onClose} disabled={uploading} className="rounded-xl">Cancel</Button>
-          <Button onClick={handleUpload} disabled={!file || uploading} className="rounded-xl bg-primary shadow-lg shadow-primary/20 min-w-[120px]">
+          <Button 
+            onClick={handleUpload} 
+            disabled={files.length === 0 || uploading} 
+            className="rounded-xl bg-primary shadow-lg shadow-primary/20 min-w-[120px]"
+          >
             {uploading ? <Loader2 className="size-4 animate-spin mr-2" /> : <Upload className="size-4 mr-2" />}
-            {uploading ? 'Uploading' : 'Upload'}
+            {uploading ? 'Uploading...' : `Upload ${files.length > 0 ? files.length : ''} File${files.length !== 1 ? 's' : ''}`}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   )
 }
+
