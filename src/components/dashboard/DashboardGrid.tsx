@@ -144,18 +144,6 @@ function DailyTasksContent({ h }: { w: number; h: number }) {
     return { overdueTasks: overdue, todayTasks: todayList, upcomingTasks: upcoming }
   }, [tasks, mounted])
 
-  // How many tasks to show per section based on card height
-  const showSections = h >= 2
-  const maxOverdue = Math.min(overdueTasks.length, h >= 4 ? 3 : 2)
-  const maxToday = Math.min(todayTasks.length, h >= 3 ? 4 : 2)
-  const maxUpcoming = Math.min(upcomingTasks.length, h >= 4 ? 4 : h >= 3 ? 3 : 2)
-
-  // Format a date string to short form (e.g. "May 8")
-  const formatDueDate = (dateStr: string) => {
-    const d = new Date(dateStr + 'T12:00:00')
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  }
-
   // Pre-mount placeholder
   if (!mounted) {
     return (
@@ -163,18 +151,6 @@ function DailyTasksContent({ h }: { w: number; h: number }) {
         <div className="h-4 w-16 rounded bg-muted animate-pulse" />
         <div className="h-8 w-full rounded-xl bg-muted/50 animate-pulse" />
         <div className="h-8 w-full rounded-xl bg-muted/50 animate-pulse" />
-      </div>
-    )
-  }
-
-  // Compact mode for 1-row cards
-  if (!showSections) {
-    const allTasks = [...overdueTasks, ...todayTasks, ...upcomingTasks]
-    return (
-      <div className="space-y-1.5">
-        {allTasks.slice(0, 4).map((task) => (
-          <TaskRow key={task.id} task={task} onToggle={toggleTaskStatus} compact />
-        ))}
       </div>
     )
   }
@@ -195,7 +171,7 @@ function DailyTasksContent({ h }: { w: number; h: number }) {
             <span className="text-[0.6rem] text-destructive/70 tabular-nums">{overdueTasks.length}</span>
           </div>
           <div className="space-y-1">
-            {overdueTasks.slice(0, maxOverdue).map((task) => (
+            {overdueTasks.map((task) => (
               <TaskRow key={task.id} task={task} onToggle={toggleTaskStatus} isOverdue />
             ))}
           </div>
@@ -210,7 +186,7 @@ function DailyTasksContent({ h }: { w: number; h: number }) {
             <span className="text-[0.65rem] font-semibold text-primary uppercase tracking-wider">Today</span>
           </div>
           <div className="space-y-1">
-            {todayTasks.slice(0, maxToday).map((task) => (
+            {todayTasks.map((task) => (
               <TaskRow key={task.id} task={task} onToggle={toggleTaskStatus} />
             ))}
           </div>
@@ -225,7 +201,7 @@ function DailyTasksContent({ h }: { w: number; h: number }) {
             <span className="text-[0.65rem] font-semibold text-muted-foreground uppercase tracking-wider">Upcoming</span>
           </div>
           <div className="space-y-1">
-            {upcomingTasks.slice(0, maxUpcoming).map((task) => (
+            {upcomingTasks.map((task) => (
               <TaskRow key={task.id} task={task} onToggle={toggleTaskStatus} />
             ))}
           </div>
