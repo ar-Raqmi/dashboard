@@ -72,10 +72,19 @@ export default defineSchema({
     parentId: v.optional(v.id("files")), // self-referential parent
     size: v.optional(v.number()),
     storageId: v.optional(v.id("_storage")),
-    createdAt: v.number(), // Use number (timestamp)
-    updatedAt: v.number(),
+    starred: v.optional(v.boolean()),
+    lastAccessed: v.optional(v.number()),
+    createdAt: v.union(v.number(), v.string()), 
+    updatedAt: v.union(v.number(), v.string()),
   }).index("by_user", ["userId"])
-    .index("by_parent", ["parentId"]),
+    .index("by_parent", ["parentId"])
+    .index("by_user_parent", ["userId", "parentId"])
+    .index("by_user_starred", ["userId", "starred"])
+    .index("by_user_category", ["userId", "category"])
+    .searchIndex("search_name", {
+      searchField: "name",
+      filterFields: ["userId"],
+    }),
 
   // Clocks
   clocks: defineTable({
