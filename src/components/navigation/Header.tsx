@@ -62,6 +62,7 @@ export default function Header() {
   const [mounted, setMounted] = useState(false)
   const [tick, setTick] = useState(0)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [logoError, setLogoError] = useState(false)
 
   const updateTime = useCallback(() => setTick((t) => t + 1), [])
 
@@ -97,26 +98,32 @@ export default function Header() {
       {/* Left: Logo + Title */}
       <div className="flex items-center gap-3 min-w-0">
         <div className="w-9 h-9 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
-          {appLogo ? (
+          {appLogo && !logoError ? (
             <img
               src={appLogo}
               alt={`${appTitle} logo`}
               className="w-full h-full object-cover rounded-2xl"
+              onError={() => setLogoError(true)}
             />
           ) : (
-            <img
-              src="/logo.svg"
-              alt={`${appTitle} logo`}
-              className="w-5 h-5"
-              onError={(e) => {
-                const target = e.currentTarget as HTMLImageElement
-                target.style.display = 'none'
-                const parent = target.parentElement
-                if (parent) {
-                  parent.innerHTML = `<span class="text-primary font-bold text-sm">R</span>`
-                }
-              }}
-            />
+            <div className="flex items-center justify-center w-full h-full">
+              <img
+                src="/logo.svg"
+                alt={`${appTitle} logo`}
+                className="w-5 h-5"
+                onError={(e) => {
+                  const target = e.currentTarget as HTMLImageElement
+                  target.style.display = 'none'
+                  setLogoError(true)
+                }}
+                style={{ display: logoError ? 'none' : 'block' }}
+              />
+              {logoError && (
+                <span className="text-primary font-bold text-sm">
+                  {getInitials(appTitle || 'R')}
+                </span>
+              )}
+            </div>
           )}
         </div>
         <h1 className="text-foreground font-semibold text-sm md:text-base truncate">

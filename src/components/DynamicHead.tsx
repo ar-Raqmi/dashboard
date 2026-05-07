@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useAppStore } from '@/lib/store'
 
 /**
@@ -8,21 +8,19 @@ import { useAppStore } from '@/lib/store'
  * - document.title from appTitle store
  * - Favicon <link> elements from appLogo store (with iconBackgroundColor compositing)
  * - PWA manifest <link> with dynamic title/logo
+ * 
+ * Uses React 19's native head hoisting.
  */
 export default function DynamicHead() {
   const appTitle = useAppStore((s) => s.appTitle)
   const appLogo = useAppStore((s) => s.appLogo)
   const iconBackgroundColor = useAppStore((s) => s.iconBackgroundColor)
+  
+  const [faviconUrl, setFaviconUrl] = useState<string>('/logo.svg')
+  const [manifestUrl, setManifestUrl] = useState<string>('')
   const manifestBlobRef = useRef<string | null>(null)
 
-  // 1. Update document.title
-  useEffect(() => {
-    if (appTitle) {
-      document.title = appTitle
-    }
-  }, [appTitle])
-
-  // 2. Generate composited favicon (logo on colored background) + update links + manifest
+  // 1. Generate composited favicon (logo on colored background) + manifest
   useEffect(() => {
     let cancelled = false
 
@@ -88,28 +86,13 @@ export default function DynamicHead() {
       }
 
       if (cancelled) return
-
-      // Update favicon <link> elements
-      document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]').forEach((el) => el.remove())
-      const iconLink = document.createElement('link')
-      iconLink.rel = 'icon'
-      iconLink.type = finalIconUrl.endsWith('.svg') ? 'image/svg+xml' : 'image/png'
-      iconLink.href = finalIconUrl
-      document.head.appendChild(iconLink)
-
-      // Update apple-touch-icon
-      document.querySelectorAll('link[rel="apple-touch-icon"]').forEach((el) => el.remove())
-      const appleLink = document.createElement('link')
-      appleLink.rel = 'apple-touch-icon'
-      appleLink.href = finalIconUrl
-      document.head.appendChild(appleLink)
+      setFaviconUrl(finalIconUrl)
 
       // Update PWA manifest
       if (manifestBlobRef.current) {
         URL.revokeObjectURL(manifestBlobRef.current)
         manifestBlobRef.current = null
       }
-      document.querySelector('link[rel="manifest"]')?.remove()
 
       const shortName = appTitle?.split(' ').slice(0, 2).join('') || 'ar-Raqmi'
       const bgColor = iconBackgroundColor || '#A5D6A7'
@@ -136,13 +119,9 @@ export default function DynamicHead() {
       }
 
       const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' })
-      const manifestUrl = URL.createObjectURL(blob)
-      manifestBlobRef.current = manifestUrl
-
-      const manifestLink = document.createElement('link')
-      manifestLink.rel = 'manifest'
-      manifestLink.href = manifestUrl
-      document.head.appendChild(manifestLink)
+      const url = URL.createObjectURL(blob)
+      manifestBlobRef.current = url
+      setManifestUrl(url)
     }
 
     updateAll()
@@ -161,5 +140,13 @@ export default function DynamicHead() {
     }
   }, [])
 
-  return null // This component renders nothing
+  return (
+    <>
+      <title>{appTitle || 'ar-Raqmi Database'}</title>
+      <link rel="icon" type={faviconUrl.endsWith('.svg') ? 'image/svg+xml' : 'image/png'} href={faviconUrl} />
+      <link rel="apple-touch-icon" href={faviconUrl} />
+      {manifestUrl && <link rel="manifest" href={manifestUrl} />}
+    </>
+  )
 }
+
