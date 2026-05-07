@@ -2,7 +2,7 @@
 
 import React, { useCallback, useMemo, useRef } from 'react'
 import { ResponsiveGridLayout, useContainerWidth } from 'react-grid-layout'
-import { CheckCircle, CalendarDays, StickyNote, BookOpen, Flag, Folder, FileText, Image as ImageIcon, Music, Film, Pencil, Check, Plus, Settings2, Trash2, ChevronUp, ChevronDown, MoonStar, ClipboardList, Copy, CheckCheck } from 'lucide-react'
+import { CheckCircle, CalendarDays, StickyNote, BookOpen, Flag, Folder, FileText, Image as ImageIcon, Music, Film, Pencil, Check, Plus, Settings2, Trash2, ChevronUp, ChevronDown, MoonStar, ClipboardList, Copy, CheckCheck, Star, Clock, Loader2, ExternalLink } from 'lucide-react'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import { useAppStore, MAX_GRID_W, MAX_GRID_H } from '@/lib/store'
@@ -12,6 +12,11 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { Switch } from '@/components/ui/switch'
 import { Slider } from '@/components/ui/slider'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
+import { useQuery } from 'convex/react'
+import { api } from '../../../convex/_generated/api'
+import { useAuth } from '@/hooks/useAuth'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 
 // Widget icon mapping
 const widgetIcons: Record<WidgetType, React.ReactNode> = {
@@ -70,15 +75,16 @@ function parseEventDate(dateStr: string): Date {
 }
 
 // Helper to get file icon based on category
-function getFileIcon(category: FileItem['category']) {
+function getFileIcon(category: string | undefined) {
+  const cn = "w-4 h-4"
   switch (category) {
-    case 'folder': return <Folder className="w-4 h-4 text-primary" />
-    case 'pdf': return <FileText className="w-4 h-4 text-red-500" />
-    case 'doc': return <FileText className="w-4 h-4 text-blue-500" />
-    case 'image': return <ImageIcon className="w-4 h-4 text-green-500" />
-    case 'audio': return <Music className="w-4 h-4 text-purple-500" />
-    case 'video': return <Film className="w-4 h-4 text-orange-500" />
-    default: return <FileText className="w-4 h-4 text-muted-foreground" />
+    case 'folder': return <Folder className={`${cn} text-amber-400`} />
+    case 'image': return <ImageIcon className={`${cn} text-emerald-400`} />
+    case 'audio': return <Music className={`${cn} text-purple-400`} />
+    case 'pdf': return <FileText className={`${cn} text-red-400`} />
+    case 'doc': return <FileText className={`${cn} text-blue-400`} />
+    case 'video': return <Film className={`${cn} text-pink-400`} />
+    default: return <FileText className={`${cn} text-slate-400`} />
   }
 }
 
@@ -537,22 +543,133 @@ function GoalsContent() {
 }
 
 function FilesContent() {
-  const files = useAppStore((s) => s.files)
-  const rootFiles = files.filter((f) => f.parentId === null).slice(0, 5)
+  const { sessionToken } = useAuth()
+  const { setPreviewFile, setCurrentFolderId, setActivePage } = useAppStore()
+  
+  const files = useQuery(api.files.list, sessionToken ? { sessionToken } : 'skip')
+  
+  const starredFiles = useMemo(() => files?.filter(f => f.starred).slice(0, 3) || [], [files])
+  const recentFiles = useMemo(() => {
+    if (!files) return []
+    return [...files]
+      .filter(f => f.type === 'file')
+      .sort((a, b) => {
+        const timeA = typeof a.updatedAt === 'number' ? a.updatedAt : new Date(a.updatedAt).getTime()
+        const timeB = typeof b.updatedAt === 'number' ? b.updatedAt : new Date(b.updatedAt).getTime()
+        return timeB - timeA
+      })
+      .slice(0, 4)
+  }, [files])
+
+  if (!files) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10 opacity-50">
+        <Loader2 className="size-6 animate-spin mb-2" />
+        <p className="text-xs">Loading files...</p>
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-2">
-      {rootFiles.map((file) => (
-        <div key={file.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-accent transition-colors">
-          {getFileIcon(file.category)}
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-foreground truncate">{file.name}</p>
+    <div className="flex flex-col h-full gap-4">
+      {/* Quick Categories */}
+      <div className="grid grid-cols-4 gap-2">
+        {[
+          { icon: ImageIcon, label: 'Images', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+          { icon: Music, label: 'Audio', color: 'text-purple-400', bg: 'bg-purple-500/10' },
+          { icon: FileText, label: 'Docs', color: 'text-blue-400', bg: 'bg-blue-500/10' },
+          { icon: Film, label: 'Videos', color: 'text-pink-400', bg: 'bg-pink-500/10' },
+        ].map((cat) => (
+          <button
+            key={cat.label}
+            onClick={() => setActivePage('files')}
+            className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-accent transition-colors group"
+          >
+            <div className={`size-8 rounded-lg ${cat.bg} flex items-center justify-center transition-transform group-hover:scale-110`}>
+              <cat.icon className={`size-4 ${cat.color}`} />
+            </div>
+            <span className="text-[10px] font-medium text-muted-foreground">{cat.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Starred Files Section */}
+      {starredFiles.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 px-1">
+            <Star className="size-3 text-amber-400 fill-amber-400" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Starred</span>
           </div>
-          <span className="text-xs text-muted-foreground shrink-0">{formatFileSize(file.size)}</span>
+          <div className="space-y-1">
+            {starredFiles.map((file) => (
+              <button
+                key={file._id}
+                onClick={() => setPreviewFile({
+                  id: file._id,
+                  name: file.name,
+                  type: file.type as any,
+                  category: (file.category || 'other') as any,
+                  parentId: file.parentId || null,
+                  size: file.size || 0,
+                  createdAt: typeof file.createdAt === 'number' ? new Date(file.createdAt).toISOString() : file.createdAt,
+                  updatedAt: typeof file.updatedAt === 'number' ? new Date(file.updatedAt).toISOString() : file.updatedAt,
+                  storageId: file.storageId
+                })}
+                className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-accent transition-colors group"
+              >
+                <div className="size-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                  {getFileIcon(file.category)}
+                </div>
+                <div className="min-w-0 flex-1 text-left">
+                  <p className="text-sm text-foreground truncate font-medium">{file.name}</p>
+                </div>
+                <ExternalLink className="size-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+              </button>
+            ))}
+          </div>
         </div>
-      ))}
-      {rootFiles.length === 0 && (
-        <p className="text-sm text-muted-foreground text-center py-2">No files yet</p>
       )}
+
+      {/* Recent Files Section */}
+      <div className="space-y-2 flex-1 min-h-0 overflow-hidden">
+        <div className="flex items-center gap-2 px-1">
+          <Clock className="size-3 text-primary" />
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Recent</span>
+        </div>
+        <div className="space-y-1">
+          {recentFiles.map((file) => (
+            <button
+              key={file._id}
+              onClick={() => setPreviewFile({
+                id: file._id,
+                name: file.name,
+                type: file.type as any,
+                category: (file.category || 'other') as any,
+                parentId: file.parentId || null,
+                size: file.size || 0,
+                createdAt: typeof file.createdAt === 'number' ? new Date(file.createdAt).toISOString() : file.createdAt,
+                updatedAt: typeof file.updatedAt === 'number' ? new Date(file.updatedAt).toISOString() : file.updatedAt,
+                storageId: file.storageId
+              })}
+              className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-accent transition-colors group"
+            >
+              <div className="size-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                {getFileIcon(file.category)}
+              </div>
+              <div className="min-w-0 flex-1 text-left">
+                <p className="text-sm text-foreground truncate">{file.name}</p>
+                <p className="text-[10px] text-muted-foreground">{formatFileSize(file.size || 0)}</p>
+              </div>
+            </button>
+          ))}
+          {recentFiles.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-6 border-2 border-dashed border-white/5 rounded-2xl opacity-50">
+              <Folder className="size-6 mb-2" />
+              <p className="text-[10px]">No recent files</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

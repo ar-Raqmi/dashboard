@@ -68,7 +68,7 @@ export default defineSchema({
     userId: v.id("users"),
     name: v.string(),
     type: v.union(v.literal("file"), v.literal("folder")),
-    category: v.optional(v.union(v.literal("image"), v.literal("audio"), v.literal("pdf"), v.literal("doc"), v.literal("video"), v.literal("other"))),
+    category: v.optional(v.union(v.literal("image"), v.literal("audio"), v.literal("pdf"), v.literal("doc"), v.literal("video"), v.literal("folder"), v.literal("other"))),
     parentId: v.optional(v.id("files")), // self-referential parent
     size: v.optional(v.number()),
     storageId: v.optional(v.id("_storage")),

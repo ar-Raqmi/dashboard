@@ -10,6 +10,7 @@ import TabBar from '@/components/navigation/TabBar'
 import { DashboardGrid } from '@/components/dashboard/DashboardGrid'
 import { DashboardManager } from '@/components/dashboard/DashboardManager'
 import GlobalSearch from '@/components/search/GlobalSearch'
+import FilePreview from '@/components/file-manager/FilePreview'
 import TasksPage from '@/components/pages/TasksPage'
 import CalendarPage from '@/components/pages/CalendarPage'
 import NotesPage from '@/components/pages/NotesPage'
@@ -187,6 +188,9 @@ function AuthenticatedApp({
 
       {/* Global Search Command Dialog */}
       <GlobalSearch />
+
+      {/* Global File Preview Modal */}
+      <FilePreview />
     </div>
   )
 }
