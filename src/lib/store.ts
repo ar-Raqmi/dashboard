@@ -298,6 +298,8 @@ interface AppStore {
   setHijriVisible: (visible: boolean) => void
   hijriOffset: number // -2 to +2 days
   setHijriOffset: (offset: number) => void
+  showSeconds: boolean
+  setShowSeconds: (show: boolean) => void
 
   // Settings
   profileName: string
@@ -568,6 +570,8 @@ export const useAppStore = create<AppStore>()(
       setHijriVisible: (visible) => set({ hijriVisible: visible }),
       hijriOffset: 0,
       setHijriOffset: (offset) => set({ hijriOffset: Math.max(-2, Math.min(2, offset)) }),
+      showSeconds: true,
+      setShowSeconds: (show) => set({ showSeconds: show }),
 
       // Settings
       profileName: 'User',
@@ -634,6 +638,7 @@ export const useAppStore = create<AppStore>()(
         clocks: state.clocks,
         hijriVisible: state.hijriVisible,
         hijriOffset: state.hijriOffset,
+        showSeconds: state.showSeconds,
         profileName: state.profileName,
         profilePicture: state.profilePicture,
         appTitle: state.appTitle,
