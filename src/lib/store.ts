@@ -259,6 +259,8 @@ interface AppStore {
   // Search
   searchQuery: string
   setSearchQuery: (query: string) => void
+  searchOpen: boolean
+  setSearchOpen: (open: boolean) => void
 
   // Dashboard Manager
   showDashboardManager: boolean
@@ -532,6 +534,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   // Search
   searchQuery: '',
   setSearchQuery: (query) => set({ searchQuery: query }),
+  searchOpen: false,
+  setSearchOpen: (open) => set({ searchOpen: open }),
 
   // Dashboard Manager
   showDashboardManager: false,

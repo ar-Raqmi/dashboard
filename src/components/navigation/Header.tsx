@@ -61,7 +61,8 @@ export default function Header() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [tick, setTick] = useState(0)
-  const [searchOpen, setSearchOpen] = useState(false)
+  const searchOpen = useAppStore((s) => s.searchOpen)
+  const setSearchOpen = useAppStore((s) => s.setSearchOpen)
   const [logoError, setLogoError] = useState(false)
 
   const updateTime = useCallback(() => setTick((t) => t + 1), [])
@@ -126,9 +127,16 @@ export default function Header() {
             </div>
           )}
         </div>
-        <h1 className="text-foreground font-semibold text-sm md:text-base truncate">
-          {appTitle}
-        </h1>
+        <div className="flex flex-col min-w-0">
+          <h1 className="text-foreground font-semibold text-sm md:text-base truncate leading-none">
+            {appTitle}
+          </h1>
+          {profileName && (
+            <span className="text-muted-foreground text-[10px] md:text-xs truncate mt-0.5 leading-tight">
+              {profileName}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Center: Dual Date (Hijri + Gregorian) */}
@@ -175,9 +183,6 @@ export default function Header() {
           whileTap={{ scale: 0.95 }}
           onClick={() => {
             setSearchOpen(!searchOpen)
-            if (searchOpen) {
-              setSearchQuery('')
-            }
           }}
           className="w-9 h-9 rounded-2xl flex items-center justify-center
             bg-muted border border-border
