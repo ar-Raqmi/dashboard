@@ -52,7 +52,10 @@ const getTypeBadgeColor = (type: SearchResult['type']): string => {
 
 // ===== MAIN GLOBAL SEARCH =====
 export default function GlobalSearch() {
-  const { tasks, notes, files, goals, setActivePage, searchQuery, setSearchQuery, searchOpen, setSearchOpen } = useAppStore()
+  const { 
+    tasks, notes, files, goals, setActivePage, searchQuery, setSearchQuery, searchOpen, setSearchOpen,
+    setCurrentFolderId, setPreviewFile, setHighlightedTask, setHighlightedNote, setHighlightedGoal 
+  } = useAppStore()
 
   // Keyboard shortcut: Cmd/Ctrl+K
   useEffect(() => {
@@ -126,6 +129,39 @@ export default function GlobalSearch() {
     setActivePage(result.page)
     setSearchOpen(false)
     setSearchQuery('')
+
+    if (result.type === 'file') {
+      const file = files.find(f => ((f as any)._id || f.id) === result.id)
+      if (file) {
+        if (file.type === 'folder') {
+          setCurrentFolderId(result.id)
+        } else {
+          // Navigate to parent folder and open preview
+          if (file.parentId) {
+            setCurrentFolderId(file.parentId)
+          } else {
+            setCurrentFolderId(null)
+          }
+          setPreviewFile({
+            id: (file as any)._id || file.id,
+            name: file.name,
+            type: file.type as any,
+            category: (file.category || 'other') as any,
+            parentId: file.parentId || null,
+            size: file.size || 0,
+            createdAt: typeof file.createdAt === 'number' ? new Date(file.createdAt).toISOString() : file.createdAt,
+            updatedAt: typeof file.updatedAt === 'number' ? new Date(file.updatedAt).toISOString() : file.updatedAt,
+            storageId: (file as any).storageId
+          })
+        }
+      }
+    } else if (result.type === 'task') {
+      setHighlightedTask(result.id)
+    } else if (result.type === 'note') {
+      setHighlightedNote(result.id)
+    } else if (result.type === 'goal') {
+      setHighlightedGoal(result.id)
+    }
   }
 
   return (

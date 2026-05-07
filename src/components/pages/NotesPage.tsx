@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useRef, useCallback } from 'react'
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { Plus, Trash2, StickyNote, Copy, Pencil, Search, Check, Pin, PinOff, GripVertical, Maximize2, X } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -362,8 +362,17 @@ export default function NotesPage() {
   const [noteColor, setNoteColor] = useState(NOTE_COLORS[0].value)
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
-  const [copiedId, setCopiedId] = useState<string | null>(null)
   const [editMode, setEditMode] = useState(false)
+
+  const { highlightedNoteId, setHighlightedNote } = useAppStore()
+
+  // Handle highlighting from search
+  useEffect(() => {
+    if (highlightedNoteId) {
+      openNotePreview(highlightedNoteId)
+      setHighlightedNote(null)
+    }
+  }, [highlightedNoteId, setHighlightedNote, notes]) // Include notes to ensure we can find it
 
   // Separate pinned and regular notes
   const pinnedNotes = useMemo(() => notes.filter((n) => n.pinned), [notes])
