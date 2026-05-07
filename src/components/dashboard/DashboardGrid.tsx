@@ -613,17 +613,33 @@ function FilesContent() {
 function ClipboardContent() {
   const clipboardText = useAppStore((s) => s.clipboardText)
   const setClipboardText = useAppStore((s) => s.setClipboardText)
+  const [localText, setLocalText] = React.useState(clipboardText)
   const [copied, setCopied] = React.useState(false)
 
+  // Keep local text in sync with store only when not focused to avoid overwriting user typing
+  const isFocused = React.useRef(false)
+  React.useEffect(() => {
+    if (!isFocused.current) {
+      setLocalText(clipboardText)
+    }
+  }, [clipboardText])
+
+  const handleSave = () => {
+    if (localText !== clipboardText) {
+      setClipboardText(localText)
+    }
+  }
+
   const handleCopy = async () => {
-    if (!clipboardText.trim()) return
+    const textToCopy = isFocused.current ? localText : clipboardText
+    if (!textToCopy.trim()) return
     try {
-      await navigator.clipboard.writeText(clipboardText)
+      await navigator.clipboard.writeText(textToCopy)
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
     } catch {
       const ta = document.createElement('textarea')
-      ta.value = clipboardText
+      ta.value = textToCopy
       document.body.appendChild(ta)
       ta.select()
       document.execCommand('copy')
@@ -636,14 +652,24 @@ function ClipboardContent() {
   return (
     <div className="flex flex-col h-full gap-2">
       <textarea
-        value={clipboardText}
-        onChange={(e) => setClipboardText(e.target.value)}
+        value={localText}
+        onChange={(e) => setLocalText(e.target.value)}
+        onFocus={() => { isFocused.current = true }}
+        onBlur={() => {
+          isFocused.current = false
+          handleSave()
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            handleSave()
+          }
+        }}
         placeholder="Paste or type anything here..."
         className="flex-1 min-h-[60px] resize-none text-sm bg-transparent placeholder:text-muted-foreground/50 focus:outline-none leading-relaxed"
       />
       <button
         onClick={handleCopy}
-        disabled={!clipboardText.trim()}
+        disabled={!(isFocused.current ? localText : clipboardText).trim()}
         className={`shrink-0 h-8 rounded-xl text-xs font-medium flex items-center justify-center gap-1.5 transition-colors ${
           copied
             ? 'bg-primary/15 text-primary'
