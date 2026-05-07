@@ -52,15 +52,14 @@ const getTypeBadgeColor = (type: SearchResult['type']): string => {
 
 // ===== MAIN GLOBAL SEARCH =====
 export default function GlobalSearch() {
-  const [open, setOpen] = useState(false)
-  const { tasks, notes, files, goals, setActivePage, searchQuery, setSearchQuery } = useAppStore()
+  const { tasks, notes, files, goals, setActivePage, searchQuery, setSearchQuery, searchOpen, setSearchOpen } = useAppStore()
 
   // Keyboard shortcut: Cmd/Ctrl+K
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
-        setOpen(prev => !prev)
+        setSearchOpen(!searchOpen)
       }
     }
     document.addEventListener('keydown', handleKeyDown)
@@ -125,15 +124,15 @@ export default function GlobalSearch() {
 
   const handleSelect = (result: SearchResult) => {
     setActivePage(result.page)
-    setOpen(false)
+    setSearchOpen(false)
     setSearchQuery('')
   }
 
   return (
     <CommandDialog
-      open={open}
+      open={searchOpen}
       onOpenChange={(v) => {
-        setOpen(v)
+        setSearchOpen(v)
         if (!v) setSearchQuery('')
       }}
       title="Search ar-Raqmi Database"
