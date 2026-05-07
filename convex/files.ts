@@ -6,16 +6,49 @@ import { getAuthedUserId } from "./auth";
 export const list = query({
   args: { 
     sessionToken: v.string(),
-    parentId: v.optional(v.id("files"))
+    parentId: v.optional(v.id("files")),
+    starred: v.optional(v.boolean()),
+    category: v.optional(v.union(v.literal("image"), v.literal("audio"), v.literal("pdf"), v.literal("doc"), v.literal("video"), v.literal("other"))),
   },
-  handler: async (ctx, { sessionToken, parentId }) => {
+  handler: async (ctx, { sessionToken, parentId, starred, category }) => {
+    const userId = await getAuthedUserId(ctx, sessionToken);
+    
+    let q = ctx.db.query("files");
+
+    if (starred !== undefined) {
+      return await q
+        .withIndex("by_user_starred", (q) => q.eq("userId", userId).eq("starred", starred))
+        .collect();
+    }
+
+    if (category !== undefined) {
+      return await q
+        .withIndex("by_user_category", (q) => q.eq("userId", userId).eq("category", category))
+        .collect();
+    }
+
+    // Default: list by parent
+    return await q
+      .withIndex("by_user_parent", (q) => q.eq("userId", userId).eq("parentId", parentId))
+      .collect();
+  },
+});
+
+// Search files by name
+export const search = query({
+  args: { 
+    sessionToken: v.string(),
+    query: v.string(),
+  },
+  handler: async (ctx, { sessionToken, query }) => {
     const userId = await getAuthedUserId(ctx, sessionToken);
     
     return await ctx.db
       .query("files")
-      .withIndex("by_parent", (q) => q.eq("parentId", parentId))
-      .filter((q) => q.eq(q.field("userId"), userId))
-      .collect();
+      .withSearchIndex("search_name", (q) => 
+        q.search("name", query).eq("userId", userId)
+      )
+      .take(20);
   },
 });
 
@@ -41,6 +74,8 @@ export const createFile = mutation({
     return await ctx.db.insert("files", {
       ...fileData,
       userId,
+      starred: false,
+      lastAccessed: now,
       createdAt: now,
       updatedAt: now,
     });
@@ -55,6 +90,28 @@ export const rename = mutation({
     if (!file || file.userId !== userId) throw new Error("Unauthorized");
     
     await ctx.db.patch(id, { name, updatedAt: Date.now() });
+  },
+});
+
+export const toggleStar = mutation({
+  args: { sessionToken: v.string(), id: v.id("files") },
+  handler: async (ctx, { sessionToken, id }) => {
+    const userId = await getAuthedUserId(ctx, sessionToken);
+    const file = await ctx.db.get(id);
+    if (!file || file.userId !== userId) throw new Error("Unauthorized");
+    
+    await ctx.db.patch(id, { starred: !file.starred, updatedAt: Date.now() });
+  },
+});
+
+export const updateLastAccessed = mutation({
+  args: { sessionToken: v.string(), id: v.id("files") },
+  handler: async (ctx, { sessionToken, id }) => {
+    const userId = await getAuthedUserId(ctx, sessionToken);
+    const file = await ctx.db.get(id);
+    if (!file || file.userId !== userId) throw new Error("Unauthorized");
+    
+    await ctx.db.patch(id, { lastAccessed: Date.now() });
   },
 });
 
@@ -89,5 +146,25 @@ export const getFileUrl = query({
   handler: async (ctx, { sessionToken, storageId }) => {
     await getAuthedUserId(ctx, sessionToken);
     return await ctx.storage.getUrl(storageId);
+  },
+});
+
+export const getPath = query({
+  args: { sessionToken: v.string(), folderId: v.optional(v.id("files")) },
+  handler: async (ctx, { sessionToken, folderId }) => {
+    await getAuthedUserId(ctx, sessionToken);
+    if (!folderId) return [];
+    
+    const path = [];
+    let currentId: any = folderId;
+    
+    while (currentId) {
+      const folder = await ctx.db.get(currentId);
+      if (!folder) break;
+      path.unshift({ id: folder._id, name: folder.name });
+      currentId = folder.parentId;
+    }
+    
+    return path;
   },
 });
