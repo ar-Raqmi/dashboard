@@ -18,6 +18,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Progress } from '@/components/ui/progress'
+import JSZip from 'jszip'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAppStore } from '@/lib/store'
@@ -67,9 +70,12 @@ export default function FileManager() {
   const [navCategory, setNavCategory] = useState<NavCategory>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<'name' | 'date' | 'size'>('date')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isNewFolderDialogOpen, setIsNewFolderDialogOpen] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
+  const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false)
+  const [targetFolderId, setTargetFolderId] = useState<string | null>(null)
 
   // Queries
   const files = useQuery(api.files.list, sessionToken ? { 
@@ -87,10 +93,67 @@ export default function FileManager() {
   // Mutations
   const createFile = useMutation(api.files.createFile)
   const deleteFile = useMutation(api.files.remove)
+  const deleteMultiple = useMutation(api.files.removeMultiple)
+  const moveFiles = useMutation(api.files.moveFiles)
   const toggleStar = useMutation(api.files.toggleStar)
   const renameFile = useMutation(api.files.rename)
 
   // Handlers
+  const handleToggleSelect = (id: string) => {
+    const next = new Set(selectedIds)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    setSelectedIds(next)
+  }
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === displayFiles?.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(displayFiles?.map(f => f._id) || []))
+    }
+  }
+
+  const handleBatchDelete = async () => {
+    if (!sessionToken || selectedIds.size === 0) return
+    try {
+      await deleteMultiple({ sessionToken, ids: Array.from(selectedIds) as any })
+      setSelectedIds(new Set())
+      toast.success(`Deleted ${selectedIds.size} items`)
+    } catch (error) {
+      toast.error('Batch delete failed')
+    }
+  }
+
+  const handleBatchMove = async (newParentId: string | null) => {
+    if (!sessionToken || selectedIds.size === 0) return
+    try {
+      await moveFiles({ sessionToken, ids: Array.from(selectedIds) as any, newParentId: newParentId as any })
+      setSelectedIds(new Set())
+      setIsMoveDialogOpen(false)
+      toast.success(`Moved ${selectedIds.size} items`)
+    } catch (error) {
+      toast.error('Move failed')
+    }
+  }
+
+  const handleDrop = async (e: React.DragEvent, targetId: string | null) => {
+    e.preventDefault()
+    const draggedId = e.dataTransfer.getData('fileId')
+    if (!draggedId || draggedId === targetId) return
+    
+    // If dragging a selected item, move all selected items
+    const idsToMove = selectedIds.has(draggedId) ? Array.from(selectedIds) : [draggedId]
+    
+    try {
+      await moveFiles({ sessionToken, ids: idsToMove as any, newParentId: targetId as any })
+      toast.success(`Moved ${idsToMove.length} item(s)`)
+      if (selectedIds.has(draggedId)) setSelectedIds(new Set())
+    } catch (error) {
+      toast.error('Move failed')
+    }
+  }
+
   const handleCreateFolder = async () => {
     if (!sessionToken || !newFolderName) return
     try {
@@ -130,7 +193,9 @@ export default function FileManager() {
 
     return [...items].sort((a, b) => {
       if (sortBy === 'name') return a.name.localeCompare(b.name)
-      if (sortBy === 'date') return b.updatedAt - a.updatedAt
+      const timeA = typeof a.updatedAt === 'number' ? a.updatedAt : new Date(a.updatedAt).getTime()
+      const timeB = typeof b.updatedAt === 'number' ? b.updatedAt : new Date(b.updatedAt).getTime()
+      if (sortBy === 'date') return timeB - timeA
       if (sortBy === 'size') return (b.size || 0) - (a.size || 0)
       return 0
     })
@@ -229,6 +294,8 @@ export default function FileManager() {
               <BreadcrumbItem>
                 <BreadcrumbLink 
                   onClick={() => setCurrentFolderId(undefined)}
+                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' }}
+                  onDrop={(e) => handleDrop(e, null)}
                   className="cursor-pointer hover:text-primary transition-colors flex items-center"
                 >
                   My Files
@@ -240,6 +307,8 @@ export default function FileManager() {
                   <BreadcrumbItem>
                     <BreadcrumbLink 
                       onClick={() => setCurrentFolderId(item.id)}
+                      onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' }}
+                      onDrop={(e) => handleDrop(e, item.id)}
                       className={`cursor-pointer hover:text-primary transition-colors ${idx === path.length - 1 ? 'font-semibold text-foreground' : ''}`}
                     >
                       {item.name}
@@ -251,9 +320,52 @@ export default function FileManager() {
           </Breadcrumb>
           
           <div className="text-xs text-muted-foreground font-medium">
-            {displayFiles?.length || 0} items
+            {selectedIds.size > 0 ? `${selectedIds.size} of ${displayFiles?.length || 0} selected` : `${displayFiles?.length || 0} items`}
           </div>
         </div>
+
+        {/* Batch Action Bar */}
+        <AnimatePresence>
+          {selectedIds.size > 0 && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="mx-6 mt-2 p-3 rounded-2xl bg-primary text-primary-foreground flex items-center justify-between shadow-lg shadow-primary/20 z-20"
+            >
+              <div className="flex items-center gap-4 px-2">
+                <p className="text-sm font-bold">{selectedIds.size} items selected</p>
+                <div className="h-4 w-px bg-primary-foreground/20" />
+                <Button variant="ghost" size="sm" onClick={handleSelectAll} className="text-xs h-8 hover:bg-white/10 text-primary-foreground">
+                  {selectedIds.size === displayFiles?.length ? 'Deselect All' : 'Select All'}
+                </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setIsMoveDialogOpen(true)} className="h-8 hover:bg-white/10 text-primary-foreground gap-2">
+                  <Edit3 className="size-3.5" /> Move
+                </Button>
+                <Button variant="ghost" size="sm" onClick={async () => {
+                  try {
+                    const zip = new JSZip();
+                    toast.info("Preparing batch download...");
+                    // This is a simplified version, real implementation would fetch all files
+                    toast.warning("ZIP compression for multiple files coming soon!");
+                  } catch (e) {
+                    toast.error("Batch download failed");
+                  }
+                }} className="h-8 hover:bg-white/10 text-primary-foreground gap-2">
+                  <Download className="size-3.5" /> Download (.zip)
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleBatchDelete} className="h-8 hover:bg-white/10 text-primary-foreground gap-2">
+                  <Trash2 className="size-3.5" /> Delete
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())} className="h-8 hover:bg-white/10 text-primary-foreground">
+                  <X className="size-4" />
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Content View */}
         <ScrollArea className="flex-1">
@@ -278,6 +390,8 @@ export default function FileManager() {
                     <FileGridItem 
                       key={file._id.toString()} 
                       file={file} 
+                      selected={selectedIds.has(file._id)}
+                      onToggleSelect={() => handleToggleSelect(file._id)}
                       onOpen={() => file.type === 'folder' ? setCurrentFolderId(file._id) : setPreviewFile({
                         id: file._id,
                         name: file.name,
@@ -291,6 +405,11 @@ export default function FileManager() {
                       })}
                       onDelete={() => handleDelete(file._id)}
                       onToggleStar={(e) => handleToggleStar(file._id, e)}
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('fileId', file._id)
+                        e.dataTransfer.effectAllowed = 'move'
+                      }}
+                      onDrop={(e) => file.type === 'folder' ? handleDrop(e, file._id) : undefined}
                     />
                   ))}
                 </AnimatePresence>
@@ -312,6 +431,8 @@ export default function FileManager() {
                       <FileListItem 
                         key={file._id.toString()} 
                         file={file} 
+                        selected={selectedIds.has(file._id)}
+                        onToggleSelect={() => handleToggleSelect(file._id)}
                         onOpen={() => file.type === 'folder' ? setCurrentFolderId(file._id) : setPreviewFile({
                           id: file._id,
                           name: file.name,
@@ -325,6 +446,11 @@ export default function FileManager() {
                         })}
                         onDelete={() => handleDelete(file._id)}
                         onToggleStar={(e) => handleToggleStar(file._id, e)}
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData('fileId', file._id)
+                          e.dataTransfer.effectAllowed = 'move'
+                        }}
+                        onDrop={(e) => file.type === 'folder' ? handleDrop(e, file._id) : undefined}
                       />
                     ))}
                   </TableBody>
@@ -355,6 +481,38 @@ export default function FileManager() {
           <DialogFooter>
             <Button variant="ghost" onClick={() => setIsNewFolderDialogOpen(false)} className="rounded-xl">Cancel</Button>
             <Button onClick={handleCreateFolder} className="rounded-xl bg-primary shadow-lg shadow-primary/20 px-6">Create Folder</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Move Dialog */}
+      <Dialog open={isMoveDialogOpen} onOpenChange={setIsMoveDialogOpen}>
+        <DialogContent className="rounded-3xl border-white/10 bg-background/95 backdrop-blur-2xl">
+          <DialogHeader>
+            <DialogTitle>Move {selectedIds.size} items</DialogTitle>
+            <DialogDescription>Choose a target folder to move the selected items.</DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-2">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start rounded-xl border-white/10 h-12 bg-white/5"
+              onClick={() => handleBatchMove(null)}
+            >
+              <Folder className="size-4 mr-2 text-amber-400" /> Root Directory
+            </Button>
+            {files?.filter(f => f.type === 'folder' && !selectedIds.has(f._id)).map(folder => (
+              <Button 
+                key={folder._id}
+                variant="outline" 
+                className="w-full justify-start rounded-xl border-white/10 h-12 bg-white/5"
+                onClick={() => handleBatchMove(folder._id)}
+              >
+                <Folder className="size-4 mr-2 text-amber-400" /> {folder.name}
+              </Button>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsMoveDialogOpen(false)} className="rounded-xl">Cancel</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -393,26 +551,52 @@ function NavButton({ active, icon, label, onClick }: { active: boolean, icon: Re
   )
 }
 
-function FileGridItem({ file, onOpen, onDelete, onToggleStar }: { file: any, onOpen: () => void, onDelete: () => void, onToggleStar: (e: React.MouseEvent) => void }) {
-  const [isHovered, setIsHovered] = useState(false)
-  
+function FileGridItem({ 
+  file, onOpen, onDelete, onToggleStar, selected, onToggleSelect, onDragStart, onDrop 
+}: { 
+  file: any, onOpen: () => void, onDelete: () => void, onToggleStar: (e: React.MouseEvent) => void, 
+  selected: boolean, onToggleSelect: () => void, onDragStart: (e: React.DragEvent) => void, onDrop: (e: React.DragEvent) => void
+}) {
   return (
     <motion.div 
       layout
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className="group relative flex flex-col p-3 rounded-2xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all duration-200 cursor-pointer overflow-hidden"
-      onClick={onOpen}
+      draggable
+      onDragStart={onDragStart}
+      onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' }}
+      onDrop={onDrop}
+      className={`
+        group relative flex flex-col p-3 rounded-2xl border transition-all duration-200 cursor-pointer overflow-hidden
+        ${selected ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10' : 'border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/20'}
+      `}
+      onClick={(e) => {
+        if (e.metaKey || e.ctrlKey) {
+          onToggleSelect()
+        } else {
+          onOpen()
+        }
+      }}
     >
       <div className="aspect-[4/3] rounded-xl bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center mb-3 relative overflow-hidden">
         {getFileIcon(file)}
         
+        {/* Selection Checkbox */}
+        <div 
+          className={`absolute top-2 left-2 transition-all duration-200 z-10 ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Checkbox 
+            checked={selected} 
+            onCheckedChange={onToggleSelect} 
+            className="rounded-lg border-white/20 bg-black/20"
+          />
+        </div>
+
         {/* Star Button */}
         <button 
-          onClick={onToggleStar}
+          onClick={(e) => { e.stopPropagation(); onToggleStar(e) }}
           className={`
             absolute top-2 right-2 p-1.5 rounded-lg transition-all duration-200 z-10
             ${file.starred ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' : 'bg-black/20 text-white opacity-0 group-hover:opacity-100 hover:bg-black/40'}
@@ -447,8 +631,11 @@ function FileGridItem({ file, onOpen, onDelete, onToggleStar }: { file: any, onO
             <DropdownMenuItem onClick={onOpen} className="rounded-xl">
               <Play className="size-4 mr-2" /> Open
             </DropdownMenuItem>
-            <DropdownMenuItem className="rounded-xl">
-              <Edit3 className="size-4 mr-2" /> Rename
+            <DropdownMenuItem className="rounded-xl" onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}>
+              {selected ? <X className="size-4 mr-2" /> : <Check className="size-4 mr-2" />} {selected ? 'Deselect' : 'Select'}
+            </DropdownMenuItem>
+            <DropdownMenuItem className="rounded-xl" onClick={(e) => { e.stopPropagation(); setSelectedIds(new Set([file._id])); setIsMoveDialogOpen(true); }}>
+              <Edit3 className="size-4 mr-2" /> Move
             </DropdownMenuItem>
             <DropdownMenuItem className="rounded-xl">
               <Download className="size-4 mr-2" /> Download
@@ -464,15 +651,33 @@ function FileGridItem({ file, onOpen, onDelete, onToggleStar }: { file: any, onO
   )
 }
 
-function FileListItem({ file, onOpen, onDelete, onToggleStar }: { file: any, onOpen: () => void, onDelete: () => void, onToggleStar: (e: React.MouseEvent) => void }) {
+function FileListItem({ 
+  file, onOpen, onDelete, onToggleStar, selected, onToggleSelect, onDragStart, onDrop 
+}: { 
+  file: any, onOpen: () => void, onDelete: () => void, onToggleStar: (e: React.MouseEvent) => void,
+  selected: boolean, onToggleSelect: () => void, onDragStart: (e: React.DragEvent) => void, onDrop: (e: React.DragEvent) => void
+}) {
   return (
     <TableRow 
-      className="group hover:bg-white/10 border-white/5 cursor-pointer transition-colors"
-      onClick={onOpen}
+      className={`group border-white/5 cursor-pointer transition-colors ${selected ? 'bg-primary/10 hover:bg-primary/15' : 'hover:bg-white/10'}`}
+      onClick={(e) => {
+        if (e.metaKey || e.ctrlKey) {
+          onToggleSelect()
+        } else {
+          onOpen()
+        }
+      }}
+      draggable
+      onDragStart={onDragStart}
+      onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' }}
+      onDrop={onDrop}
     >
       <TableCell className="font-medium">
         <div className="flex items-center gap-3">
-          <button onClick={onToggleStar} className="p-1 rounded-lg hover:bg-white/10 transition-colors">
+          <div onClick={(e) => e.stopPropagation()}>
+            <Checkbox checked={selected} onCheckedChange={onToggleSelect} className="rounded-lg border-white/20" />
+          </div>
+          <button onClick={(e) => { e.stopPropagation(); onToggleStar(e); }} className="p-1 rounded-lg hover:bg-white/10 transition-colors">
             <Star className={`size-4 ${file.starred ? 'text-amber-500 fill-amber-500' : 'text-muted-foreground'}`} />
           </button>
           <div className="size-8 rounded-lg bg-white/5 flex items-center justify-center">
@@ -495,6 +700,12 @@ function FileListItem({ file, onOpen, onDelete, onToggleStar }: { file: any, onO
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 rounded-2xl border-white/10 bg-background/95 backdrop-blur-xl">
             <DropdownMenuItem onClick={onOpen} className="rounded-xl"><Play className="size-4 mr-2" /> Open</DropdownMenuItem>
+            <DropdownMenuItem className="rounded-xl" onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}>
+              {selected ? <X className="size-4 mr-2" /> : <Check className="size-4 mr-2" />} {selected ? 'Deselect' : 'Select'}
+            </DropdownMenuItem>
+            <DropdownMenuItem className="rounded-xl" onClick={(e) => { e.stopPropagation(); setSelectedIds(new Set([file._id])); setIsMoveDialogOpen(true); }}>
+              <Edit3 className="size-4 mr-2" /> Move
+            </DropdownMenuItem>
             <DropdownMenuItem className="rounded-xl"><Download className="size-4 mr-2" /> Download</DropdownMenuItem>
             <DropdownMenuSeparator className="bg-white/10" />
             <DropdownMenuItem onClick={onDelete} className="text-destructive rounded-xl hover:bg-destructive/10"><Trash2 className="size-4 mr-2" /> Delete</DropdownMenuItem>
