@@ -95,6 +95,14 @@ export const saveFile = mutation({
   },
 });
 
+export const getFileUrl = query({
+  args: { sessionToken: v.string(), storageId: v.id("_storage") },
+  handler: async (ctx, { sessionToken, storageId }) => {
+    await getAuthedUserId(ctx, sessionToken); // Ensure auth
+    return await ctx.storage.getUrl(storageId);
+  },
+});
+
 export const move = mutation({
   args: {
     sessionToken: v.string(),
