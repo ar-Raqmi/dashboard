@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, CheckCircle2, Trash2, ListTodo, CalendarDays, AlertTriangle, Clock } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
@@ -83,6 +83,14 @@ function TaskCard({ task, onToggle, onDelete, isHighlighted }: {
   onDelete: (id: string) => void
   isHighlighted?: boolean
 }) {
+  const cardRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (isHighlighted && cardRef.current) {
+      cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [isHighlighted])
+
   const isCompleted = task.status === 'completed'
   const today = new Date()
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
@@ -91,6 +99,7 @@ function TaskCard({ task, onToggle, onDelete, isHighlighted }: {
 
   return (
     <motion.div
+      ref={cardRef}
       layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
