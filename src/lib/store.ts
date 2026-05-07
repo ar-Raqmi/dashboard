@@ -72,13 +72,6 @@ export interface HadithData {
   grade: string
 }
 
-export interface ClipboardItem {
-  id: string
-  label: string
-  content: string
-  createdAt: string
-}
-
 export type WidgetType = 'tasks' | 'calendar' | 'notes' | 'verse' | 'goals' | 'clock' | 'files' | 'clipboard'
 
 export interface DashboardWidget {
@@ -282,10 +275,8 @@ interface AppStore {
   deleteEvent: (id: string) => void
 
   // Clipboard
-  clips: ClipboardItem[]
-  addClip: (clip: Omit<ClipboardItem, 'id' | 'createdAt'>) => void
-  deleteClip: (id: string) => void
-  updateClip: (id: string, updates: Partial<ClipboardItem>) => void
+  clipboardText: string
+  setClipboardText: (text: string) => void
 
   // File Manager
   files: FileItem[]
@@ -523,17 +514,8 @@ export const useAppStore = create<AppStore>()(
         set((state) => ({ events: state.events.filter((e) => e.id !== id) })),
 
       // Clipboard
-      clips: [],
-      addClip: (clip) =>
-        set((state) => ({
-          clips: [...state.clips, { ...clip, id: genId(), createdAt: new Date().toISOString() }],
-        })),
-      deleteClip: (id) =>
-        set((state) => ({ clips: state.clips.filter((c) => c.id !== id) })),
-      updateClip: (id, updates) =>
-        set((state) => ({
-          clips: state.clips.map((c) => (c.id === id ? { ...c, ...updates } : c)),
-        })),
+      clipboardText: '',
+      setClipboardText: (text) => set({ clipboardText: text }),
 
       // File Manager
       files: sampleFiles,
@@ -686,10 +668,11 @@ export const useAppStore = create<AppStore>()(
             mobileLayouts.push({ i: 'clipboard', x: 0, y: maxY, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: 6 })
           }
 
-          // Initialize clips array
-          if (!state.clips) {
-            state.clips = []
+          // Initialize clipboardText (remove old clips array if present)
+          if (!state.clipboardText) {
+            state.clipboardText = ''
           }
+          delete state.clips
         }
 
         return persistedState
@@ -717,7 +700,7 @@ export const useAppStore = create<AppStore>()(
         noteMobileLayouts: state.noteMobileLayouts,
         pinnedNoteLayouts: state.pinnedNoteLayouts,
         pinnedNoteMobileLayouts: state.pinnedNoteMobileLayouts,
-        clips: state.clips,
+        clipboardText: state.clipboardText,
       }),
     }
   )
