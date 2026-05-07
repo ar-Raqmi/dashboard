@@ -74,7 +74,7 @@ export default function GlobalSearch() {
     const filteredTasks: SearchResult[] = tasks
       .filter(t => t.title.toLowerCase().includes(q))
       .map(t => ({
-        id: t.id,
+        id: (t as any)._id || t.id,
         name: t.title,
         type: 'task' as const,
         badge: t.status === 'completed' ? 'Done' : 'Pending',
@@ -84,7 +84,7 @@ export default function GlobalSearch() {
     const filteredNotes: SearchResult[] = notes
       .filter(n => n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q))
       .map(n => ({
-        id: n.id,
+        id: (n as any)._id || n.id,
         name: n.title,
         type: 'note' as const,
         badge: 'Note',
@@ -94,7 +94,7 @@ export default function GlobalSearch() {
     const filteredFiles: SearchResult[] = files
       .filter(f => f.name.toLowerCase().includes(q))
       .map(f => ({
-        id: f.id,
+        id: (f as any)._id || f.id,
         name: f.name,
         type: 'file' as const,
         badge: f.category,
@@ -104,7 +104,7 @@ export default function GlobalSearch() {
     const filteredGoals: SearchResult[] = goals
       .filter(g => g.title.toLowerCase().includes(q))
       .map(g => ({
-        id: g.id,
+        id: (g as any)._id || g.id,
         name: g.title,
         type: 'goal' as const,
         badge: `${g.progress}%`,
