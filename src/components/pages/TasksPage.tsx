@@ -196,7 +196,7 @@ function SectionHeader({ label, icon, count, variant }: {
 }
 
 export default function TasksPage() {
-  const { tasks, addTask, toggleTaskStatus, deleteTask } = useAppStore()
+  const { tasks, addTask, toggleTaskStatus, deleteTask, deleteCompletedTasks } = useAppStore()
   const [filter, setFilter] = useState<FilterType>('all')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [title, setTitle] = useState('')
@@ -336,23 +336,36 @@ export default function TasksPage() {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="flex gap-2"
+        className="flex items-center gap-2"
       >
-        {(['all', 'pending', 'completed'] as FilterType[]).map((f) => (
+        <div className="flex gap-2">
+          {(['all', 'pending', 'completed'] as FilterType[]).map((f) => (
+            <Button
+              key={f}
+              variant={filter === f ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setFilter(f)}
+              className={`rounded-2xl capitalize ${
+                filter === f
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-on-surface-variant'
+              }`}
+            >
+              {f} ({filterCounts[f]})
+            </Button>
+          ))}
+        </div>
+        {filterCounts.completed > 0 && (
           <Button
-            key={f}
-            variant={filter === f ? 'default' : 'ghost'}
+            variant="ghost"
             size="sm"
-            onClick={() => setFilter(f)}
-            className={`rounded-2xl capitalize ${
-              filter === f
-                ? 'bg-primary text-primary-foreground'
-                : 'text-on-surface-variant'
-            }`}
+            onClick={deleteCompletedTasks}
+            className="rounded-2xl ml-auto text-destructive hover:text-destructive hover:bg-destructive/10"
           >
-            {f} ({filterCounts[f]})
+            <Trash2 className="size-3.5 mr-1" />
+            Clear completed
           </Button>
-        ))}
+        )}
       </motion.div>
 
       {/* Task List — Sectioned */}
