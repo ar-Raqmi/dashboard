@@ -131,8 +131,13 @@ export function WidgetCard({
         </div>
 
         {/* Custom header action (e.g. settings popover) */}
-        {headerAction && !editMode && (
-          <div className="shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
+        {headerAction && (
+          <div className={cn(
+            'shrink-0 transition-opacity duration-200',
+            editMode
+              ? 'opacity-100'
+              : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'
+          )}>
             {headerAction}
           </div>
         )}
