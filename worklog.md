@@ -1,7 +1,7 @@
 ---
 Task ID: 1
 Agent: Main Agent
-Task: Migrate ar-Raqmi Database from SQLite/localStorage to Convex.dev with authentication
+Task: Migrate ar-Raqmi Dashboard from SQLite/localStorage to Convex.dev with authentication
 
 Work Log:
 - Installed convex, bcryptjs, jose, @types/bcryptjs packages

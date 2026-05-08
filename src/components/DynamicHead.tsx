@@ -25,7 +25,7 @@ export default function DynamicHead() {
 
   // 2. Direct DOM manipulation for Title and Icons
   useEffect(() => {
-    document.title = appTitle || 'ar-Raqmi Database'
+    document.title = appTitle || 'ar-Raqmi Dashboard'
 
     // Update Favicon
     let link = document.querySelector("link[rel*='icon']") as HTMLLinkElement

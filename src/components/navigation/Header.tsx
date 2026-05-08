@@ -109,7 +109,7 @@ export default function Header() {
           ) : (
             <div className="flex items-center justify-center w-full h-full">
               <img
-                src="/logo.svg"
+                src="/logo.png"
                 alt={`${appTitle} logo`}
                 className="w-5 h-5"
                 onError={(e) => {
