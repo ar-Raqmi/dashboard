@@ -573,7 +573,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   setProfilePicture: (url) => set({ profilePicture: url }),
   appTitle: 'ar-Raqmi Database',
   setAppTitle: (title) => set({ appTitle: title }),
-  appLogo: '',
+  appLogo: 'https://cdn-icons-png.flaticon.com/512/8323/8323511.png',
   setAppLogo: (url) => set({ appLogo: url }),
 
   // Search

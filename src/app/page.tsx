@@ -19,7 +19,6 @@ import SpiritualPage from '@/components/pages/SpiritualPage'
 import GoalsPage from '@/components/pages/GoalsPage'
 import SettingsPage from '@/components/pages/SettingsPage'
 import LoginPage from '@/components/pages/LoginPage'
-import DynamicHead from '@/components/DynamicHead'
 import { Loader2 } from 'lucide-react'
 
 const pageComponents: Record<ActivePage, React.ComponentType> = {
@@ -158,7 +157,6 @@ function AuthenticatedApp({
   return (
     <div className="min-h-screen flex flex-col bg-background relative">
       {/* Dynamic head updates (title, favicon, manifest) */}
-      <DynamicHead />
       {/* Decorative Background Layer */}
       {bgStyle && (
         <div
