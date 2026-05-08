@@ -13,7 +13,6 @@ interface AuthContextType {
   loading: boolean
   login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>
   logout: () => Promise<void>
-  seedAdmin: (username: string, password: string) => Promise<{ success: boolean; error?: string }>
   updateCredentials: (username?: string, password?: string) => Promise<{ success: boolean; error?: string }>
   isConvexConfigured: boolean
 }
@@ -80,25 +79,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const seedAdmin = useCallback(async (username: string, password: string) => {
-    try {
-      const res = await fetch('/api/auth/seed', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      })
-
-      const data = await res.json()
-
-      if (res.ok && data.success) {
-        return { success: true }
-      }
-
-      return { success: false, error: data.error || 'Seed failed' }
-    } catch {
-      return { success: false, error: 'Network error. Please check your connection.' }
-    }
-  }, [])
 
   const updateCredentials = useCallback(async (username?: string, password?: string) => {
     try {
@@ -124,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user])
 
   return (
-    <AuthContext.Provider value={{ user, sessionToken, loading, login, logout, seedAdmin, updateCredentials, isConvexConfigured }}>
+    <AuthContext.Provider value={{ user, sessionToken, loading, login, logout, updateCredentials, isConvexConfigured }}>
       {children}
     </AuthContext.Provider>
   )
