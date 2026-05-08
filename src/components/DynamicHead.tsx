@@ -44,7 +44,7 @@ export default function DynamicHead() {
       appleLink.rel = 'apple-touch-icon'
       document.head.appendChild(appleLink)
     }
-    appleLink.href = faviconUrl
+    appleLink.href = faviconUrl.endsWith('.svg') ? '/icon.png' : faviconUrl
 
     // Ensure manifest is PRESENT
     let manifestLink = document.querySelector("link[rel='manifest']") as HTMLLinkElement
