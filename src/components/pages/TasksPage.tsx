@@ -17,6 +17,7 @@ import {
   DialogTrigger,
   DialogFooter,
   DialogClose,
+  DialogDescription,
 } from '@/components/ui/dialog'
 import {
   Select,
@@ -77,10 +78,10 @@ function categorizeTasks(tasks: Task[]) {
 }
 
 // ===== Task Card for full page =====
-function TaskCard({ task, onToggle, onDelete, isHighlighted }: {
+function TaskCard({ task, onToggle, initiateDelete, isHighlighted }: {
   task: Task
   onToggle: (id: string) => void
-  onDelete: (id: string) => void
+  initiateDelete: (id: string) => void
   isHighlighted?: boolean
 }) {
   const cardRef = useRef<HTMLDivElement>(null)
@@ -182,7 +183,7 @@ function TaskCard({ task, onToggle, onDelete, isHighlighted }: {
         className="size-8 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
         onClick={(e) => {
           e.stopPropagation()
-          onDelete(task.id)
+          initiateDelete(task.id)
         }}
       >
         <Trash2 className="size-4" />
@@ -225,6 +226,7 @@ export default function TasksPage() {
   const [dueDate, setDueDate] = useState<Date | undefined>(new Date())
   const [priority, setPriority] = useState<Priority>('medium')
   const [calendarOpen, setCalendarOpen] = useState(false)
+  const [deleteTaskId, setDeleteTaskId] = useState<string | null>(null)
 
   // Clear highlight after 3 seconds
   useEffect(() => {
@@ -259,6 +261,13 @@ export default function TasksPage() {
     setDueDate(new Date())
     setPriority('medium')
     setDialogOpen(false)
+  }
+
+  const confirmDelete = () => {
+    if (deleteTaskId) {
+        deleteTask(deleteTaskId)
+        setDeleteTaskId(null)
+    }
   }
 
   const filterCounts = {
@@ -361,6 +370,25 @@ export default function TasksPage() {
         </Dialog>
       </motion.div>
 
+      {/* Delete Confirmation */}
+      <Dialog open={!!deleteTaskId} onOpenChange={(open) => !open && setDeleteTaskId(null)}>
+        <DialogContent className="bg-card border-border rounded-3xl sm:max-w-sm">
+            <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-destructive">
+                    <AlertTriangle className="size-5" />
+                    Delete Task
+                </DialogTitle>
+                <DialogDescription className="text-muted-foreground pt-2">
+                    Are you sure you want to delete this task? This action cannot be undone.
+                </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 sm:gap-0">
+                <DialogClose asChild><Button variant="ghost" className="rounded-2xl">Cancel</Button></DialogClose>
+                <Button onClick={confirmDelete} className="rounded-2xl bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete Task</Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Filters */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -439,7 +467,7 @@ export default function TasksPage() {
                         key={task.id}
                         task={task}
                         onToggle={toggleTaskStatus}
-                        onDelete={deleteTask}
+                        initiateDelete={setDeleteTaskId}
                         isHighlighted={highlightedTaskId === task.id}
                       />
                     ))}
@@ -467,7 +495,7 @@ export default function TasksPage() {
                         key={task.id}
                         task={task}
                         onToggle={toggleTaskStatus}
-                        onDelete={deleteTask}
+                        initiateDelete={setDeleteTaskId}
                         isHighlighted={highlightedTaskId === task.id}
                       />
                     ))}
@@ -495,7 +523,7 @@ export default function TasksPage() {
                           key={task.id}
                           task={task}
                           onToggle={toggleTaskStatus}
-                          onDelete={deleteTask}
+                          initiateDelete={setDeleteTaskId}
                           isHighlighted={highlightedTaskId === task.id}
                         />
                     ))}

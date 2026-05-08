@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
-import { Plus, Trash2, StickyNote, Copy, Pencil, Search, Check, Pin, PinOff, X } from 'lucide-react'
+import { Plus, Trash2, StickyNote, Copy, Pencil, Search, Check, Pin, PinOff, X, AlertTriangle } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useAppStore } from '@/lib/store'
@@ -17,9 +17,9 @@ import {
   DialogTrigger,
   DialogFooter,
   DialogClose,
+  DialogDescription,
 } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 
 const NOTE_COLORS = [
@@ -72,21 +72,21 @@ function NoteCard({ note, editMode, onOpen, onPin, onDelete, onCopy, copiedId }:
           <span className="text-[0.65rem] font-medium text-muted-foreground uppercase tracking-tight">
             {new Date(note.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
           </span>
-          <div className="ml-auto flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="ml-auto flex gap-3 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
             <button onClick={(e) => { e.stopPropagation(); onCopy() }}
-              className="p-1.5 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+              className="p-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
               title="Copy content">
-              {copiedId === note.id ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+              {copiedId === note.id ? <Check className="size-4" /> : <Copy className="size-4" />}
             </button>
             <button onClick={(e) => { e.stopPropagation(); onPin() }}
-              className="p-1.5 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+              className="p-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
               title={note.pinned ? 'Unpin' : 'Pin'}>
-              {note.pinned ? <PinOff className="size-3.5" /> : <Pin className="size-3.5 -rotate-45" />}
+              {note.pinned ? <PinOff className="size-4" /> : <Pin className="size-4 -rotate-45" />}
             </button>
             <button onClick={(e) => { e.stopPropagation(); onDelete() }}
-              className="p-1.5 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+              className="p-2 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
               title="Delete">
-              <Trash2 className="size-3.5" />
+              <Trash2 className="size-4" />
             </button>
           </div>
         </div>
@@ -149,6 +149,7 @@ export default function NotesPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [viewDialogOpen, setViewDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [noteTitle, setNoteTitle] = useState('')
   const [noteContent, setNoteContent] = useState('')
   const [noteColor, setNoteColor] = useState(NOTE_COLORS[0].value)
@@ -253,7 +254,20 @@ export default function NotesPage() {
     setViewDialogOpen(open)
   }
 
-  const handleDelete = (id: string) => { deleteNote(id) }
+  const initiateDelete = (id: string) => {
+    setActiveNoteId(id)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = () => {
+    if (activeNoteId) {
+        deleteNote(activeNoteId)
+        setDeleteDialogOpen(false)
+        setViewDialogOpen(false)
+        resetForm()
+    }
+  }
+
   const handleCopy = (id: string) => {
     const note = notes.find((n) => n.id === id)
     if (note) copyToClipboard(note.content, id)
@@ -371,27 +385,8 @@ export default function NotesPage() {
                       <Input value={noteTitle} onChange={(e) => setNoteTitle(e.target.value)}
                         className="text-lg font-semibold bg-input border-border rounded-xl" />
                     ) : (
-                      <h2 className="text-lg font-semibold text-foreground truncate">{activeNote.title}</h2>
+                      <h2 className="text-lg font-semibold text-foreground">{activeNote.title}</h2>
                     )}
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {/* Pin toggle */}
-                    <Button variant="ghost" size="icon"
-                      className={`size-8 rounded-xl ${activeNote.pinned ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-primary'}`}
-                      onClick={() => toggleNotePinned(activeNote.id)}
-                      title={activeNote.pinned ? 'Unpin' : 'Pin'}>
-                      {activeNote.pinned ? <PinOff className="size-3.5" /> : <Pin className="size-3.5 -rotate-45" />}
-                    </Button>
-                    <Button variant={isEditing ? 'default' : 'outline'} size="sm"
-                      onClick={() => { if (isEditing) handleSaveNote(); else setIsEditing(true) }}
-                      className="rounded-xl gap-1.5 text-xs h-8">
-                      {isEditing ? <><Check className="size-3.5" />Save</> : <><Pencil className="size-3.5" />Edit</>}
-                    </Button>
-                    <Button variant="ghost" size="icon"
-                      className="size-8 rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10"
-                      onClick={() => { deleteNote(activeNote.id); setViewDialogOpen(false); resetForm() }}>
-                      <Trash2 className="size-3.5" />
-                    </Button>
                   </div>
                 </div>
               </div>
@@ -425,16 +420,57 @@ export default function NotesPage() {
                   </div>
                 </>
               ) : (
-                <ScrollArea className="flex-1 min-h-0 px-6 pb-6">
-                  <div className={`text-sm text-foreground pr-2 ${MARKDOWN_STYLES}`}>
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {activeNote.content || '*No content*'}
-                    </ReactMarkdown>
+                <>
+                  <ScrollArea className="flex-1 min-h-0 px-6 py-2">
+                    <div className={`text-sm text-foreground pr-2 ${MARKDOWN_STYLES}`}>
+                      <div className="overflow-x-auto">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {activeNote.content || '*No content*'}
+                        </ReactMarkdown>
+                      </div>
+                    </div>
+                  </ScrollArea>
+                  <div className="shrink-0 px-6 pb-5 pt-3 border-t border-border/50 flex items-center justify-end gap-2">
+                    <Button variant="ghost" size="icon" className="rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10"
+                      onClick={() => handleCopy(activeNote.id)} title="Copy">
+                      {copiedId === activeNote.id ? <Check className="size-4" /> : <Copy className="size-4" />}
+                    </Button>
+                    <Button variant="ghost" size="icon" className="rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => initiateDelete(activeNote.id)} title="Delete">
+                      <Trash2 className="size-4" />
+                    </Button>
+                    <Button variant="outline" size="icon" className="rounded-xl"
+                      onClick={() => setIsEditing(true)} title="Edit">
+                      <Pencil className="size-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="rounded-xl"
+                      onClick={() => toggleNotePinned(activeNote.id)} title={activeNote.pinned ? "Unpin" : "Pin"}>
+                      {activeNote.pinned ? <PinOff className="size-4" /> : <Pin className="size-4 -rotate-45" />}
+                    </Button>
                   </div>
-                </ScrollArea>
+                </>
               )}
             </>
           )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="bg-card border-border rounded-3xl sm:max-w-sm">
+            <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-destructive">
+                    <AlertTriangle className="size-5" />
+                    Delete Note
+                </DialogTitle>
+                <DialogDescription className="text-muted-foreground pt-2">
+                    Are you sure you want to delete this note? This action cannot be undone.
+                </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 sm:gap-0">
+                <DialogClose asChild><Button variant="ghost" className="rounded-2xl">Cancel</Button></DialogClose>
+                <Button onClick={confirmDelete} className="rounded-2xl bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete Note</Button>
+            </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -444,7 +480,7 @@ export default function NotesPage() {
           title="Pinned Notes" icon={<Pin className="size-4 text-primary -rotate-45" />}
           notes={filteredPinned}
           editMode={editMode} onOpen={openNotePreview} onPin={toggleNotePinned}
-          onDelete={handleDelete} onCopy={handleCopy} copiedId={copiedId}
+          onDelete={initiateDelete} onCopy={handleCopy} copiedId={copiedId}
         />
       )}
 
@@ -454,7 +490,7 @@ export default function NotesPage() {
           title="Notes" icon={<StickyNote className="size-4 text-primary" />}
           notes={filteredRegular}
           editMode={editMode} onOpen={openNotePreview} onPin={toggleNotePinned}
-          onDelete={handleDelete} onCopy={handleCopy} copiedId={copiedId}
+          onDelete={initiateDelete} onCopy={handleCopy} copiedId={copiedId}
         />
       )}
 
