@@ -14,7 +14,7 @@ export default function DynamicHead() {
   const appLogo = useAppStore((s) => s.appLogo)
   const iconBackgroundColor = useAppStore((s) => s.iconBackgroundColor)
   
-  const defaultIcon = '/icon.png'
+  const defaultIcon = '/logo.png'
   const [faviconUrl, setFaviconUrl] = useState<string>(defaultIcon)
 
   // 1. Determine favicon URL
@@ -44,7 +44,7 @@ export default function DynamicHead() {
       appleLink.rel = 'apple-touch-icon'
       document.head.appendChild(appleLink)
     }
-    appleLink.href = faviconUrl.endsWith('.png') ? '/icon.png' : faviconUrl
+    appleLink.href = faviconUrl.endsWith('.png') ? '/logo.png' : faviconUrl
 
     // Ensure manifest is PRESENT
     let manifestLink = document.querySelector("link[rel='manifest']") as HTMLLinkElement
