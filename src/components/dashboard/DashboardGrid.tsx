@@ -521,19 +521,31 @@ function VerseContent() {
 }
 
 function GoalsContent() {
-  const { goals } = useAppStore()
+  const { goals, setActivePage, setHighlightedGoal } = useAppStore()
 
   const sortedGoals = useMemo(() => {
     return [...goals].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
   }, [goals])
 
+  const handleGoalClick = (id: string) => {
+    setHighlightedGoal(id)
+    setActivePage('goals')
+  }
+
   return (
     <div className="space-y-4 pr-1">
       {sortedGoals.map((goal) => (
-        <div key={goal.id} className="p-3 rounded-2xl bg-muted/30 border border-border/50">
+        <div
+          key={goal.id}
+          onClick={() => handleGoalClick(goal.id)}
+          className="p-3 rounded-2xl bg-muted/30 border border-border/50 hover:bg-accent/50 hover:border-primary/30 transition-all cursor-pointer group"
+        >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-foreground truncate flex-1 mr-2">{goal.title}</span>
-            <span className="text-xs text-primary font-bold">{goal.progress}%</span>
+            <span className="text-sm font-semibold text-foreground truncate flex-1 mr-2 group-hover:text-primary transition-colors">{goal.title}</span>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-xs text-primary font-bold">{goal.progress}%</span>
+              <ExternalLink className="size-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
           </div>
           <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden mb-3">
             <div
