@@ -60,17 +60,29 @@ export default function Home() {
       setVerseLoading(true)
       setHadithLoading(true)
       try {
+        const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
+        if (!convexUrl) return
+
         const [verseRes, hadithRes] = await Promise.all([
-          fetch('/api/verse'),
-          fetch('/api/hadith'),
+          fetch(`${convexUrl}/api/query`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path: 'content:getDailyVerse', args: {} }),
+          }),
+          fetch(`${convexUrl}/api/query`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path: 'content:getDailyHadith', args: {} }),
+          }),
         ])
+
         if (verseRes.ok) {
           const verseData = await verseRes.json()
-          setVerse(verseData)
+          setVerse(verseData.value)
         }
         if (hadithRes.ok) {
           const hadithData = await hadithRes.json()
-          setHadith(hadithData)
+          setHadith(hadithData.value)
         }
       } catch {
         // Silently fail - components show fallback
