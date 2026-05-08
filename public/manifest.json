@@ -5,7 +5,11 @@
   "description": "Premium PWA Personal Dashboard — Material 3 Expressive Design",
   "start_url": "/",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
   "background_color": "#022c22",
   "theme_color": "#1a2e1a",
   "orientation": "portrait-primary",
@@ -23,13 +27,16 @@
       "purpose": "maskable"
     },
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/8323/8323511.png",
+      "src": "/icon.svg",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     }
   ],
-  "categories": ["productivity", "utilities"],
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
   "lang": "en",
   "dir": "ltr",
   "prefer_related_applications": false
