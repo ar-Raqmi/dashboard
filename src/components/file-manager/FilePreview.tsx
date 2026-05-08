@@ -234,7 +234,7 @@ export default function FilePreview() {
     <>
       <Dialog open={!!previewFile} onOpenChange={(v) => { if (!v) setPreviewFile(null) }}>
         <DialogContent
-          className="bg-background/95 backdrop-blur-2xl border-white/10 text-foreground sm:max-w-2xl rounded-[2.5rem] p-0 overflow-hidden shadow-2xl"
+          className="bg-background/95 backdrop-blur-2xl border-white/10 text-foreground sm:max-w-2xl w-[95vw] sm:w-full rounded-[2rem] sm:rounded-[2.5rem] p-0 overflow-hidden shadow-2xl max-h-[90vh] overflow-y-auto no-scrollbar"
           showCloseButton={false}
         >
           <DialogTitle>
@@ -243,10 +243,10 @@ export default function FilePreview() {
           {previewFile && (
             <div key={previewFile.id} className="relative">
                 {/* Header with gradient background */}
-                <div className={`bg-gradient-to-br ${getCategoryColor(previewFile.category)} px-8 pt-10 pb-8`}>
+                <div className={`bg-gradient-to-br ${getCategoryColor(previewFile.category)} px-5 sm:px-8 pt-8 sm:pt-10 pb-6 sm:pb-8`}>
                   <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-center gap-5">
-                      <div className="size-16 rounded-[1.25rem] bg-black/20 backdrop-blur-md flex items-center justify-center shadow-lg border border-white/5">
+                    <div className="flex items-center gap-3 sm:gap-5">
+                      <div className="size-12 sm:size-16 rounded-xl sm:rounded-[1.25rem] bg-black/20 backdrop-blur-md flex items-center justify-center shadow-lg border border-white/5 shrink-0">
                         {getCategoryIcon(previewFile.category)}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -278,22 +278,22 @@ export default function FilePreview() {
                         variant="ghost"
                         size="icon"
                         onClick={() => setPreviewFile(null)}
-                        className="rounded-full bg-black/10 text-foreground/70 hover:text-foreground hover:bg-black/20 size-10"
+                        className="rounded-full bg-black/10 text-foreground/70 hover:text-foreground hover:bg-black/20 size-8 sm:size-10"
                       >
-                        <X className="size-5" />
+                        <X className="size-4 sm:size-5" />
                       </Button>
                     </div>
                   </div>
                 </div>
 
                 {/* Main Preview */}
-                <div className="px-8 py-8">
+                <div className="px-5 sm:px-8 py-6 sm:py-8">
                   <PreviewContent file={previewFile} fileUrl={fileUrl} />
                 </div>
 
                 {/* Metadata & Actions */}
-                <div className="px-8 pb-10">
-                  <div className="grid grid-cols-3 gap-6 mb-8 p-6 rounded-3xl bg-white/5 border border-white/5">
+                <div className="px-5 sm:px-8 pb-8 sm:pb-10">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8 p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/5 border border-white/5">
                     <div className="space-y-1">
                       <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Size</p>
                       <div className="flex items-center gap-2 text-foreground font-medium">
@@ -317,10 +317,10 @@ export default function FilePreview() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-col sm:flex-row items-center gap-3">
                     <Button
                       size="lg"
-                      className="flex-1 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 gap-2 h-14 font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
+                      className="w-full sm:flex-1 rounded-xl sm:rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 gap-2 h-12 sm:h-14 font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
                       onClick={async () => {
                         if (!fileUrl) return
                         toast.info('Starting download...')
@@ -339,23 +339,27 @@ export default function FilePreview() {
                       Download File
                     </Button>
                     
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="rounded-2xl border-white/10 bg-white/5 text-foreground hover:bg-white/10 gap-2 h-14 w-14 p-0 shadow-lg"
-                      onClick={handleToggleStar}
-                    >
-                      <Star className="size-5" />
-                    </Button>
+                    <div className="flex w-full sm:w-auto items-center gap-3">
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        className="flex-1 sm:flex-none rounded-xl sm:rounded-2xl border-white/10 bg-white/5 text-foreground hover:bg-white/10 gap-2 h-12 sm:h-14 sm:w-14 p-0 shadow-lg"
+                        onClick={handleToggleStar}
+                      >
+                        <Star className="size-5" />
+                        <span className="sm:hidden font-medium">Star</span>
+                      </Button>
 
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="rounded-2xl border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10 hover:text-red-300 gap-2 h-14 w-14 p-0 shadow-lg"
-                      onClick={() => setShowDeleteConfirm(true)}
-                    >
-                      <Trash2 className="size-5" />
-                    </Button>
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        className="flex-1 sm:flex-none rounded-xl sm:rounded-2xl border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10 hover:text-red-300 gap-2 h-12 sm:h-14 sm:w-14 p-0 shadow-lg"
+                        onClick={() => setShowDeleteConfirm(true)}
+                      >
+                        <Trash2 className="size-5" />
+                        <span className="sm:hidden font-medium">Delete</span>
+                      </Button>
+                    </div>
                   </div>
                 </div>
             </div>
