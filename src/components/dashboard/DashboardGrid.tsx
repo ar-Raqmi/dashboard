@@ -423,9 +423,17 @@ function CalendarContent({ w, h }: { w: number; h: number }) {
 
 function NotesContent({ w, h }: { w: number; h: number }) {
   const notes = useAppStore((s) => s.notes)
+  const setActivePage = useAppStore((s) => s.setActivePage)
+  const setHighlightedNote = useAppStore((s) => s.setHighlightedNote)
+  
   const maxNotes = Math.min(notes.length, h >= 5 ? 10 : h >= 4 ? 8 : h >= 3 ? 5 : h >= 2 ? 4 : 3)
   const showContent = h >= 3
   const useGrid = w >= 2 && h >= 2
+
+  const handleNoteClick = (id: string) => {
+    setHighlightedNote(id)
+    setActivePage('notes')
+  }
 
   if (useGrid) {
     // Grid layout for wider/taller cards
@@ -433,16 +441,20 @@ function NotesContent({ w, h }: { w: number; h: number }) {
     return (
       <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
         {notes.slice(0, maxNotes).map((note) => (
-          <div
+          <button
             key={note.id}
-            className="p-2.5 rounded-xl border border-border hover:bg-accent/50 transition-colors"
+            onClick={() => handleNoteClick(note.id)}
+            className="p-2.5 rounded-xl border border-border hover:bg-accent/50 transition-all text-left group"
             style={{ borderLeftColor: note.color, borderLeftWidth: '3px' }}
           >
-            <p className="text-sm font-medium text-foreground line-clamp-1">{note.title}</p>
+            <div className="flex items-center justify-between gap-1 mb-1">
+              <p className="text-sm font-bold text-foreground line-clamp-1 flex-1 group-hover:text-primary transition-colors">{note.title}</p>
+              <ExternalLink className="size-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+            </div>
             {showContent && (
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{note.content}</p>
+              <p className="text-xs text-muted-foreground line-clamp-2">{note.content}</p>
             )}
-          </div>
+          </button>
         ))}
       </div>
     )
@@ -452,16 +464,20 @@ function NotesContent({ w, h }: { w: number; h: number }) {
   return (
     <div className="space-y-1.5">
       {notes.slice(0, maxNotes).map((note) => (
-        <div
+        <button
           key={note.id}
-          className="p-2.5 rounded-xl border border-border hover:bg-accent/50 transition-colors"
+          onClick={() => handleNoteClick(note.id)}
+          className="w-full p-2.5 rounded-xl border border-border hover:bg-accent/50 transition-all text-left group"
           style={{ borderLeftColor: note.color, borderLeftWidth: '3px' }}
         >
-          <p className="text-sm font-medium text-foreground line-clamp-1">{note.title}</p>
+          <div className="flex items-center justify-between gap-1">
+            <p className="text-sm font-bold text-foreground line-clamp-1 flex-1 group-hover:text-primary transition-colors">{note.title}</p>
+            <ExternalLink className="size-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+          </div>
           {showContent && (
             <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{note.content}</p>
           )}
-        </div>
+        </button>
       ))}
     </div>
   )
