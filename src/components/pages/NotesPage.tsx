@@ -435,6 +435,10 @@ export default function NotesPage() {
                       onClick={() => handleCopy(activeNote.id)} title="Copy">
                       {copiedId === activeNote.id ? <Check className="size-4" /> : <Copy className="size-4" />}
                     </Button>
+                    <Button variant="ghost" size="icon" className="rounded-xl"
+                      onClick={() => toggleNotePinned(activeNote.id)} title={activeNote.pinned ? "Unpin" : "Pin"}>
+                      {activeNote.pinned ? <PinOff className="size-4" /> : <Pin className="size-4 -rotate-45" />}
+                    </Button>
                     <Button variant="ghost" size="icon" className="rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10"
                       onClick={() => initiateDelete(activeNote.id)} title="Delete">
                       <Trash2 className="size-4" />
@@ -442,10 +446,6 @@ export default function NotesPage() {
                     <Button variant="outline" size="icon" className="rounded-xl"
                       onClick={() => setIsEditing(true)} title="Edit">
                       <Pencil className="size-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="rounded-xl"
-                      onClick={() => toggleNotePinned(activeNote.id)} title={activeNote.pinned ? "Unpin" : "Pin"}>
-                      {activeNote.pinned ? <PinOff className="size-4" /> : <Pin className="size-4 -rotate-45" />}
                     </Button>
                   </div>
                 </>
