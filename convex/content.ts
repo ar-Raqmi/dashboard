@@ -1,59 +1,50 @@
-import { query } from "./_generated/server";
+import { action } from "./_generated/server";
 
-// Seeded random based on date for consistent daily content
-function getDailyIndex(max: number): number {
-  const today = new Date()
-  const dateStr = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`
-  let hash = 0
-  for (let i = 0; i < dateStr.length; i++) {
-    const char = dateStr.charCodeAt(i)
-    hash = ((hash << 5) - hash) + char
-    hash |= 0
-  }
-  return Math.abs(hash)
-}
-
-const fallbackVerses = [
-  {
-    arabic: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
-    translation: 'In the Name of Allah, the Most Gracious, the Most Merciful.',
-    surah: 'Al-Fatihah',
-    ayah: 1,
-    surahNumber: 1,
-    reference: 'Quran 1:1 (Al-Hilali & Khan)',
-  },
-  {
-    arabic: 'اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ',
-    translation: 'Allah! None has the right to be worshipped but He, the Ever Living, the One Who sustains and protects all that exists. Neither slumber nor sleep overtakes Him.',
-    surah: 'Al-Baqarah',
-    ayah: 255,
-    surahNumber: 2,
-    reference: 'Quran 2:255 (Al-Hilali & Khan)',
-  },
-  // ... (keeping it short for the demo, can add more)
-];
-
-const hadiths = [
-  {
-    arabic: 'إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى',
-    translation: 'Actions are judged by intentions, and everyone will be rewarded according to what they intended.',
-    narrator: 'Umar ibn al-Khattab',
-    source: 'Sahih al-Bukhari 1',
-    grade: 'Sahih',
-  },
-  // ... (keeping it short)
-];
-
-export const getDailyVerse = query({
+export const getDailyVerseAction = action({
   handler: async () => {
-    const index = getDailyIndex(fallbackVerses.length) % fallbackVerses.length
-    return fallbackVerses[index]
-  },
-})
+    const today = new Date();
+    const start = new Date(today.getFullYear(), 0, 0);
+    const diff = today.getTime() - start.getTime();
+    const oneDay = 1000 * 60 * 60 * 24;
+    const dayOfYear = Math.floor(diff / oneDay);
+    const ayahId = (dayOfYear % 6236) + 1;
 
-export const getDailyHadith = query({
-  handler: async () => {
-    const index = (getDailyIndex(hadiths.length) + 42) % hadiths.length
-    return hadiths[index]
+    try {
+      const response = await fetch(`https://api.alquran.cloud/v1/ayah/${ayahId}/editions/quran-uthmani,en.sahih`);
+      const data = await response.json();
+      return {
+        arabic: data.data[0].text,
+        translation: data.data[1].text,
+        reference: `${data.data[0].surah.englishName} ${data.data[0].numberInSurah}`,
+      };
+    } catch {
+      return null;
+    }
   },
-})
+});
+
+export const getDailyHadithAction = action({
+  handler: async () => {
+    const today = new Date();
+    const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+    const hadithId = (dayOfYear % 7000) + 1;
+
+    try {
+      const response = await fetch(`https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-bukhari/${hadithId}.json`);
+      const data = await response.json();
+      
+      // Correcting data path: data.hadiths is the array
+      const hadith = data.hadiths[0];
+      return {
+        arabic: "Sahih al-Bukhari", // Displaying source as header
+        translation: hadith.text,   // Text is combined in this API
+        narrator: "Narrated in Sahih Bukhari",
+        source: `Hadith ${hadithId}`,
+        grade: "Sahih",
+      };
+    } catch (e) {
+      console.error("Hadith fetch error:", e);
+      return null;
+    }
+  },
+});

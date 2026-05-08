@@ -3,54 +3,37 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { BookOpen, RefreshCw } from 'lucide-react'
+import { useAction } from 'convex/react'
+import { api } from '@/../convex/_generated/api'
 import { useAppStore } from '@/lib/store'
-import type { VerseData } from '@/lib/store'
 
 export default function VerseWidget() {
   const { verse, setVerse, verseLoading, setVerseLoading } = useAppStore()
   const [error, setError] = useState<string | null>(null)
+  const getVerseAction = useAction(api.content.getDailyVerseAction)
 
   const fetchVerse = async () => {
     setVerseLoading(true)
     setError(null)
     try {
-      const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
-      if (!convexUrl) throw new Error('Convex not configured')
-      const res = await fetch(`${convexUrl}/api/query`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: 'content:getDailyVerse', args: {} }),
-      })
-      if (!res.ok) throw new Error('Failed to fetch verse')
-      const data = await res.json()
-      setVerse(data.value)
+      const data = await getVerseAction({})
+      if (data) {
+        setVerse(data)
+      } else {
+        throw new Error('No data received')
+      }
     } catch {
       setError('Could not load verse')
-      // Fallback verse
-      setVerse({
-        arabic: 'اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ',
-        translation:
-          'Allah! None has the right to be worshipped but He, the Ever Living, the One Who sustains and protects all that exists.',
-        surah: 'Al-Baqarah',
-        ayah: 255,
-        surahNumber: 2,
-        reference: 'Surah Al-Baqarah 2:255',
-      })
     } finally {
       setVerseLoading(false)
     }
   }
 
   useEffect(() => {
-    const rafId = requestAnimationFrame(() => {
-      fetchVerse()
-    })
+    fetchVerse()
     // Refresh daily
     const interval = setInterval(fetchVerse, 24 * 60 * 60 * 1000)
-    return () => {
-      clearInterval(interval)
-      cancelAnimationFrame(rafId)
-    }
+    return () => clearInterval(interval)
   }, [])
 
   // Loading skeleton

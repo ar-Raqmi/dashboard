@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { RefreshCw, Share2, BookOpen, Star } from 'lucide-react'
+import { useAction } from 'convex/react'
+import { api } from '@/../convex/_generated/api'
 import { useAppStore } from '@/lib/store'
-import type { VerseData, HadithData } from '@/lib/store'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -14,43 +15,32 @@ export default function SpiritualPage() {
     hadith, setHadith, hadithLoading, setHadithLoading,
   } = useAppStore()
 
+  const getVerse = useAction(api.content.getDailyVerseAction)
+  const getHadith = useAction(api.content.getDailyHadithAction)
+
   const fetchVerse = useCallback(async () => {
     setVerseLoading(true)
     try {
-      const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
-      if (!convexUrl) return
-      const res = await fetch(`${convexUrl}/api/query`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: 'content:getDailyVerse', args: {} }),
-      })
-      const data = await res.json()
-      setVerse(data.value)
+      const data = await getVerse({})
+      setVerse(data)
     } catch {
       setVerse(null)
     } finally {
       setVerseLoading(false)
     }
-  }, [setVerse, setVerseLoading])
+  }, [getVerse, setVerse, setVerseLoading])
 
   const fetchHadith = useCallback(async () => {
     setHadithLoading(true)
     try {
-      const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
-      if (!convexUrl) return
-      const res = await fetch(`${convexUrl}/api/query`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: 'content:getDailyHadith', args: {} }),
-      })
-      const data = await res.json()
-      setHadith(data.value)
+      const data = await getHadith({})
+      setHadith(data)
     } catch {
       setHadith(null)
     } finally {
       setHadithLoading(false)
     }
-  }, [setHadith, setHadithLoading])
+  }, [getHadith, setHadith, setHadithLoading])
 
   useEffect(() => {
     if (!verse) fetchVerse()
