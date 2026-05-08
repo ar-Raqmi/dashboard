@@ -35,6 +35,7 @@ export const admin = mutation({
       userId,
       profileName: "User",
       appTitle: "ar-Raqmi Database",
+      appLogo: "https://cdn-icons-png.flaticon.com/512/8323/8323511.png",
       iconBackgroundColor: "#A5D6A7",
       hijriVisible: true,
       hijriOffset: 0,
