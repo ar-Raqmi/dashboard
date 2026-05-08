@@ -30,8 +30,8 @@ export const metadata: Metadata = {
   description: "Premium PWA Personal Dashboard — Material 3 Expressive Design",
   manifest: "/manifest.json",
   icons: {
-    icon: "https://cdn-icons-png.flaticon.com/512/8323/8323511.png",
-    apple: "https://cdn-icons-png.flaticon.com/512/8323/8323511.png",
+    icon: "/icon.svg",
+    apple: "/icon.svg",
   },
 };
 
