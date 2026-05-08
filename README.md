@@ -3,7 +3,7 @@
 
 # ar-Raqmi Database
 
-A feature-rich personal dashboard application built with Next.js 16, powered by **Convex** for real-time cloud database, with secure authentication and a beautiful Material 3 Expressive design system.
+A feature-rich personal dashboard application built with Next.js 16, powered by **Convex** for real-time cloud database, with secure authentication.
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
 ![Convex](https://img.shields.io/badge/Convex-Cloud_Database-4F46E5?logo=convex)
