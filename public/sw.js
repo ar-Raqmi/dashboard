@@ -4,7 +4,6 @@ const CACHE_NAME = 'ar-raqmi-cache-v1';
 const PRECACHE_ASSETS = [
   '/',
   '/manifest.json',
-  '/logo.svg',
 ];
 
 self.addEventListener('install', (event) => {
