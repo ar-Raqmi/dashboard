@@ -45,7 +45,7 @@ export default function LoginPage() {
           >
             <Database className="size-10 text-primary" />
           </motion.div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">ar-Raqmi Database</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">ar-Raqmi Dashboard</h1>
           <p className="text-muted-foreground mt-1.5">Sign in to your dashboard</p>
         </div>
 
@@ -150,7 +150,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground mt-6">
-          ar-Raqmi Database
+          ar-Raqmi Dashboard
         </p>
       </motion.div>
     </div>

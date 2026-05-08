@@ -34,7 +34,7 @@ export const admin = mutation({
     await ctx.db.insert("userSettings", {
       userId,
       profileName: "User",
-      appTitle: "ar-Raqmi Database",
+      appTitle: "ar-Raqmi Dashboard",
       appLogo: "https://cdn-icons-png.flaticon.com/512/8323/8323511.png",
       iconBackgroundColor: "#A5D6A7",
       hijriVisible: true,
@@ -135,7 +135,7 @@ export const admin = mutation({
     // Sample goals with milestones
     const goalData = [
       {
-        title: "Complete ar-Raqmi Database", progress: 65,
+        title: "Complete ar-Raqmi Dashboard", progress: 65,
         milestones: [
           { label: "Design Phase", completed: true },
           { label: "Core Features", completed: true },

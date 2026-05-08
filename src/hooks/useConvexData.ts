@@ -244,7 +244,7 @@ export function useSettings() {
   const defaultSettings = {
     profileName: 'User',
     profilePicture: '',
-    appTitle: 'ar-Raqmi Database',
+    appTitle: 'ar-Raqmi Dashboard',
     appLogo: '',
     iconBackgroundColor: '#A5D6A7',
     hijriVisible: true,

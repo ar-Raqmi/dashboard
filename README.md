@@ -1,7 +1,7 @@
 > بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
 <div align="center">
 
-# ar-Raqmi Database
+# ar-Raqmi Dashboard
 
 A feature-rich personal dashboard application built with Next.js 16, powered by **Convex** for real-time cloud database, with secure authentication.
 

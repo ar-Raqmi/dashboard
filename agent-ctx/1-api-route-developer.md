@@ -1,7 +1,7 @@
 # Task 1 - API Route Developer
 
 ## Summary
-Created two API routes for the ar-Raqmi Database project:
+Created two API routes for the ar-Raqmi Dashboard project:
 
 ### `/api/verse/route.ts` - Daily Qur'an Verse
 - Fetches from alquran.cloud API (Arabic + Hilali & Khan translation)

@@ -26,12 +26,12 @@ const notoSansArabic = Noto_Sans_Arabic({
 });
 
 export const metadata: Metadata = {
-  title: "ar-Raqmi Database",
-  description: "Premium PWA Personal Dashboard — Material 3 Expressive Design",
+  title: "ar-Raqmi Dashboard",
+  description: "Premium PWA Personal Dashboard",
   manifest: "/manifest.json",
   icons: {
-    icon: "/icon.svg",
-    apple: "/icon.png",
+    icon: "/logo.png",
+    apple: "/logo.png",
   },
 };
 
