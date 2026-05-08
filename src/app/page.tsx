@@ -20,6 +20,8 @@ import GoalsPage from '@/components/pages/GoalsPage'
 import SettingsPage from '@/components/pages/SettingsPage'
 import LoginPage from '@/components/pages/LoginPage'
 import { Loader2 } from 'lucide-react'
+import { useAction } from 'convex/react'
+import { api } from '@/../convex/_generated/api'
 
 const pageComponents: Record<ActivePage, React.ComponentType> = {
   dashboard: DashboardGrid,
@@ -32,7 +34,6 @@ const pageComponents: Record<ActivePage, React.ComponentType> = {
   settings: SettingsPage,
 }
 
-// Preset gradient definitions
 const GRADIENT_MAP: Record<string, string> = {
   'citrus-dawn': 'linear-gradient(135deg, #A5D6A7 0%, #F48FB1 50%, #CE93D8 100%)',
   'citrus-breeze': 'linear-gradient(135deg, #80CBC4 0%, #A5D6A7 50%, #C5E1A5 100%)',
@@ -53,47 +54,31 @@ export default function Home() {
   const setHadithLoading = useAppStore((s) => s.setHadithLoading)
   const background = useAppStore((s) => s.background)
 
+  const getVerseAction = useAction(api.content.getDailyVerseAction)
+  const getHadithAction = useAction(api.content.getDailyHadithAction)
+
   // Fetch spiritual data on mount
   useEffect(() => {
     const fetchSpiritual = async () => {
       setVerseLoading(true)
       setHadithLoading(true)
       try {
-        const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
-        if (!convexUrl) return
-
-        const [verseRes, hadithRes] = await Promise.all([
-          fetch(`${convexUrl}/api/query`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ path: 'content:getDailyVerse', args: {} }),
-          }),
-          fetch(`${convexUrl}/api/query`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ path: 'content:getDailyHadith', args: {} }),
-          }),
+        const [verse, hadith] = await Promise.all([
+          getVerseAction({}),
+          getHadithAction({}),
         ])
-
-        if (verseRes.ok) {
-          const verseData = await verseRes.json()
-          setVerse(verseData.value)
-        }
-        if (hadithRes.ok) {
-          const hadithData = await hadithRes.json()
-          setHadith(hadithData.value)
-        }
-      } catch {
-        // Silently fail - components show fallback
+        if (verse) setVerse(verse)
+        if (hadith) setHadith(hadith)
+      } catch (err) {
+        console.error('Failed to fetch daily content:', err)
       } finally {
         setVerseLoading(false)
         setHadithLoading(false)
       }
     }
     fetchSpiritual()
-  }, [setVerse, setVerseLoading, setHadith, setHadithLoading])
+  }, [getVerseAction, getHadithAction, setVerse, setVerseLoading, setHadith, setHadithLoading])
 
-  // Show loading spinner while checking auth
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -105,12 +90,10 @@ export default function Home() {
     )
   }
 
-  // Show login page if not authenticated
   if (!user) {
     return <LoginPage />
   }
 
-  // Authenticated: Show the main app with Convex sync
   return (
     <ConvexSync key={user?.id || 'public'}>
       <AuthenticatedApp
@@ -129,8 +112,6 @@ function AuthenticatedApp({
   background: any
 }) {
   const PageComponent = pageComponents[activePage]
-
-  // Compute the background style for the decorative layer
   const bgStyle = useMemo(() => {
     if (background.type === 'default') return null
     const opacity = background.opacity / 100
@@ -156,23 +137,16 @@ function AuthenticatedApp({
 
   return (
     <div className="min-h-screen flex flex-col bg-background relative">
-      {/* Dynamic head updates (title, favicon, manifest) */}
-      {/* Decorative Background Layer */}
       {bgStyle && (
         <div
           className="fixed inset-0 pointer-events-none z-0"
           style={bgStyle}
         />
       )}
-      {/* Header */}
       <Header />
-
-      {/* Tab Bar Navigation (below header) */}
       <div className="fixed top-16 left-0 right-0 z-40">
         <TabBar />
       </div>
-
-      {/* Content Area */}
       <main className="flex-1 pt-[112px] overflow-y-auto relative z-10">
         <AnimatePresence mode="wait">
           <motion.div
@@ -192,14 +166,8 @@ function AuthenticatedApp({
           </motion.div>
         </AnimatePresence>
       </main>
-
-      {/* Dashboard Manager Sheet */}
       <DashboardManager />
-
-      {/* Global Search Command Dialog */}
       <GlobalSearch />
-
-      {/* Global File Preview Modal */}
       <FilePreview />
     </div>
   )
