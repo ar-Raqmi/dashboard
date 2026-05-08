@@ -52,7 +52,7 @@ export const create = mutation({
       id: v.optional(v.string()),
     })),
   },
-  handler: async (ctx, { sessionToken, title, progress, milestones }) => {
+  handler: async (ctx, { sessionToken, title, progress, order, milestones }) => {
     const userId = await getAuthedUserId(ctx, sessionToken);
     const goalId = await ctx.db.insert("goals", {
       userId,
