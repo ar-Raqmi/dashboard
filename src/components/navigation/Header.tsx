@@ -200,18 +200,17 @@ export default function Header() {
           onClick={() => setShowDashboardManager(!showDashboardManager)}
           className={`w-9 h-9 rounded-2xl flex items-center justify-center
             border transition-colors
-            ${
-              showDashboardManager
-                ? 'bg-primary/10 border-primary/30 text-primary'
-                : 'bg-muted border-border text-muted-foreground hover:text-foreground hover:bg-accent'
+            ${showDashboardManager
+              ? 'bg-primary/10 border-primary/30 text-primary'
+              : 'bg-muted border-border text-muted-foreground hover:text-foreground hover:bg-accent'
             }`}
           aria-label="Toggle dashboard manager"
         >
           <LayoutGrid className="h-4 w-4" />
         </motion.button>
 
-        {/* Profile Avatar */}
-        <div className="w-9 h-9 rounded-2xl overflow-hidden flex items-center justify-center bg-secondary/20 border border-secondary/30 flex-shrink-0">
+        {/* Profile Avatar Disable for a while*/}
+        {/* <div className="w-9 h-9 rounded-2xl overflow-hidden flex items-center justify-center bg-secondary/20 border border-secondary/30 flex-shrink-0">
           {profilePicture ? (
             <img
               src={profilePicture}
@@ -223,7 +222,7 @@ export default function Header() {
               {getInitials(profileName)}
             </span>
           )}
-        </div>
+        </div> */}
       </div>
 
       {/* Mobile Date Chip (shown below header on small screens) */}
