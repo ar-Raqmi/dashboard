@@ -1,6 +1,7 @@
-# ar-Raqmi Database
+> بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
+<div align="center">
 
-> Premium PWA Personal Dashboard — Material 3 Expressive Design
+# ar-Raqmi Database
 
 A feature-rich personal dashboard application built with Next.js 16, powered by **Convex** for real-time cloud database, with secure authentication and a beautiful Material 3 Expressive design system.
 
@@ -9,71 +10,71 @@ A feature-rich personal dashboard application built with Next.js 16, powered by 
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-38B2AC?logo=tailwindcss)
 
----
+</div>
 
-## ✨ Features
+## Features
 
 ### Dashboard
-- 🎛️ **Customizable Widget Grid** — Drag, resize, and toggle dashboard widgets with `react-grid-layout`
-- 📋 **8 Built-in Widgets** — Daily Tasks, Calendar, Quick Notes, Daily Verse, Goals, World Clock, Files, Clipboard
-- 🎨 **Custom Backgrounds** — Color, gradient (8 presets), or custom image with opacity control
-- 📱 **Responsive Layout** — Separate desktop (3-column) and mobile (1-column) grid layouts
+- **Customizable Widget Grid** — Drag, resize, and toggle dashboard widgets with `react-grid-layout`
+- **8 Built-in Widgets** — Daily Tasks, Calendar, Quick Notes, Daily Verse, Goals, World Clock, Files, Clipboard
+- **Custom Backgrounds** — Color, gradient (8 presets), or custom image with opacity control
+- **Responsive Layout** — Separate desktop (3-column) and mobile (1-column) grid layouts
 
 ### Tasks
-- ✅ Full task management with due dates, priorities (high/medium/low), and status
-- 📅 Today, Overdue, and Upcoming sections with color-coded backgrounds
-- 🗑️ Bulk delete completed tasks
-- 🕐 Timezone-safe date handling (no UTC offset bugs)
+- Full task management with due dates, priorities (high/medium/low), and status
+- Today, Overdue, and Upcoming sections with color-coded backgrounds
+- Bulk delete completed tasks
+- Timezone-safe date handling (no UTC offset bugs)
 
 ### Notes
-- 📝 Markdown-powered notes with color coding
-- 📌 Pin important notes to a dedicated section
-- 🔄 Drag & drop layout for both pinned and regular notes
+- Markdown-powered notes with color coding
+- Pin important notes to a dedicated section
+- Drag & drop layout for both pinned and regular notes
 
 ### Calendar
-- 📆 Monthly calendar view with event markers
-- 🎨 Color-coded events
+- Monthly calendar view with event markers
+- Color-coded events
 
 ### Goals
-- 🎯 Goal tracking with progress bar
-- 🏁 Milestone checklist with auto-calculated progress
+- Goal tracking with progress bar
+- Milestone checklist with auto-calculated progress
 
 ### Files
-- 📁 Hierarchical file manager with folders and files
-- 📄 File categories (PDF, DOC, Image, Audio, Video)
-- 👁️ File preview modal
+- Hierarchical file manager with folders and files
+- File categories (PDF, DOC, Image, Audio, Video)
+- File preview modal
 
 ### Spiritual
-- ☪️ Daily Quran verse (from Al Quran Cloud API)
-- 📖 Daily Hadith (curated collection, date-seeded)
+- Daily Quran verse (from Al Quran Cloud API)
+- Daily Hadith (curated collection, date-seeded)
 
 ### World Clock
-- 🌍 Multiple timezone clocks (up to 5)
-- ⏱️ Optional seconds display
-- ☪️ Hijri date in page header with offset adjustment
+- Multiple timezone clocks (up to 5)
+- Optional seconds display
+- Hijri date in page header with offset adjustment
 
 ### Settings
-- 👤 Profile customization (name, picture)
-- 🎨 App branding (title, logo, icon color)
-- 🌐 World Clock management
-- 🖼️ Background customization
+- Profile customization (name, picture)
+- App branding (title, logo, icon color)
+- World Clock management
+- Background customization
 
 ### Security
-- 🔐 **Secure Login** — Username/password authentication with bcryptjs hashing (12 salt rounds)
-- 🔑 **Session Management** — JWT tokens with httpOnly cookies
-- 🛡️ **Server-side Validation** — All Convex functions validate session tokens
-- 🔒 **Password Security** — Hashed + salted passwords, never stored in plain text
+- **Secure Login** — Username/password authentication with bcryptjs hashing (12 salt rounds)
+- **Session Management** — JWT tokens with httpOnly cookies
+- **Server-side Validation** — All Convex functions validate session tokens
+- **Password Security** — Hashed + salted passwords, never stored in plain text
 
 ### Cloud Database
-- ☁️ **Convex** — Real-time cloud database with automatic sync
-- 📡 **Live Updates** — Changes reflect instantly across all devices
-- 🔄 **Optimistic UI** — Immediate local updates, background Convex persistence
+- **Convex** — Real-time cloud database with automatic sync
+- **Live Updates** — Changes reflect instantly across all devices
+- **Optimistic UI** — Immediate local updates, background Convex persistence
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────┐
 │                   Browser                        │
 │  ┌──────────┐  ┌───────────┐  ┌──────────────┐  │
@@ -92,6 +93,7 @@ A feature-rich personal dashboard application built with Next.js 16, powered by 
 │  │  /api/hadith     │  └─────────────────────┘  │
 │  └──────────────────┘                           │
 └─────────────────────────────────────────────────┘
+
 ```
 
 ### Data Flow
@@ -102,12 +104,12 @@ A feature-rich personal dashboard application built with Next.js 16, powered by 
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- **Node.js** 18+ or **Bun** 1.0+
-- **Convex Account** — [Sign up free at convex.dev](https://convex.dev)
+* **Node.js** 18+ or **Bun** 1.0+
+* **Convex Account** — [Sign up free at convex.dev](https://convex.dev)
 
 ### 1. Clone & Install
 
@@ -115,6 +117,7 @@ A feature-rich personal dashboard application built with Next.js 16, powered by 
 git clone <your-repo-url>
 cd ar-raqmi-database
 bun install
+
 ```
 
 ### 2. Set Up Convex
@@ -129,6 +132,7 @@ npx convex dev
 # 3. Deploy your schema and functions
 # 4. Generate TypeScript types
 # 5. Print your deployment URL
+
 ```
 
 ### 3. Configure Environment
@@ -137,8 +141,9 @@ Copy the deployment URL from the previous step and add it to your `.env` file:
 
 ```bash
 # .env
-NEXT_PUBLIC_CONVEX_URL=https://your-project.convex.cloud
+NEXT_PUBLIC_CONVEX_URL=[https://your-project.convex.cloud](https://your-project.convex.cloud)
 JWT_SECRET=your-secret-key-change-in-production
+
 ```
 
 ### 4. Seed the Admin User
@@ -147,29 +152,33 @@ Start the development server:
 
 ```bash
 bun run dev
+
 ```
 
 1. Open the app in your browser
 2. Click **"Show Initial Setup"** on the login page
 3. Click **"Seed Admin User & Sample Data"**
 4. Default credentials:
-   - **Username**: `ar-raqmi`
-   - **Password**: `password`
+* **Username**: `ar-raqmi`
+* **Password**: `password`
 
-> ⚠️ **Change the default password!** Go to your Convex dashboard and update the password hash manually, or use the seed mutation with a new password.
+
+
+> **Note: Change the default password!** Go to your Convex dashboard and update the password hash manually, or use the seed mutation with a new password.
 
 ### 5. Development
 
 ```bash
 bun run dev          # Start Next.js dev server (port 3000)
 npx convex dev       # Start Convex dev server (watches for function changes)
+
 ```
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
-```
+```text
 ar-raqmi-database/
 ├── convex/                    # Convex backend functions
 │   ├── _generated/           # Auto-generated by Convex CLI (don't edit)
@@ -220,29 +229,32 @@ ar-raqmi-database/
 ├── prisma/                   # Legacy Prisma schema (unused with Convex)
 ├── public/                   # Static assets (logo, manifest)
 └── .env                      # Environment variables
+
 ```
 
 ---
 
-## 🔐 Authentication
+## Authentication
 
 ### How It Works
 
 1. **Password Storage**: Passwords are hashed with **bcryptjs** (12 salt rounds) and stored in the Convex `users` table
-2. **Login Flow**: 
-   - POST `/api/auth/login` with username/password
-   - Server verifies against Convex `users` table
-   - Creates a session in Convex `sessions` table
-   - Returns JWT (httpOnly cookie) + session token (regular cookie)
+2. **Login Flow**:
+* POST `/api/auth/login` with username/password
+* Server verifies against Convex `users` table
+* Creates a session in Convex `sessions` table
+* Returns JWT (httpOnly cookie) + session token (regular cookie)
+
+
 3. **Session Validation**: Every Convex query/mutation validates the session token before executing
 4. **Auto-Logout**: Sessions expire after 7 days
 
 ### Managing Credentials
 
-- **Default admin**: Username `ar-raqmi`, Password `password`
-- **Change password**: Update the `passwordHash` and `salt` fields in the Convex dashboard
-- **Add users**: Call the `seed:admin` mutation from the Convex dashboard with a new username and hashed password
-- **Remove sessions**: Delete entries from the `sessions` table in the Convex dashboard
+* **Default admin**: Username `ar-raqmi`, Password `password`
+* **Change password**: Update the `passwordHash` and `salt` fields in the Convex dashboard
+* **Add users**: Call the `seed:admin` mutation from the Convex dashboard with a new username and hashed password
+* **Remove sessions**: Delete entries from the `sessions` table in the Convex dashboard
 
 ### Generating a Password Hash
 
@@ -254,56 +266,17 @@ const salt = await bcrypt.genSalt(12);
 const hash = await bcrypt.hash(password, salt);
 console.log({ hash, salt });
 // Use these values to update the Convex users table
+
 ```
 
 ---
 
-## ☁️ Convex Database
-
-### Schema
-
-| Table | Purpose | Key Fields |
-|-------|---------|------------|
-| `users` | Authentication | username, passwordHash, salt |
-| `sessions` | Session tokens | userId, token, expiresAt |
-| `tasks` | Task management | userId, title, dueDate, priority, status |
-| `goals` | Goal tracking | userId, title, progress |
-| `milestones` | Goal milestones | goalId, label, completed |
-| `notes` | Markdown notes | userId, title, content, color, pinned |
-| `events` | Calendar events | userId, title, date, color |
-| `files` | File hierarchy | userId, name, type, category, parentId |
-| `clocks` | World clocks | userId, label, timezone |
-| `dashboardWidgets` | Widget config | userId, type, label, icon, visible |
-| `dashboardLayouts` | Grid layouts | userId, layoutType, layouts (JSON) |
-| `userSettings` | All settings | userId, profileName, background*, etc. |
-
-### ConvexSync Architecture
-
-The `ConvexSync` component bridges Convex and the Zustand store:
-
-- **Subscribes** to all Convex queries in real-time
-- **Populates** the Zustand store with Convex data
-- **Overrides** Zustand write actions with Convex-aware versions
-- **Provides** optimistic UI updates (Zustand) + persistent storage (Convex)
-
-This means existing components continue using the Zustand store API without changes, while data is transparently persisted to Convex.
-
----
-
-## 🎨 Design System
-
-### Material 3 Expressive
-
-- **Ultra-rounded corners**: `rounded-3xl` on all containers
-- **Citrus Green + Light Pink** palette
-- **Bold typography** with proper hierarchy
-- **Bouncy animations** via Framer Motion
-- **Responsive** mobile-first design
+## Design System
 
 ### Color Palette
 
 | Role | Color | Usage |
-|------|-------|-------|
+| --- | --- | --- |
 | Primary | `#A5D6A7` | Citrus Green — buttons, accents, headers |
 | Secondary | `#F48FB1` | Light Pink — highlights, badges |
 | Tertiary | `#CE93D8` | Lavender — accents, progress |
@@ -312,10 +285,10 @@ This means existing components continue using the Zustand store API without chan
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Category | Technology |
-|----------|-----------|
+| --- | --- |
 | **Framework** | Next.js 16 (App Router, Turbopack) |
 | **Language** | TypeScript 5 |
 | **Styling** | Tailwind CSS 4 + shadcn/ui |
@@ -331,33 +304,33 @@ This means existing components continue using the Zustand store API without chan
 
 ---
 
-## 📝 Scripts
+## Scripts
 
 | Command | Description |
-|---------|-------------|
-| `bun run dev` | Start Next.js development server (port 3000) |
-| `bun run lint` | Run ESLint |
+| --- | --- |
+| `npm run dev` | Start Next.js development server (port 3000) |
+| `npm run lint` | Run ESLint |
 | `npx convex dev` | Start Convex development (watches functions) |
 | `npx convex dashboard` | Open Convex dashboard in browser |
 | `npx convex run seed:admin` | Seed admin user from CLI |
 
 ---
 
-## 🌙 Islamic Features
+## Islamic Features
 
-- **Daily Quran Verse** — Fetched from Al Quran Cloud API with 10-verse fallback
-- **Daily Hadith** — Curated collection of 20 authentic hadiths, date-seeded rotation
-- **Hijri Date** — Displayed in page header with ±2 day offset adjustment
-- **Arabic Font** — Noto Sans Arabic for proper Arabic text rendering
-- **Prayer-friendly** — World clock shows multiple timezones for prayer time awareness
+* **Daily Quran Verse** — Fetched from Al Quran Cloud API with 10-verse fallback
+* **Daily Hadith** — Curated collection of 20 authentic hadiths, date-seeded rotation
+* **Hijri Date** — Displayed in page header with ±2 day offset adjustment
+* **Arabic Font** — Noto Sans Arabic for proper Arabic text rendering
 
 ---
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### "Database Not Connected" on Login Page
 
 This means `NEXT_PUBLIC_CONVEX_URL` is not set in your `.env` file:
+
 1. Create a Convex project at [convex.dev](https://convex.dev)
 2. Run `npx convex dev` to get your deployment URL
 3. Add the URL to `.env`: `NEXT_PUBLIC_CONVEX_URL=https://your-project.convex.cloud`
@@ -377,21 +350,25 @@ Dates use local timezone formatting to avoid UTC offset issues. If you see date 
 
 ---
 
-## 📄 License
+## License
 
 Private project. All rights reserved.
 
 ---
 
-## 🤲 Acknowledgments
+## Acknowledgments
 
-- **Convex** — Real-time cloud database platform
-- **shadcn/ui** — Beautiful component library
-- **Al Quran Cloud** — Quran verse API
-- **Material Design 3** — Design system inspiration
+* **Convex** — Real-time cloud database platform
+* **shadcn/ui** — Beautiful component library
+* **Al Quran Cloud** — Quran verse API
+* **Material Design 3** — Design system inspiration
 
 ---
 
-> بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
-> 
 > *"Indeed, with hardship comes ease."* — Quran 94:6
+
+<div align="center">
+
+*🖋️ the pen hasn't lifted*
+
+</div>
