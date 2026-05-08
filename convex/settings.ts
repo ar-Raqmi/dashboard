@@ -65,7 +65,7 @@ export const update = mutation({
         userId,
         profileName: updates.profileName ?? "User",
         profilePicture: updates.profilePicture,
-        appTitle: updates.appTitle ?? "ar-Raqmi Database",
+        appTitle: updates.appTitle ?? "ar-Raqmi Dashboard",
         appLogo: updates.appLogo ?? "https://cdn-icons-png.flaticon.com/512/8323/8323511.png",
         iconBackgroundColor: updates.iconBackgroundColor ?? "#A5D6A7",
         hijriVisible: updates.hijriVisible ?? true,

@@ -4,7 +4,7 @@
 ## Date: 2025-07-26
 
 ## Summary
-Created the File Manager, File Preview, Global Search, and FileManagerPage components for the ar-Raqmi Database project.
+Created the File Manager, File Preview, Global Search, and FileManagerPage components for the ar-Raqmi Dashboard project.
 
 ## Files Created
 

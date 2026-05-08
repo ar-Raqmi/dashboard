@@ -171,7 +171,7 @@ export default function GlobalSearch() {
         setSearchOpen(v)
         if (!v) setSearchQuery('')
       }}
-      title="Search ar-Raqmi Database"
+      title="Search ar-Raqmi Dashboard"
       description="Search across tasks, notes, files, and goals"
       className="bg-card border-border text-foreground rounded-3xl"
     >
