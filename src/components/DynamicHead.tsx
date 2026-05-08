@@ -46,11 +46,14 @@ export default function DynamicHead() {
     }
     appleLink.href = faviconUrl
 
-    // Ensure manifest is REMOVED to stop PWA behavior
-    const manifestLink = document.querySelector("link[rel='manifest']")
-    if (manifestLink) {
-      manifestLink.remove()
+    // Ensure manifest is PRESENT
+    let manifestLink = document.querySelector("link[rel='manifest']") as HTMLLinkElement
+    if (!manifestLink) {
+      manifestLink = document.createElement('link')
+      manifestLink.rel = 'manifest'
+      document.head.appendChild(manifestLink)
     }
+    manifestLink.href = '/manifest.json'
   }, [appTitle, faviconUrl])
 
   return null

@@ -28,6 +28,7 @@ const notoSansArabic = Noto_Sans_Arabic({
 export const metadata: Metadata = {
   title: "ar-Raqmi Database",
   description: "Premium PWA Personal Dashboard — Material 3 Expressive Design",
+  manifest: "/manifest.json",
   icons: {
     icon: "https://cdn-icons-png.flaticon.com/512/8323/8323511.png",
     apple: "https://cdn-icons-png.flaticon.com/512/8323/8323511.png",
