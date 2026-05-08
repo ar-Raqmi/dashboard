@@ -407,7 +407,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       }
       const isPinned = note.pinned ?? false
       const layoutEntry: Layout = {
-        i: newId, x: 0, y: 0, w: 1, h: 1,
+        i: newId, x: 0, y: 0, w: 1, h: 2,
         minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H,
       }
       return {
@@ -443,7 +443,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       if (!note) return state
       const newPinned = !note.pinned
       const layoutEntry: Layout = {
-        i: id, x: 0, y: 0, w: 1, h: 1,
+        i: id, x: 0, y: 0, w: 1, h: 2,
         minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H,
       }
       if (newPinned) {
