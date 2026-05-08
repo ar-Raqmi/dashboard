@@ -67,7 +67,7 @@ export function ConvexSync({ children }: { children: React.ReactNode }) {
   const toggleTaskStatusMut = useMutation(api.tasks.toggleStatus)
 
   const createGoal = useMutation(api.goals.create)
-  const updateGoal = useMutation(api.goals.update)
+  const updateGoalMut = useMutation(api.goals.update)
   const deleteGoalMut = useMutation(api.goals.remove)
   const toggleMilestoneMut = useMutation(api.goals.toggleMilestone)
   const reorderGoalsMut = useMutation(api.goals.reorder)
