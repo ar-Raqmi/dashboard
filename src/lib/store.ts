@@ -82,6 +82,7 @@ export interface DashboardWidget {
 }
 
 export type ActivePage = 'dashboard' | 'tasks' | 'calendar' | 'notes' | 'files' | 'spiritual' | 'goals' | 'settings'
+export type EditSubMode = 'move' | 'resize'
 
 export interface ClockConfig {
   id: string
@@ -277,6 +278,8 @@ interface AppStore {
   // Dashboard Edit Mode
   dashboardEditMode: boolean
   setDashboardEditMode: (edit: boolean) => void
+  dashboardEditSubMode: EditSubMode
+  setDashboardEditSubMode: (mode: EditSubMode) => void
 
   // Background
   background: BackgroundSettings
@@ -314,14 +317,38 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       ),
     })),
   updateWidgetSize: (widgetId, w, h) =>
-    set((state) => ({
-      layouts: state.layouts.map((l) =>
+    set((state) => {
+      // Update desktop layouts
+      const newLayouts = state.layouts.map((l) =>
         l.i === widgetId ? { ...l, w: Math.min(Math.max(w, 1), MAX_W), h: Math.min(Math.max(h, 1), MAX_H) } : l
-      ),
-      mobileLayouts: state.mobileLayouts.map((l) =>
+      )
+
+      // Update mobile heights and normalize Y positions
+      // 1. Update heights first
+      const updatedMobile = state.mobileLayouts.map((l) =>
         l.i === widgetId ? { ...l, h: Math.min(Math.max(h, 1), MAX_H) } : l
-      ),
-    })),
+      )
+
+      // 2. Separate visible and hidden (using current widgets state)
+      const visibleTypes = new Set(state.widgets.filter(w => w.visible).map(w => w.type))
+      const visibleMobile = updatedMobile
+        .filter(l => visibleTypes.has(l.i as any))
+        .sort((a, b) => a.y - b.y)
+      const hiddenMobile = updatedMobile.filter(l => !visibleTypes.has(l.i as any))
+
+      // 3. Recalculate Y for visible mobile layouts
+      let nextY = 0
+      const normalizedVisible = visibleMobile.map(l => {
+        const item = { ...l, y: nextY }
+        nextY += l.h
+        return item
+      })
+
+      return {
+        layouts: newLayouts,
+        mobileLayouts: [...normalizedVisible, ...hiddenMobile]
+      }
+    }),
 
   // Tasks
   tasks: [],
@@ -589,6 +616,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   // Dashboard Edit Mode
   dashboardEditMode: false,
   setDashboardEditMode: (edit) => set({ dashboardEditMode: edit }),
+  dashboardEditSubMode: 'move',
+  setDashboardEditSubMode: (mode) => set({ dashboardEditSubMode: mode }),
 
   // Background
   background: {
