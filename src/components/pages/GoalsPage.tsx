@@ -16,6 +16,16 @@ import {
   DialogClose,
 } from '@/components/ui/dialog'
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
   DndContext,
   closestCenter,
   KeyboardSensor,
@@ -229,12 +239,14 @@ export default function GoalsPage() {
   } = useAppStore()
   
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [goalIdToDelete, setGoalIdToDelete] = useState<string | null>(null)
   const [isRearranging, setIsRearranging] = useState(false)
   const [activeId, setActiveId] = useState<string | null>(null)
 
   const sortedGoals = useMemo(() => {
     return [...goals].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-  }, [goals, goals.map(g => g.order).join(',')]) // Added robust dependency
+  }, [goals]) // Simplified dependency as goals change is enough
 
   // Clear highlight after 3 seconds
   useEffect(() => {
@@ -255,6 +267,19 @@ export default function GoalsPage() {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   )
+
+  const handleDeleteClick = (id: string) => {
+    setGoalIdToDelete(id)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleConfirmDelete = () => {
+    if (goalIdToDelete) {
+      deleteGoal(goalIdToDelete)
+      setGoalIdToDelete(null)
+      setDeleteDialogOpen(false)
+    }
+  }
 
   const handleAddMilestone = () => {
     if (!milestoneInput.trim()) return
@@ -524,7 +549,7 @@ export default function GoalsPage() {
                     goal={goal}
                     isRearranging={isRearranging}
                     onEdit={handleEditClick}
-                    onDelete={deleteGoal}
+                    onDelete={handleDeleteClick}
                     onToggleMilestone={toggleMilestone}
                     isHighlighted={highlightedGoalId === goal.id}
                   />
@@ -547,12 +572,35 @@ export default function GoalsPage() {
                   onEdit={() => {}}
                   onDelete={() => {}}
                   onToggleMilestone={() => {}}
+                  isHighlighted={false}
                 />
               ) : null}
             </DragOverlay>
           </DndContext>
         )}
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="rounded-[2rem] border-border bg-card p-8 shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-2xl font-black">Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription className="text-foreground/70 text-lg mt-2">
+              This will permanently delete the goal "{goals.find(g => g.id === goalIdToDelete)?.title}" and all its progress. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-8 gap-3">
+            <AlertDialogCancel className="rounded-xl h-12 px-6 font-bold border-none bg-muted hover:bg-muted/80">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="rounded-xl h-12 px-8 font-bold bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Goal
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
