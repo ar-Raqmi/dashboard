@@ -3,8 +3,10 @@ import { Geist, Geist_Mono, Noto_Sans_Arabic } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import Script from "next/script";
 import { Providers } from "@/components/Providers";
 import { PWAProvider } from "@/components/PWAProvider";
+import DynamicHead from "@/components/DynamicHead";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,10 +28,9 @@ const notoSansArabic = Noto_Sans_Arabic({
 export const metadata: Metadata = {
   title: "ar-Raqmi Database",
   description: "Premium PWA Personal Dashboard — Material 3 Expressive Design",
-  manifest: "/manifest.json",
   icons: {
-    icon: "/logo.svg",
-    apple: "/logo.svg",
+    icon: "https://cdn-icons-png.flaticon.com/512/8323/8323511.png",
+    apple: "https://cdn-icons-png.flaticon.com/512/8323/8323511.png",
   },
 };
 
@@ -60,13 +61,14 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange={false}
         >
+          <DynamicHead />
           <PWAProvider>
             <Providers>
               {children}
             </Providers>
           </PWAProvider>
           <Toaster richColors position="bottom-right" />
-          <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" async />
+          <Script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" strategy="lazyOnload" />
         </ThemeProvider>
       </body>
     </html>
