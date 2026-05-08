@@ -105,7 +105,7 @@ function TaskCard({ task, onToggle, onDelete, isHighlighted }: {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -100, transition: { duration: 0.2 } }}
       transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-      className={`flex items-center gap-3 p-4 rounded-3xl border transition-all duration-500 group ${
+      className={`flex items-start gap-4 p-4 rounded-3xl border transition-all duration-500 group ${
         isHighlighted
           ? 'ring-2 ring-primary ring-offset-2 bg-primary/10 border-primary shadow-lg shadow-primary/20 scale-[1.02]'
           : isOverdue
@@ -115,68 +115,78 @@ function TaskCard({ task, onToggle, onDelete, isHighlighted }: {
               : 'bg-card border-border hover:border-outline'
       }`}
     >
-      <Checkbox
-        checked={isCompleted}
-        onCheckedChange={() => onToggle(task.id)}
-        className={`size-5 rounded-lg ${
-          isOverdue
-            ? 'data-[state=unchecked]:border-destructive data-[state=unchecked]:hover:border-destructive/80'
-            : ''
-        } data-[state=checked]:bg-primary data-[state=checked]:border-primary`}
-      />
-      <span
-        className={`flex-1 text-sm min-w-0 truncate ${
-          isCompleted
-            ? 'line-through text-outline'
-            : 'text-foreground'
-        }`}
-      >
-        {task.title}
-      </span>
-      <div className="flex items-center gap-2 shrink-0">
-        {/* Overdue indicator */}
-        {isOverdue && (
-          <Badge className="rounded-xl text-[0.6rem] bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20 gap-1">
-            <AlertTriangle className="size-2.5" />
-            Overdue
-          </Badge>
-        )}
-        {/* Today indicator */}
-        {isToday && !isCompleted && !isOverdue && (
-          <Badge className="rounded-xl text-[0.6rem] bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 gap-1">
-            <Clock className="size-2.5" />
-            Today
-          </Badge>
-        )}
-        {task.dueDate && (
+      <div className="pt-0.5 shrink-0">
+        <Checkbox
+          checked={isCompleted}
+          onCheckedChange={() => onToggle(task.id)}
+          className={`size-5 rounded-lg ${
+            isOverdue
+              ? 'data-[state=unchecked]:border-destructive data-[state=unchecked]:hover:border-destructive/80'
+              : ''
+          } data-[state=checked]:bg-primary data-[state=checked]:border-primary`}
+        />
+      </div>
+
+      <div className="flex-1 flex flex-col gap-2 min-w-0">
+        <span
+          className={`text-sm font-semibold leading-relaxed ${
+            isCompleted
+              ? 'line-through text-outline'
+              : 'text-foreground'
+          }`}
+        >
+          {task.title}
+        </span>
+        
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Overdue indicator */}
+          {isOverdue && (
+            <Badge className="rounded-xl text-[0.6rem] bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20 gap-1 px-2 py-0.5">
+              <AlertTriangle className="size-2.5" />
+              Overdue
+            </Badge>
+          )}
+          {/* Today indicator */}
+          {isToday && !isCompleted && !isOverdue && (
+            <Badge className="rounded-xl text-[0.6rem] bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 gap-1 px-2 py-0.5">
+              <Clock className="size-2.5" />
+              Today
+            </Badge>
+          )}
+          {task.dueDate && (
+            <Badge
+              variant="outline"
+              className={`rounded-xl text-[0.65rem] px-2 py-0.5 ${
+                isOverdue
+                  ? 'border-destructive/30 text-destructive'
+                  : isToday && !isCompleted
+                    ? 'border-primary/30 text-primary'
+                    : 'border-border text-on-surface-variant'
+              }`}
+            >
+              {format(new Date(task.dueDate + 'T12:00:00'), 'MMM d')}
+            </Badge>
+          )}
           <Badge
             variant="outline"
-            className={`rounded-xl text-[0.65rem] ${
-              isOverdue
-                ? 'border-destructive/30 text-destructive'
-                : isToday && !isCompleted
-                  ? 'border-primary/30 text-primary'
-                  : 'border-border text-on-surface-variant'
-            }`}
+            className={`rounded-xl text-[0.65rem] px-2 py-0.5 border ${priorityConfig[task.priority].className}`}
           >
-            {format(new Date(task.dueDate + 'T12:00:00'), 'MMM d')}
+            {priorityConfig[task.priority].label}
           </Badge>
-        )}
-        <Badge
-          variant="outline"
-          className={`rounded-xl text-[0.65rem] border ${priorityConfig[task.priority].className}`}
-        >
-          {priorityConfig[task.priority].label}
-        </Badge>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-8 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
-          onClick={() => onDelete(task.id)}
-        >
-          <Trash2 className="size-4" />
-        </Button>
+        </div>
       </div>
+
+      <Button
+        variant="ghost"
+        size="icon"
+        className="size-8 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
+        onClick={(e) => {
+          e.stopPropagation()
+          onDelete(task.id)
+        }}
+      >
+        <Trash2 className="size-4" />
+      </Button>
     </motion.div>
   )
 }
