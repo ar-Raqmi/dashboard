@@ -17,9 +17,15 @@ export default function SpiritualPage() {
   const fetchVerse = useCallback(async () => {
     setVerseLoading(true)
     try {
-      const res = await fetch('/api/verse')
-      const data: VerseData = await res.json()
-      setVerse(data)
+      const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
+      if (!convexUrl) return
+      const res = await fetch(`${convexUrl}/api/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: 'content:getDailyVerse', args: {} }),
+      })
+      const data = await res.json()
+      setVerse(data.value)
     } catch {
       setVerse(null)
     } finally {
@@ -30,9 +36,15 @@ export default function SpiritualPage() {
   const fetchHadith = useCallback(async () => {
     setHadithLoading(true)
     try {
-      const res = await fetch('/api/hadith')
-      const data: HadithData = await res.json()
-      setHadith(data)
+      const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
+      if (!convexUrl) return
+      const res = await fetch(`${convexUrl}/api/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: 'content:getDailyHadith', args: {} }),
+      })
+      const data = await res.json()
+      setHadith(data.value)
     } catch {
       setHadith(null)
     } finally {
