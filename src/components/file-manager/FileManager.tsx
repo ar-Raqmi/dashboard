@@ -9,7 +9,7 @@ import {
   Trash2, FileText, ImageIcon, Music, Film, FileEdit, Loader2, 
   Check, X, Search, Grid, List, Star, Clock, Image, 
   FileStack, ChevronRight, Download, Edit3, Share2, Filter,
-  MoreHorizontal, Play, Pause, ExternalLink
+  MoreHorizontal, Play, Pause, ExternalLink, Menu, Plus
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
@@ -21,6 +21,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAppStore } from '@/lib/store'
 import { toast } from 'sonner'
@@ -78,6 +79,8 @@ export default function FileManager() {
   const [newRenameName, setNewRenameName] = useState('')
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false)
   const [targetFolderId, setTargetFolderId] = useState<string | null>(null)
+  const [isSearchVisible, setIsSearchVisible] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   // Queries
   const files = useQuery(api.files.list, sessionToken ? { 
@@ -271,9 +274,9 @@ export default function FileManager() {
   const displayFiles = getDisplayFiles()
 
   return (
-    <div className="flex h-[calc(100vh-120px)] w-full overflow-hidden bg-background/50 backdrop-blur-xl rounded-3xl border border-white/10">
-      {/* Sidebar Navigation */}
-      <div className="w-64 border-r border-white/5 p-4 flex flex-col gap-6">
+    <div className="flex h-full md:h-[calc(100vh-120px)] w-full overflow-hidden bg-background/50 md:backdrop-blur-xl md:rounded-3xl border-none md:border md:border-white/10 relative">
+      {/* Desktop Sidebar Navigation */}
+      <div className="hidden md:flex w-64 border-r border-white/5 p-4 flex-col gap-6 shrink-0">
         <div className="px-2">
           <Button 
             onClick={() => setIsUploadModalOpen(true)}
@@ -298,58 +301,100 @@ export default function FileManager() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-full">
         {/* Top Header */}
-        <header className="h-16 border-b border-white/5 px-6 flex items-center justify-between gap-4">
-          <div className="flex-1 max-w-xl relative">
+        <header className="h-16 border-b border-white/5 px-4 md:px-6 flex items-center justify-between gap-4 shrink-0 bg-background/50 backdrop-blur-md sticky top-0 z-30">
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="md:hidden size-10 rounded-xl"
+              onClick={() => setIsSidebarOpen(true)}
+            >
+              <Menu className="size-6" />
+            </Button>
+            
+            {!isSearchVisible && (
+              <h1 className="text-lg font-bold truncate md:hidden">
+                {navCategory === 'all' ? (path?.length ? path[path.length-1].name : 'My Files') : navCategory.charAt(0).toUpperCase() + navCategory.slice(1)}
+              </h1>
+            )}
+          </div>
+
+          <div className={`flex-1 ${isSearchVisible ? 'flex' : 'hidden md:flex'} items-center max-w-xl relative transition-all duration-300`}>
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input 
               placeholder="Search files and folders..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-10 bg-white/5 border-white/10 rounded-xl focus-visible:ring-primary/50"
+              onBlur={() => !searchQuery && setIsSearchVisible(false)}
+              className="pl-10 h-10 bg-white/5 border-white/10 rounded-xl focus-visible:ring-primary/50 w-full"
+              autoFocus={isSearchVisible}
             />
+            {isSearchVisible && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="md:hidden ml-2 shrink-0" 
+                onClick={() => { setIsSearchVisible(false); setSearchQuery(''); }}
+              >
+                <X className="size-5" />
+              </Button>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-10 rounded-xl border-white/10 bg-white/5 gap-2 px-3">
-                  <Filter className="size-4" />
-                  <span className="text-xs font-medium capitalize">Sort: {sortBy}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40 rounded-xl border-white/10 bg-background/95 backdrop-blur-xl">
-                <DropdownMenuItem onClick={() => setSortBy('name')} className="rounded-lg">Name</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy('date')} className="rounded-lg">Date Modified</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy('size')} className="rounded-lg">Size</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {!isSearchVisible && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="md:hidden size-10 rounded-xl"
+                onClick={() => setIsSearchVisible(true)}
+              >
+                <Search className="size-5" />
+              </Button>
+            )}
 
-            <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
-              <Button 
-                variant={viewMode === 'grid' ? 'secondary' : 'ghost'} 
-                size="icon" 
-                onClick={() => setViewMode('grid')}
-                className="size-8 rounded-lg"
-              >
-                <Grid className="size-4" />
-              </Button>
-              <Button 
-                variant={viewMode === 'list' ? 'secondary' : 'ghost'} 
-                size="icon" 
-                onClick={() => setViewMode('list')}
-                className="size-8 rounded-lg"
-              >
-                <List className="size-4" />
-              </Button>
+            <div className="hidden sm:flex items-center gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-10 rounded-xl border-white/10 bg-white/5 gap-2 px-3">
+                    <Filter className="size-4" />
+                    <span className="text-xs font-medium capitalize">Sort: {sortBy}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40 rounded-xl border-white/10 bg-background/95 backdrop-blur-xl">
+                  <DropdownMenuItem onClick={() => setSortBy('name')} className="rounded-lg">Name</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortBy('date')} className="rounded-lg">Date Modified</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortBy('size')} className="rounded-lg">Size</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
+                <Button 
+                  variant={viewMode === 'grid' ? 'secondary' : 'ghost'} 
+                  size="icon" 
+                  onClick={() => setViewMode('grid')}
+                  className="size-8 rounded-lg"
+                >
+                  <Grid className="size-4" />
+                </Button>
+                <Button 
+                  variant={viewMode === 'list' ? 'secondary' : 'ghost'} 
+                  size="icon" 
+                  onClick={() => setViewMode('list')}
+                  className="size-8 rounded-lg"
+                >
+                  <List className="size-4" />
+                </Button>
+              </div>
             </div>
             
             <Button 
               variant="outline" 
               size="icon" 
               onClick={() => setIsNewFolderDialogOpen(true)}
-              className="size-10 rounded-xl border-white/10 bg-white/5 hover:bg-white/10"
+              className="hidden md:flex size-10 rounded-xl border-white/10 bg-white/5 hover:bg-white/10"
             >
               <FolderPlus className="size-5" />
             </Button>
@@ -357,28 +402,28 @@ export default function FileManager() {
         </header>
 
         {/* Breadcrumbs & Actions */}
-        <div className="h-12 px-6 flex items-center justify-between bg-white/5 border-b border-white/5">
-          <Breadcrumb>
-            <BreadcrumbList>
+        <div className="h-12 px-4 md:px-6 flex items-center justify-between bg-white/5 border-b border-white/5 overflow-x-auto no-scrollbar shrink-0">
+          <Breadcrumb className="whitespace-nowrap flex-1">
+            <BreadcrumbList className="flex-nowrap">
               <BreadcrumbItem>
                 <BreadcrumbLink 
-                  onClick={() => setCurrentFolderId(undefined)}
+                  onClick={() => { setCurrentFolderId(undefined); setNavCategory('all'); }}
                   onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' }}
                   onDrop={(e) => handleDrop(e, null)}
-                  className="cursor-pointer hover:text-primary transition-colors flex items-center"
+                  className="cursor-pointer hover:text-primary transition-colors flex items-center text-xs"
                 >
                   My Files
                 </BreadcrumbLink>
               </BreadcrumbItem>
               {path?.map((item, idx) => (
                 <React.Fragment key={item.id}>
-                  <BreadcrumbSeparator><ChevronRight className="size-4" /></BreadcrumbSeparator>
+                  <BreadcrumbSeparator><ChevronRight className="size-4 opacity-50" /></BreadcrumbSeparator>
                   <BreadcrumbItem>
                     <BreadcrumbLink 
                       onClick={() => setCurrentFolderId(item.id)}
                       onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' }}
                       onDrop={(e) => handleDrop(e, item.id)}
-                      className={`cursor-pointer hover:text-primary transition-colors ${idx === path.length - 1 ? 'font-semibold text-foreground' : ''}`}
+                      className={`cursor-pointer hover:text-primary transition-colors text-xs ${idx === path.length - 1 ? 'font-semibold text-foreground' : ''}`}
                     >
                       {item.name}
                     </BreadcrumbLink>
@@ -388,8 +433,8 @@ export default function FileManager() {
             </BreadcrumbList>
           </Breadcrumb>
           
-          <div className="text-xs text-muted-foreground font-medium">
-            {selectedIds.size > 0 ? `${selectedIds.size} of ${displayFiles?.length || 0} selected` : `${displayFiles?.length || 0} items`}
+          <div className="text-[10px] md:text-xs text-muted-foreground font-medium ml-4 shrink-0">
+            {selectedIds.size > 0 ? `${selectedIds.size} selected` : `${displayFiles?.length || 0} items`}
           </div>
         </div>
 
@@ -400,26 +445,26 @@ export default function FileManager() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
-              className="mx-6 mt-2 p-3 rounded-2xl bg-primary text-primary-foreground flex items-center justify-between shadow-lg shadow-primary/20 z-20"
+              className="mx-4 md:mx-6 mt-2 p-3 rounded-2xl bg-primary text-primary-foreground flex items-center justify-between shadow-lg shadow-primary/20 z-40 relative md:absolute md:bottom-6 md:left-0 md:right-0"
             >
-              <div className="flex items-center gap-4 px-2">
-                <p className="text-sm font-bold">{selectedIds.size} items selected</p>
+              <div className="flex items-center gap-3 md:gap-4 px-1 md:px-2">
+                <p className="text-xs md:text-sm font-bold">{selectedIds.size} selected</p>
                 <div className="h-4 w-px bg-primary-foreground/20" />
-                <Button variant="ghost" size="sm" onClick={handleSelectAll} className="text-xs h-8 hover:bg-white/10 text-primary-foreground">
-                  {selectedIds.size === displayFiles?.length ? 'Deselect All' : 'Select All'}
+                <Button variant="ghost" size="sm" onClick={handleSelectAll} className="text-[10px] md:text-xs h-8 hover:bg-white/10 text-primary-foreground px-2">
+                  {selectedIds.size === displayFiles?.length ? 'Deselect' : 'All'}
                 </Button>
               </div>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setIsMoveDialogOpen(true)} className="h-8 hover:bg-white/10 text-primary-foreground gap-2">
-                  <Edit3 className="size-3.5" /> Move
+              <div className="flex items-center gap-1 md:gap-2">
+                <Button variant="ghost" size="icon" onClick={() => setIsMoveDialogOpen(true)} className="size-8 hover:bg-white/10 text-primary-foreground md:w-auto md:px-3 md:gap-2">
+                  <Edit3 className="size-4" /> <span className="hidden md:inline text-xs">Move</span>
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => handleBatchDownload(Array.from(selectedIds))} className="h-8 hover:bg-white/10 text-primary-foreground gap-2">
-                  <Download className="size-3.5" /> Download (.zip)
+                <Button variant="ghost" size="icon" onClick={() => handleBatchDownload(Array.from(selectedIds))} className="size-8 hover:bg-white/10 text-primary-foreground md:w-auto md:px-3 md:gap-2">
+                  <Download className="size-4" /> <span className="hidden md:inline text-xs">ZIP</span>
                 </Button>
-                <Button variant="ghost" size="sm" onClick={handleBatchDelete} className="h-8 hover:bg-white/10 text-primary-foreground gap-2">
-                  <Trash2 className="size-3.5" /> Delete
+                <Button variant="ghost" size="icon" onClick={handleBatchDelete} className="size-8 hover:bg-white/10 text-primary-foreground md:w-auto md:px-3 md:gap-2">
+                  <Trash2 className="size-4" /> <span className="hidden md:inline text-xs">Delete</span>
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())} className="h-8 hover:bg-white/10 text-primary-foreground">
+                <Button variant="ghost" size="icon" onClick={() => setSelectedIds(new Set())} className="size-8 hover:bg-white/10 text-primary-foreground">
                   <X className="size-4" />
                 </Button>
               </div>
@@ -429,7 +474,7 @@ export default function FileManager() {
 
         {/* Content View */}
         <ScrollArea className="flex-1">
-          <div className="p-6">
+          <div className="p-4 md:p-6 pb-24 md:pb-6">
             {!displayFiles ? (
               <div className="flex flex-col items-center justify-center py-20 opacity-50">
                 <Loader2 className="size-10 animate-spin mb-4" />
@@ -444,7 +489,7 @@ export default function FileManager() {
                 <p className="max-w-xs">Try searching for something else or upload a new file to get started.</p>
               </div>
             ) : viewMode === 'grid' ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 md:gap-6">
                 <AnimatePresence mode="popLayout">
                   {displayFiles.filter(f => f && f._id).map((file) => (
                     <FileGridItem 
@@ -481,14 +526,14 @@ export default function FileManager() {
                 </AnimatePresence>
               </div>
             ) : (
-              <div className="border border-white/10 rounded-2xl overflow-hidden bg-white/5">
+              <div className="border border-white/10 rounded-2xl overflow-hidden bg-white/5 overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="hover:bg-transparent border-white/10">
-                      <TableHead className="w-[400px]">Name</TableHead>
-                      <TableHead>Size</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Modified</TableHead>
+                      <TableHead className="w-[200px] md:w-[400px]">Name</TableHead>
+                      <TableHead className="hidden sm:table-cell">Size</TableHead>
+                      <TableHead className="hidden md:table-cell">Type</TableHead>
+                      <TableHead className="hidden sm:table-cell">Modified</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -532,6 +577,64 @@ export default function FileManager() {
           </div>
         </ScrollArea>
       </div>
+
+      {/* Mobile Floating Action Button */}
+      <div className="md:hidden fixed bottom-6 right-6 z-50 flex flex-col gap-3">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="icon" className="size-14 rounded-full bg-primary shadow-2xl shadow-primary/40 text-primary-foreground">
+              <Plus className="size-8" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48 rounded-2xl border-white/10 bg-background/95 backdrop-blur-xl mb-4">
+            <DropdownMenuItem onClick={() => setIsUploadModalOpen(true)} className="rounded-xl py-3">
+              <Upload className="size-4 mr-2" /> Upload Files
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setIsNewFolderDialogOpen(true)} className="rounded-xl py-3">
+              <FolderPlus className="size-4 mr-2" /> New Folder
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Mobile Sidebar Sheet */}
+      <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
+        <SheetContent side="left" className="w-72 border-r border-white/10 bg-background/95 backdrop-blur-2xl p-4">
+          <SheetHeader className="mb-6">
+            <SheetTitle className="text-left flex items-center gap-2">
+              <FileStack className="size-5 text-primary" />
+              File Manager
+            </SheetTitle>
+          </SheetHeader>
+          
+          <nav className="flex flex-col gap-1">
+            <NavButton 
+              active={navCategory === 'all'} 
+              onClick={() => { setNavCategory('all'); setSearchQuery(''); setCurrentFolderId(undefined); setIsSidebarOpen(false); }} 
+              icon={<FileStack className="size-5" />} 
+              label="My Files" 
+            />
+            <NavButton 
+              active={navCategory === 'starred'} 
+              onClick={() => { setNavCategory('starred'); setSearchQuery(''); setIsSidebarOpen(false); }} 
+              icon={<Star className="size-5" />} 
+              label="Starred" 
+            />
+            <NavButton 
+              active={navCategory === 'recent'} 
+              onClick={() => { setNavCategory('recent'); setSearchQuery(''); setIsSidebarOpen(false); }} 
+              icon={<Clock className="size-5" />} 
+              label="Recent" 
+            />
+            
+            <div className="mt-6 mb-2 px-4 text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">Categories</div>
+            <NavButton active={navCategory === 'images'} onClick={() => { setNavCategory('images'); setSearchQuery(''); setIsSidebarOpen(false); }} icon={<Image className="size-5" />} label="Images" />
+            <NavButton active={navCategory === 'audio'} onClick={() => { setNavCategory('audio'); setSearchQuery(''); setIsSidebarOpen(false); }} icon={<Music className="size-5" />} label="Audio" />
+            <NavButton active={navCategory === 'video'} onClick={() => { setNavCategory('video'); setSearchQuery(''); setIsSidebarOpen(false); }} icon={<Film className="size-5" />} label="Videos" />
+            <NavButton active={navCategory === 'docs'} onClick={() => { setNavCategory('docs'); setSearchQuery(''); setIsSidebarOpen(false); }} icon={<FileText className="size-5" />} label="Documents" />
+          </nav>
+        </SheetContent>
+      </Sheet>
 
       {/* Dialogs */}
       <Dialog open={isRenameDialogOpen} onOpenChange={setIsRenameDialogOpen}>
@@ -680,13 +783,17 @@ function FileGridItem({
           onOpen()
         }
       }}
+      onContextMenu={(e) => {
+        e.preventDefault()
+        onToggleSelect()
+      }}
     >
-      <div className="aspect-[4/3] rounded-xl bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center mb-3 relative overflow-hidden">
+      <div className="aspect-[4/3] rounded-xl bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center mb-2 md:mb-3 relative overflow-hidden">
         {getFileIcon(file)}
         
         {/* Selection Checkbox */}
         <div 
-          className={`absolute top-2 left-2 transition-all duration-200 z-10 ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+          className={`absolute top-2 left-2 transition-all duration-200 z-10 ${selected ? 'opacity-100' : 'opacity-0 md:group-hover:opacity-100'}`}
           onClick={(e) => e.stopPropagation()}
         >
           <Checkbox 
@@ -701,52 +808,45 @@ function FileGridItem({
           onClick={(e) => { e.stopPropagation(); onToggleStar(e) }}
           className={`
             absolute top-2 right-2 p-1.5 rounded-lg transition-all duration-200 z-10
-            ${file.starred ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' : 'bg-black/20 text-white opacity-0 group-hover:opacity-100 hover:bg-black/40'}
+            ${file.starred ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' : 'bg-black/20 text-white opacity-0 md:group-hover:opacity-100 hover:bg-black/40'}
           `}
         >
-          <Star className={`size-3.5 ${file.starred ? 'fill-current' : ''}`} />
+          <Star className={`size-3 md:size-3.5 ${file.starred ? 'fill-current' : ''}`} />
         </button>
-
-        {/* Thumbnail Preview Hint (Mock) */}
-        {file.category === 'image' && (
-          <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            <ExternalLink className="size-6 text-emerald-400 opacity-60" />
-          </div>
-        )}
       </div>
 
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start justify-between gap-1 md:gap-2">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium truncate">{file.name}</p>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+          <p className="text-xs md:text-sm font-medium truncate">{file.name}</p>
+          <p className="text-[9px] md:text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
             {file.type === 'folder' ? 'Folder' : file.category || 'File'}
           </p>
         </div>
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="size-7 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+            <Button variant="ghost" size="icon" className="size-7 rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
               <MoreVertical className="size-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 rounded-2xl border-white/10 bg-background/95 backdrop-blur-xl">
-            <DropdownMenuItem onClick={onOpen} className="rounded-xl">
+            <DropdownMenuItem onClick={onOpen} className="rounded-xl py-2.5">
               <Play className="size-4 mr-2" /> Open
             </DropdownMenuItem>
-            <DropdownMenuItem className="rounded-xl" onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}>
+            <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}>
               {selected ? <X className="size-4 mr-2" /> : <Check className="size-4 mr-2" />} {selected ? 'Deselect' : 'Select'}
             </DropdownMenuItem>
-            <DropdownMenuItem className="rounded-xl" onClick={(e) => { e.stopPropagation(); onRename(); }}>
+            <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onRename(); }}>
               <Edit3 className="size-4 mr-2" /> Rename
             </DropdownMenuItem>
-            <DropdownMenuItem className="rounded-xl" onClick={(e) => { e.stopPropagation(); setSelectedIds(new Set([file._id])); setIsMoveDialogOpen(true); }}>
+            <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); setSelectedIds(new Set([file._id])); setIsMoveDialogOpen(true); }}>
               <Folder className="size-4 mr-2" /> Move
             </DropdownMenuItem>
-            <DropdownMenuItem className="rounded-xl" onClick={(e) => { e.stopPropagation(); onDownload(); }}>
-              <Download className="size-4 mr-2" /> {file.type === 'folder' ? 'Download as ZIP' : 'Download'}
+            <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onDownload(); }}>
+              <Download className="size-4 mr-2" /> {file.type === 'folder' ? 'Download ZIP' : 'Download'}
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-white/10" />
-            <DropdownMenuItem onClick={onDelete} className="text-destructive rounded-xl hover:bg-destructive/10">
+            <DropdownMenuItem onClick={onDelete} className="text-destructive rounded-xl hover:bg-destructive/10 py-2.5">
               <Trash2 className="size-4 mr-2" /> Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -796,35 +896,35 @@ function FileListItem({
           <div className="size-8 rounded-lg bg-white/5 flex items-center justify-center">
             {getFileIcon(file)}
           </div>
-          <span className="truncate max-w-[300px]">{file.name}</span>
-        </div>
-      </TableCell>
-      <TableCell className="text-muted-foreground text-xs">{formatSize(file.size)}</TableCell>
-      <TableCell className="text-muted-foreground text-xs uppercase tracking-tighter font-semibold">
-        {file.type === 'folder' ? 'Folder' : file.category || 'File'}
-      </TableCell>
-      <TableCell className="text-muted-foreground text-xs">{formatDate(file.updatedAt)}</TableCell>
+          <span className="truncate max-w-[150px] md:max-w-[300px] text-xs md:text-sm">{file.name}</span>
+      </div>
+    </TableCell>
+    <TableCell className="text-muted-foreground text-[10px] md:text-xs hidden sm:table-cell">{formatSize(file.size)}</TableCell>
+    <TableCell className="text-muted-foreground text-[10px] md:text-xs uppercase tracking-tighter font-semibold hidden md:table-cell">
+      {file.type === 'folder' ? 'Folder' : file.category || 'File'}
+    </TableCell>
+    <TableCell className="text-muted-foreground text-[10px] md:text-xs hidden sm:table-cell">{formatDate(file.updatedAt)}</TableCell>
       <TableCell className="text-right">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="size-8 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+            <Button variant="ghost" size="icon" className="size-8 rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
               <MoreHorizontal className="size-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 rounded-2xl border-white/10 bg-background/95 backdrop-blur-xl">
-            <DropdownMenuItem onClick={onOpen} className="rounded-xl"><Play className="size-4 mr-2" /> Open</DropdownMenuItem>
-            <DropdownMenuItem className="rounded-xl" onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}>
+            <DropdownMenuItem onClick={onOpen} className="rounded-xl py-2.5"><Play className="size-4 mr-2" /> Open</DropdownMenuItem>
+            <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}>
               {selected ? <X className="size-4 mr-2" /> : <Check className="size-4 mr-2" />} {selected ? 'Deselect' : 'Select'}
             </DropdownMenuItem>
-            <DropdownMenuItem className="rounded-xl" onClick={(e) => { e.stopPropagation(); onRename(); }}>
+            <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onRename(); }}>
               <Edit3 className="size-4 mr-2" /> Rename
             </DropdownMenuItem>
-            <DropdownMenuItem className="rounded-xl" onClick={(e) => { e.stopPropagation(); setSelectedIds(new Set([file._id])); setIsMoveDialogOpen(true); }}>
+            <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); setSelectedIds(new Set([file._id])); setIsMoveDialogOpen(true); }}>
               <Folder className="size-4 mr-2" /> Move
             </DropdownMenuItem>
-            <DropdownMenuItem className="rounded-xl"><Download className="size-4 mr-2" /> Download</DropdownMenuItem>
+            <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onDownload(); }}><Download className="size-4 mr-2" /> Download</DropdownMenuItem>
             <DropdownMenuSeparator className="bg-white/10" />
-            <DropdownMenuItem onClick={onDelete} className="text-destructive rounded-xl hover:bg-destructive/10"><Trash2 className="size-4 mr-2" /> Delete</DropdownMenuItem>
+            <DropdownMenuItem onClick={onDelete} className="text-destructive rounded-xl hover:bg-destructive/10 py-2.5"><Trash2 className="size-4 mr-2" /> Delete</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </TableCell>
