@@ -2,21 +2,18 @@
 
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Lock, User, Eye, EyeOff, Database, AlertCircle, Loader2, Server, CheckCircle2 } from 'lucide-react'
+import { Lock, User, Eye, EyeOff, Database, AlertCircle, Loader2, Server } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 export default function LoginPage() {
-  const { login, seedAdmin, isConvexConfigured } = useAuth()
+  const { login, isConvexConfigured } = useAuth()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [showSetup, setShowSetup] = useState(false)
-  const [seedLoading, setSeedLoading] = useState(false)
-  const [seedSuccess, setSeedSuccess] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,18 +25,6 @@ export default function LoginPage() {
       setError(result.error || 'Login failed')
     }
     setLoading(false)
-  }
-
-  const handleSeed = async () => {
-    setSeedLoading(true)
-    setError('')
-    const result = await seedAdmin('ar-raqmi', 'password')
-    if (result.success) {
-      setSeedSuccess(true)
-    } else {
-      setError(result.error || 'Failed to seed admin user')
-    }
-    setSeedLoading(false)
   }
 
   return (
@@ -159,61 +144,13 @@ export default function LoginPage() {
                 </Button>
               </form>
 
-              {/* Setup Section */}
-              <div className="mt-6 pt-4 border-t border-border/30">
-                <button
-                  type="button"
-                  onClick={() => setShowSetup(!showSetup)}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors w-full text-center"
-                >
-                  {showSetup ? 'Hide' : 'Show'} Initial Setup
-                </button>
-
-                {showSetup && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    className="mt-4 space-y-3"
-                  >
-                    <div className="bg-muted/50 rounded-2xl p-4 text-sm text-muted-foreground">
-                      <p className="mb-2 font-medium text-foreground">First-time setup:</p>
-                      <p className="mb-3">Click the button below to create the default admin account. Credentials will be:</p>
-                      <div className="bg-background rounded-xl p-3 font-mono text-xs space-y-1">
-                        <p>Username: <span className="text-primary">ar-raqmi</span></p>
-                        <p>Password: <span className="text-primary">password</span></p>
-                      </div>
-                    </div>
-
-                    {seedSuccess ? (
-                      <div className="flex items-center gap-2 p-3 rounded-2xl bg-primary/10 text-primary text-sm">
-                        <CheckCircle2 className="size-4" />
-                        <span>Admin user reset successfully! You can now sign in.</span>
-                      </div>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        onClick={handleSeed}
-                        disabled={seedLoading}
-                        className="w-full rounded-2xl"
-                      >
-                        {seedLoading ? (
-                          <Loader2 className="size-4 animate-spin mr-2" />
-                        ) : (
-                          <Database className="size-4 mr-2" />
-                        )}
-                        Reset & Seed Admin User
-                      </Button>
-                    )}
-                  </motion.div>
-                )}
-              </div>
             </>
           )}
         </div>
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground mt-6">
-          ar-Raqmi Database &middot; Clean Reset Mode
+          ar-Raqmi Database
         </p>
       </motion.div>
     </div>
