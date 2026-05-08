@@ -234,52 +234,58 @@ function TaskRow({ task, onToggle, compact, isOverdue }: {
 
   return (
     <div
-      className={`flex items-center gap-2.5 p-2 rounded-xl hover:bg-accent transition-colors cursor-pointer ${
+      className={`flex flex-col gap-1.5 p-2 rounded-xl hover:bg-accent transition-colors cursor-pointer ${
         isOverdue && !isCompleted ? 'bg-destructive/5 hover:bg-destructive/10' : ''
       }`}
       onClick={(e) => { e.stopPropagation(); onToggle(task.id) }}
     >
-      <div
-        className={
-          isCompleted
-            ? 'w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 border-primary bg-primary'
-            : isOverdue
-              ? 'w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 border-destructive hover:border-destructive/80 transition-colors'
-              : 'w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 border-outline hover:border-primary transition-colors'
-        }
-      >
-        {isCompleted && (
-          <svg className="w-2.5 h-2.5 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
-        )}
+      <div className="flex items-start gap-2.5">
+        <div
+          className={cn(
+            "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5",
+            isCompleted
+              ? 'border-primary bg-primary'
+              : isOverdue
+                ? 'border-destructive hover:border-destructive/80 transition-colors'
+                : 'border-outline hover:border-primary transition-colors'
+          )}
+        >
+          {isCompleted && (
+            <svg className="w-2.5 h-2.5 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          )}
+        </div>
+        <span
+          className={cn(
+            "text-sm font-medium flex-1 min-w-0",
+            isCompleted ? 'line-through text-muted-foreground' : 'text-foreground'
+          )}
+        >
+          {task.title}
+        </span>
       </div>
-      <span
-        className={
-          isCompleted
-            ? 'text-sm truncate line-through text-muted-foreground flex-1 min-w-0'
-            : isOverdue
-              ? 'text-sm truncate text-foreground flex-1 min-w-0'
-              : 'text-sm truncate text-foreground flex-1 min-w-0'
-        }
-      >
-        {task.title}
-      </span>
-      {task.dueDate && !compact && (
-        <span className={`text-[0.6rem] font-medium shrink-0 tabular-nums ${
-          isOverdue && !isCompleted
-            ? 'text-destructive'
-            : isCompleted
-              ? 'text-muted-foreground line-through'
-              : 'text-muted-foreground'
-        }`}>
-          {formatDueDate(task.dueDate)}
-        </span>
-      )}
-      {isOverdue && !isCompleted && (
-        <span className="text-[0.5rem] font-bold uppercase tracking-wider text-destructive bg-destructive/10 px-1.5 py-0.5 rounded-md shrink-0">
-          Due
-        </span>
+      
+      {(task.dueDate || isOverdue) && !compact && (
+        <div className="flex flex-wrap items-center gap-1.5 ml-[26px]">
+          {isOverdue && !isCompleted && (
+            <span className="text-[0.55rem] font-bold uppercase tracking-wider text-destructive bg-destructive/10 px-1.5 py-0.5 rounded-md shrink-0">
+              Overdue
+            </span>
+          )}
+          {task.dueDate && (
+            <span className={cn(
+              "text-[0.6rem] font-medium shrink-0 tabular-nums px-1.5 py-0.5 rounded-md border",
+              isOverdue && !isCompleted
+                ? 'border-destructive/30 text-destructive bg-destructive/5'
+                : isCompleted
+                  ? 'border-border text-muted-foreground line-through'
+                  : 'border-border text-muted-foreground bg-muted/30'
+            )}>
+              {formatDueDate(task.dueDate)}
+            </span>
+          )}
+        </div>
       )}
     </div>
   )
