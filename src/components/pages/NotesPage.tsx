@@ -363,6 +363,7 @@ export default function NotesPage() {
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [editMode, setEditMode] = useState(false)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
 
   const { highlightedNoteId, setHighlightedNote } = useAppStore()
 
