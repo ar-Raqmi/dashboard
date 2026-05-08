@@ -14,7 +14,7 @@ export default function DynamicHead() {
   const appLogo = useAppStore((s) => s.appLogo)
   const iconBackgroundColor = useAppStore((s) => s.iconBackgroundColor)
   
-  const defaultIcon = 'https://cdn-icons-png.flaticon.com/512/8323/8323511.png'
+  const defaultIcon = '/icon.svg'
   const [faviconUrl, setFaviconUrl] = useState<string>(defaultIcon)
 
   // 1. Determine favicon URL
