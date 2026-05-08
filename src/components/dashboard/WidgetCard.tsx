@@ -1,10 +1,10 @@
 'use client'
 
 import React, { useCallback } from 'react'
-import { GripVertical, Maximize2 } from 'lucide-react'
+import { GripVertical, Maximize2, ChevronUp, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
-import { MAX_GRID_W, MAX_GRID_H } from '@/lib/store'
+import { MAX_GRID_W, MAX_GRID_H, type EditSubMode } from '@/lib/store'
 
 interface WidgetCardProps {
   title: string
@@ -18,8 +18,12 @@ interface WidgetCardProps {
   currentW: number
   currentH: number
   onSizeChange: (w: number, h: number) => void
+  onMoveUp?: () => void
+  onMoveDown?: () => void
   onNavigate?: () => void
   editMode?: boolean
+  editSubMode?: EditSubMode
+  isMobile?: boolean
 }
 
 // Grid size picker: shows a W×H visual grid where user clicks to select size
@@ -27,11 +31,14 @@ function GridSizePicker({
   currentW,
   currentH,
   onSizeChange,
+  isMobile,
 }: {
   currentW: number
   currentH: number
   onSizeChange: (w: number, h: number) => void
+  isMobile?: boolean
 }) {
+  const maxW = isMobile ? 1 : MAX_GRID_W
   return (
     <div className="space-y-3">
       <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -39,12 +46,12 @@ function GridSizePicker({
       </div>
       <div
         className="grid gap-1.5"
-        style={{ gridTemplateColumns: `repeat(${MAX_GRID_W}, minmax(0, 1fr))` }}
+        style={{ gridTemplateColumns: `repeat(${maxW}, minmax(0, 1fr))` }}
         role="grid"
         aria-label="Select widget size"
       >
         {Array.from({ length: MAX_GRID_H }, (_, row) =>
-          Array.from({ length: MAX_GRID_W }, (_, col) => {
+          Array.from({ length: maxW }, (_, col) => {
             const w = col + 1
             const h = row + 1
             const isSelected = w <= currentW && h <= currentH
@@ -93,8 +100,12 @@ export function WidgetCard({
   currentW,
   currentH,
   onSizeChange,
+  onMoveUp,
+  onMoveDown,
   onNavigate,
   editMode = false,
+  editSubMode = 'move',
+  isMobile = false,
 }: WidgetCardProps) {
   const handleSizeChange = useCallback(
     (w: number, h: number) => {
@@ -105,20 +116,46 @@ export function WidgetCard({
 
   return (
     <div
+      onPointerDown={(e) => {
+        // Only block on desktop if needed, on mobile we don't drag at all now
+        if (!isMobile && editMode) {
+          const isDragHandle = !!(e.target as HTMLElement).closest('.widget-drag-handle')
+          if (!isDragHandle) e.stopPropagation()
+        }
+      }}
       className={cn(
-        'widget-card group rounded-3xl border bg-card flex flex-col h-full overflow-hidden relative shadow-sm transition-shadow duration-200',
-        editMode
-          ? 'border-primary/40 shadow-md shadow-primary/5 ring-1 ring-primary/20'
-          : 'border-border',
-        className
+        'widget-card group rounded-3xl border bg-card flex flex-col h-full overflow-hidden relative transition-shadow duration-200',
+        editMode ? 'border-primary/40 shadow-md shadow-primary/5 ring-1 ring-primary/20' : 'border-border shadow-sm hover:shadow-md hover:border-primary/20',
+        // Definitively block dragging on mobile to allow button clicks
+        isMobile && 'no-drag'
       )}
     >
       {/* Header with drag handle */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50">
-        {/* Drag handle - only visible in edit mode */}
-        {editMode && (
-          <div className="widget-drag-handle cursor-grab active:cursor-grabbing p-0.5 -ml-1 rounded-xl hover:bg-accent transition-colors">
+        {/* Desktop Drag Handle */}
+        {editMode && !isMobile && (
+          <div className="widget-drag-handle cursor-grab active:cursor-grabbing p-2 -ml-2 mr-1 rounded-xl hover:bg-accent transition-colors shrink-0">
             <GripVertical className="w-4 h-4 text-primary/70 hover:text-primary transition-colors" />
+          </div>
+        )}
+
+        {/* Mobile Move Buttons */}
+        {editMode && isMobile && editSubMode === 'move' && (
+          <div className="flex items-center gap-1 -ml-2 mr-1">
+            <button
+              onClick={(e) => { e.stopPropagation(); onMoveUp?.() }}
+              className="p-2 rounded-xl hover:bg-accent text-primary transition-colors no-drag"
+              aria-label="Move up"
+            >
+              <ChevronUp className="w-5 h-5" />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onMoveDown?.() }}
+              className="p-2 rounded-xl hover:bg-accent text-primary transition-colors no-drag"
+              aria-label="Move down"
+            >
+              <ChevronDown className="w-5 h-5" />
+            </button>
           </div>
         )}
 
@@ -132,26 +169,30 @@ export function WidgetCard({
 
         {/* Custom header action (e.g. settings popover) */}
         {headerAction && (
-          <div className={cn(
-            'shrink-0 transition-opacity duration-200',
-            editMode
-              ? 'opacity-100'
-              : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'
-          )}>
+          <div 
+            className={cn(
+              'shrink-0 transition-opacity duration-200 no-drag',
+              editMode
+                ? 'opacity-100'
+                : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'
+            )}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
             {headerAction}
           </div>
         )}
 
-        {/* Size picker — only visible in edit mode, uses Popover with Portal */}
-        {editMode && (
+        {/* Size picker — visible in edit mode, but on mobile only in 'resize' sub-mode */}
+        {editMode && (!isMobile || editSubMode === 'resize') && (
           <Popover>
             <PopoverTrigger asChild>
               <button
-                className="shrink-0 p-1.5 rounded-xl hover:bg-accent transition-colors text-muted-foreground hover:text-primary"
+                className="shrink-0 p-2 sm:p-1.5 rounded-xl hover:bg-accent transition-colors text-muted-foreground hover:text-primary no-drag"
                 aria-label={`Resize ${title}`}
                 title={`${currentW}×${currentH} — click to resize`}
+                onPointerDown={(e) => e.stopPropagation()}
               >
-                <Maximize2 className="w-3.5 h-3.5" />
+                <Maximize2 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
               </button>
             </PopoverTrigger>
             <PopoverContent
@@ -164,6 +205,7 @@ export function WidgetCard({
                 currentW={currentW}
                 currentH={currentH}
                 onSizeChange={handleSizeChange}
+                isMobile={isMobile}
               />
             </PopoverContent>
           </Popover>
@@ -173,7 +215,8 @@ export function WidgetCard({
         {onAction && actionIcon && (
           <button
             onClick={onAction}
-            className="shrink-0 p-1.5 rounded-xl hover:bg-accent transition-colors text-muted-foreground hover:text-primary"
+            onPointerDown={(e) => e.stopPropagation()}
+            className="shrink-0 p-2 sm:p-1.5 rounded-xl hover:bg-accent transition-colors text-muted-foreground hover:text-primary no-drag"
             aria-label={`${title} action`}
           >
             {actionIcon}

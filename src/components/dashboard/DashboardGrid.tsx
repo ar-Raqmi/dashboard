@@ -17,6 +17,8 @@ import { api } from '../../../convex/_generated/api'
 import { useAuth } from '@/hooks/useAuth'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { useIsMobile } from '@/hooks/use-mobile'
+import { cn } from '@/lib/utils'
 
 // Widget icon mapping
 const widgetIcons: Record<WidgetType, React.ReactNode> = {
@@ -886,11 +888,12 @@ function ClockSettingsPopover() {
     <Popover>
       <PopoverTrigger asChild>
         <button
-          className="shrink-0 p-1.5 rounded-xl hover:bg-accent transition-colors text-muted-foreground hover:text-primary"
+          className="shrink-0 p-2 sm:p-1.5 rounded-xl hover:bg-accent transition-colors text-muted-foreground hover:text-primary no-drag"
           aria-label="Clock settings"
           onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
         >
-          <Settings2 className="w-3.5 h-3.5" />
+          <Settings2 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
         </button>
       </PopoverTrigger>
       <PopoverContent
@@ -1079,8 +1082,15 @@ export function DashboardGrid() {
   const setActivePage = useAppStore((s) => s.setActivePage)
   const dashboardEditMode = useAppStore((s) => s.dashboardEditMode)
   const setDashboardEditMode = useAppStore((s) => s.setDashboardEditMode)
+  const dashboardEditSubMode = useAppStore((s) => s.dashboardEditSubMode)
+  const setDashboardEditSubMode = useAppStore((s) => s.setDashboardEditSubMode)
+  
+  // 1. Initialize core hooks and refs
+  const isMobile = useIsMobile()
+  const { containerRef, width } = useContainerWidth()
+  const currentBreakpointRef = useRef<string>('lg')
 
-  // Stable selector: only re-renders when the set of visible widget types actually changes
+  // 2. Stable selectors and memos
   const visibleWidgetTypesKey = useAppStore(
     useCallback((s: { widgets: { type: string; visible: boolean }[] }) => {
       return s.widgets.filter((w) => w.visible).map((w) => w.type).join(',')
@@ -1101,20 +1111,52 @@ export function DashboardGrid() {
     return map
   }, [layouts])
 
-  // Use the container width hook from react-grid-layout v2
-  const { containerRef, width } = useContainerWidth()
+  // 2. Movement logic for mobile
+  const handleMoveWidget = useCallback(
+    (widgetId: string, direction: 'up' | 'down') => {
+      // 1. Get visible vs hidden types
+      const visibleTypes = new Set(visibleWidgets.map((w) => w.type))
+      
+      // 2. Separate visible and hidden layouts
+      const visibleLayouts = mobileLayouts
+        .filter((l) => visibleTypes.has(l.i as any))
+        .sort((a, b) => a.y - b.y)
+      const hiddenLayouts = mobileLayouts.filter((l) => !visibleTypes.has(l.i as any))
 
-  // Track current breakpoint to save to the correct layout store
-  const currentBreakpointRef = useRef<string>('lg')
+      // 3. Find index in visible list
+      const index = visibleLayouts.findIndex((l) => l.i === widgetId)
+      if (index === -1) return
 
-  // Build responsive layouts: desktop uses `layouts`, mobile uses `mobileLayouts`
+      const targetIndex = direction === 'up' ? index - 1 : index + 1
+      if (targetIndex < 0 || targetIndex >= visibleLayouts.length) return
+
+      // 4. Swap positions in the visible array
+      const [movedItem] = visibleLayouts.splice(index, 1)
+      visibleLayouts.splice(targetIndex, 0, movedItem)
+
+      // 5. Recalculate ALL y values for visible layouts to ensure no gaps
+      let nextY = 0
+      const recalculatedVisible = visibleLayouts.map((l) => {
+        const newItem = { ...l, y: nextY }
+        nextY += l.h
+        return newItem
+      })
+
+      // 6. Save combined layouts back to store
+      setMobileLayouts([...recalculatedVisible, ...hiddenLayouts])
+    },
+    [mobileLayouts, visibleWidgets, setMobileLayouts]
+  )
+
+  // 3. Responsive layouts memo
   const responsiveLayouts = useMemo(() => {
     const visibleTypes = new Set(visibleWidgets.map((w) => w.type))
 
-    // Apply static when not in edit mode to prevent any dragging; strip static in edit mode
+    // Apply static when not in edit mode OR when on mobile (we use buttons for move, popover for resize)
     const applyStatic = (l: Layout): Layout => {
       const { static: _s, ...rest } = l as Layout & { static?: boolean }
-      return dashboardEditMode ? rest : { ...rest, static: true }
+      const isInteractionDisabled = !dashboardEditMode || isMobile
+      return isInteractionDisabled ? { ...rest, static: true } : rest
     }
 
     // Desktop: 3 columns - use dedicated desktop layouts
@@ -1144,7 +1186,7 @@ export function DashboardGrid() {
       md: desktopLayout,
       sm: mobileLayout,
     }
-  }, [layouts, mobileLayouts, visibleWidgets, dashboardEditMode])
+  }, [layouts, mobileLayouts, visibleWidgets, dashboardEditMode, isMobile, dashboardEditSubMode])
 
   // Strip `static` flag before persisting so it never gets baked into the store
   const stripStatic = (l: Layout): Layout => {
@@ -1199,15 +1241,47 @@ export function DashboardGrid() {
   return (
     <div ref={containerRef} className="w-full">
       {/* Edit Mode Toggle */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-foreground">Dashboard</h2>
+      <div className="flex items-center justify-between mb-4 gap-2">
+        <div className="flex items-center gap-3 shrink-0">
+          <h2 className="text-lg font-semibold text-foreground">Dashboard</h2>
+          
+          {/* Sub-mode Toggle (Mobile Only) */}
+          {dashboardEditMode && isMobile && (
+            <div className="flex items-center bg-muted/50 p-1 rounded-xl border border-border/50">
+              <button
+                onClick={() => setDashboardEditSubMode('move')}
+                className={cn(
+                  "px-3 py-1 rounded-lg text-xs font-bold transition-all",
+                  dashboardEditSubMode === 'move' 
+                    ? "bg-primary text-primary-foreground shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Move
+              </button>
+              <button
+                onClick={() => setDashboardEditSubMode('resize')}
+                className={cn(
+                  "px-3 py-1 rounded-lg text-xs font-bold transition-all",
+                  dashboardEditSubMode === 'resize' 
+                    ? "bg-primary text-primary-foreground shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Resize
+              </button>
+            </div>
+          )}
+        </div>
+
         <button
           onClick={() => setDashboardEditMode(!dashboardEditMode)}
-          className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-medium transition-all ${
+          className={cn(
+            'inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-medium transition-all',
             dashboardEditMode
               ? 'bg-primary text-primary-foreground shadow-sm'
               : 'bg-muted border border-border text-muted-foreground hover:text-foreground hover:bg-accent'
-          }`}
+          )}
         >
           {dashboardEditMode ? (
             <>
@@ -1225,6 +1299,7 @@ export function DashboardGrid() {
 
       {/* Grid */}
       <ResponsiveGridLayout
+        key={`grid-${dashboardEditMode}-${dashboardEditSubMode}-${isMobile}`}
         className="layout"
         layouts={responsiveLayouts}
         breakpoints={{ lg: 768, md: 768, sm: 0 }}
@@ -1233,12 +1308,13 @@ export function DashboardGrid() {
         width={width}
         onLayoutChange={handleLayoutChange}
         onBreakpointChange={handleBreakpointChange}
-        draggableHandle={dashboardEditMode ? '.widget-drag-handle' : '.no-drag-handle'}
+        draggableHandle={dashboardEditMode && !isMobile && dashboardEditSubMode === 'move' ? '.widget-drag-handle' : '.non-existent-handle'}
+        draggableCancel=".no-drag"
         compactType="vertical"
         margin={[16, 16]}
         containerPadding={[0, 0]}
         isResizable={false}
-        isDraggable={dashboardEditMode}
+        isDraggable={dashboardEditMode && !isMobile && dashboardEditSubMode === 'move'}
       >
         {visibleWidgets.map((widget) => {
           const WidgetComponent = widgetComponents[widget.type]
@@ -1254,8 +1330,12 @@ export function DashboardGrid() {
                 currentW={w}
                 currentH={h}
                 onSizeChange={(nw, nh) => handleSizeChange(widget.type, nw, nh)}
+                onMoveUp={() => handleMoveWidget(widget.type, 'up')}
+                onMoveDown={() => handleMoveWidget(widget.type, 'down')}
                 onNavigate={widget.type !== 'clock' ? () => setActivePage(widgetPageMap[widget.type]) : undefined}
                 editMode={dashboardEditMode}
+                editSubMode={dashboardEditSubMode}
+                isMobile={isMobile}
                 headerAction={widget.type === 'clock' ? <ClockSettingsPopover /> : undefined}
               >
                 <WidgetComponent w={w} h={h} />
