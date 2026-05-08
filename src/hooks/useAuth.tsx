@@ -23,23 +23,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [sessionToken, setSessionToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  // Check if Convex URL is configured (NEXT_PUBLIC_ vars are available client-side)
   const [isConvexConfigured] = useState(() => !!process.env.NEXT_PUBLIC_CONVEX_URL)
+
+  // Helper to set cookie
+  const setSessionCookie = (token: string, days: number) => {
+    const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString()
+    document.cookie = `ar-raqmi-token=${token}; expires=${expires}; path=/; SameSite=Lax`
+  }
+
+  // Helper to get cookie
+  const getSessionCookie = () => {
+    const name = "ar-raqmi-token="
+    const decodedCookie = decodeURIComponent(document.cookie)
+    const ca = decodedCookie.split(';')
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i]
+      while (c.charAt(0) === ' ') c = c.substring(1)
+      if (c.indexOf(name) === 0) return c.substring(name.length, c.length)
+    }
+    return null
+  }
 
   // Check auth status on mount
   useEffect(() => {
     async function checkAuth() {
+      const token = getSessionCookie()
+      if (!token) {
+        setLoading(false)
+        return
+      }
+
       try {
-        const res = await fetch('/api/auth/me')
+        const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
+        if (!convexUrl) {
+          setLoading(false)
+          return
+        }
+
+        // Use fetch for the initial check to avoid dependency loops with ConvexProvider
+        const res = await fetch(`${convexUrl}/api/query`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            path: 'auth:validateSession',
+            args: { sessionToken: token },
+          }),
+        })
+
         if (res.ok) {
           const data = await res.json()
-          if (data.authenticated) {
-            setUser(data.user)
-            setSessionToken(data.sessionToken)
+          if (data.value) {
+            setUser({
+              userId: data.value.userId,
+              username: data.value.username
+            })
+            setSessionToken(token)
+          } else {
+            // Invalid token
+            document.cookie = "ar-raqmi-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
           }
         }
-      } catch {
-        // Network error
+      } catch (err) {
+        console.error('Auth check error:', err)
       } finally {
         setLoading(false)
       }
@@ -50,58 +95,125 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(async (username: string, password: string) => {
     try {
-      const res = await fetch('/api/auth/login', {
+      const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
+      if (!convexUrl) return { success: false, error: 'Convex not configured' }
+
+      // 1. Get user by username
+      const userRes = await fetch(`${convexUrl}/api/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({
+          path: 'auth:getUserByUsername',
+          args: { username },
+        }),
       })
 
-      const data = await res.json()
+      if (!userRes.ok) return { success: false, error: 'Auth service unavailable' }
+      const userData = await userRes.json()
+      const userFound = userData.value
 
-      if (res.ok && data.success) {
-        setUser(data.user)
-        setSessionToken(data.sessionToken)
-        return { success: true }
-      }
+      if (!userFound) return { success: false, error: 'Invalid username or password' }
 
-      return { success: false, error: data.error || 'Login failed' }
-    } catch {
-      return { success: false, error: 'Network error. Please check your connection.' }
+      // 2. Verify password (using bcryptjs which is bundled in the client)
+      const bcrypt = (await import('bcryptjs')).default
+      const isValid = await bcrypt.compare(password, userFound.passwordHash)
+
+      if (!isValid) return { success: false, error: 'Invalid username or password' }
+
+      // 3. Create session
+      const token = crypto.randomUUID()
+      const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000 // 7 days
+
+      const sessionRes = await fetch(`${convexUrl}/api/mutation`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          path: 'sessions:create',
+          args: {
+            userId: userFound._id,
+            token,
+            expiresAt,
+          },
+        }),
+      })
+
+      if (!sessionRes.ok) return { success: false, error: 'Failed to create session' }
+
+      // Success
+      setSessionCookie(token, 7)
+      setUser({
+        userId: userFound._id,
+        username: userFound.username
+      })
+      setSessionToken(token)
+      return { success: true }
+
+    } catch (err) {
+      console.error('Login error:', err)
+      return { success: false, error: 'An unexpected error occurred' }
     }
   }, [])
 
   const logout = useCallback(async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' })
+      const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
+      if (convexUrl && sessionToken) {
+        await fetch(`${convexUrl}/api/mutation`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            path: 'sessions:remove',
+            args: { token: sessionToken },
+          }),
+        })
+      }
     } finally {
+      document.cookie = "ar-raqmi-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
       setUser(null)
       setSessionToken(null)
     }
-  }, [])
+  }, [sessionToken])
 
-
-  const updateCredentials = useCallback(async (username?: string, password?: string) => {
+  const updateCredentials = useCallback(async (newUsername?: string, newPassword?: string) => {
     try {
-      const res = await fetch('/api/auth/update', {
+      const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
+      if (!convexUrl || !sessionToken) return { success: false, error: 'Unauthorized' }
+
+      const args: any = { sessionToken }
+      if (newUsername) args.newUsername = newUsername
+
+      if (newPassword) {
+        const bcrypt = (await import('bcryptjs')).default
+        const salt = await bcrypt.genSalt(12)
+        args.newPasswordHash = await bcrypt.hash(newPassword, salt)
+        args.newSalt = salt
+      }
+
+      const res = await fetch(`${convexUrl}/api/mutation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({
+          path: 'auth:updateUser',
+          args,
+        }),
       })
 
+      if (!res.ok) return { success: false, error: 'Failed to update credentials' }
       const data = await res.json()
-
-      if (res.ok && data.success) {
-        if (username && user) {
-          setUser({ ...user, username })
+      
+      if (data.value && data.value.success) {
+        if (newUsername && user) {
+          setUser({ ...user, username: newUsername })
         }
         return { success: true }
       }
 
-      return { success: false, error: data.error || 'Update failed' }
-    } catch {
-      return { success: false, error: 'Network error. Please check your connection.' }
+      return { success: false, error: data.value?.error || 'Update failed' }
+    } catch (err) {
+      console.error('Update error:', err)
+      return { success: false, error: 'An error occurred during update' }
     }
-  }, [user])
+  }, [sessionToken, user])
 
   return (
     <AuthContext.Provider value={{ user, sessionToken, loading, login, logout, updateCredentials, isConvexConfigured }}>

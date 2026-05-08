@@ -14,10 +14,16 @@ export default function VerseWidget() {
     setVerseLoading(true)
     setError(null)
     try {
-      const res = await fetch('/api/verse')
+      const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
+      if (!convexUrl) throw new Error('Convex not configured')
+      const res = await fetch(`${convexUrl}/api/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: 'content:getDailyVerse', args: {} }),
+      })
       if (!res.ok) throw new Error('Failed to fetch verse')
-      const data: VerseData = await res.json()
-      setVerse(data)
+      const data = await res.json()
+      setVerse(data.value)
     } catch {
       setError('Could not load verse')
       // Fallback verse

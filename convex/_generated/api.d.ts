@@ -10,6 +10,7 @@
 
 import type * as auth from "../auth.js";
 import type * as clocks from "../clocks.js";
+import type * as content from "../content.js";
 import type * as dashboard from "../dashboard.js";
 import type * as events from "../events.js";
 import type * as files from "../files.js";
@@ -29,6 +30,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   clocks: typeof clocks;
+  content: typeof content;
   dashboard: typeof dashboard;
   events: typeof events;
   files: typeof files;
