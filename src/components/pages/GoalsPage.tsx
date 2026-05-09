@@ -83,7 +83,7 @@ function SortableMilestoneItem({ milestone, index, onRemove, onLabelChange }: Mi
       <Input
         value={milestone.label}
         onChange={(e) => onLabelChange(index, e.target.value)}
-        className="flex-1 bg-transparent border-none p-0 h-auto focus-visible:ring-0 text-foreground"
+        className="flex-1 bg-transparent border-none p-0 h-auto focus-visible:ring-0 text-foreground arabic-text"
       />
       <Button
         variant="ghost"
@@ -152,7 +152,7 @@ function SortableGoalCard({ goal, isRearranging, onEdit, onDelete, onToggleMiles
                 <GripVertical className="size-5" />
               </div>
             )}
-            <h3 className="font-bold text-foreground text-xl truncate">
+            <h3 className="font-bold text-foreground text-xl truncate arabic-text">
               {goal.title}
             </h3>
           </div>
@@ -215,11 +215,12 @@ function SortableGoalCard({ goal, isRearranging, onEdit, onDelete, onToggleMiles
                 )}
               </div>
               <span
-                className={`text-[15px] leading-relaxed flex-1 ${
+                className={`text-[15px] leading-relaxed flex-1 arabic-text ${
                   milestone.completed
                     ? 'line-through text-outline'
                     : 'text-foreground font-medium'
                 }`}
+                dir="auto"
               >
                 {milestone.label}
               </span>
@@ -437,7 +438,7 @@ export default function GoalsPage() {
                       value={goalTitle}
                       onChange={(e) => setGoalTitle(e.target.value)}
                       placeholder="What do you want to achieve?"
-                      className="h-12 rounded-2xl bg-muted border-none text-lg font-medium px-5 focus-visible:ring-2 ring-primary/20"
+                      className="h-12 rounded-2xl bg-muted border-none text-lg font-medium px-5 focus-visible:ring-2 ring-primary/20 arabic-text"
                     />
                   </div>
                   <div className="flex flex-col gap-2.5">
@@ -447,7 +448,7 @@ export default function GoalsPage() {
                         value={milestoneInput}
                         onChange={(e) => setMilestoneInput(e.target.value)}
                         placeholder="Add a step..."
-                        className="h-11 rounded-2xl bg-muted border-none px-4 focus-visible:ring-2 ring-primary/20"
+                        className="h-11 rounded-2xl bg-muted border-none px-4 focus-visible:ring-2 ring-primary/20 arabic-text"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             e.preventDefault()
