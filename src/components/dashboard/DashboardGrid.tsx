@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useMemo, useRef } from 'react'
+import React, { useCallback, useMemo, useRef, useMemo as useMemoReact } from 'react'
 import { ResponsiveGridLayout, useContainerWidth } from 'react-grid-layout'
 import { CheckCircle, CalendarDays, StickyNote, BookOpen, Flag, Folder, FileText, Image as ImageIcon, Music, Film, Pencil, Check, Plus, Settings2, Trash2, ChevronUp, ChevronDown, MoonStar, ClipboardList, Copy, CheckCheck, Star, Clock, Loader2, ExternalLink } from 'lucide-react'
 import 'react-grid-layout/css/styles.css'
@@ -433,8 +433,18 @@ function NotesContent({ w, h }: { w: number; h: number }) {
   const notes = useAppStore((s) => s.notes)
   const setActivePage = useAppStore((s) => s.setActivePage)
   const setHighlightedNote = useAppStore((s) => s.setHighlightedNote)
-  
-  const maxNotes = Math.min(notes.length, h >= 5 ? 10 : h >= 4 ? 8 : h >= 3 ? 5 : h >= 2 ? 4 : 3)
+
+  // Sort by createdAt desc (latest first) - pinned notes first, then by date
+  const sortedNotes = useMemo(() => {
+    return [...notes].sort((a, b) => {
+      // Pinned notes always come first
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
+      // Then sort by createdAt descending (newest first)
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    })
+  }, [notes])
+
+  const maxNotes = Math.min(sortedNotes.length, h >= 5 ? 10 : h >= 4 ? 8 : h >= 3 ? 5 : h >= 2 ? 4 : 3)
   const showContent = h >= 3
   const useGrid = w >= 2 && h >= 2
 
@@ -448,15 +458,20 @@ function NotesContent({ w, h }: { w: number; h: number }) {
     const cols = w >= 3 ? 3 : 2
     return (
       <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
-        {notes.slice(0, maxNotes).map((note) => (
+        {sortedNotes.slice(0, maxNotes).map((note) => (
           <button
             key={note.id}
             onClick={() => handleNoteClick(note.id)}
-            className="p-2.5 rounded-xl border border-border hover:bg-accent/50 transition-all text-left group"
+            className="p-2.5 rounded-xl border border-border hover:bg-accent/50 transition-all text-left group relative"
             style={{ borderLeftColor: note.color, borderLeftWidth: '3px' }}
           >
+            {note.pinned && (
+              <div className="absolute top-1.5 right-1.5">
+                <Star className="size-3 text-primary fill-primary" />
+              </div>
+            )}
             <div className="flex items-center justify-between gap-1 mb-1">
-              <p className="text-sm font-bold text-foreground line-clamp-1 flex-1 group-hover:text-primary transition-colors arabic-text" dir="auto">{note.title}</p>
+              <p className="text-sm font-bold text-foreground line-clamp-1 flex-1 group-hover:text-primary transition-colors arabic-text pr-4" dir="auto">{note.title}</p>
               <ExternalLink className="size-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
             </div>
             {showContent && (
@@ -471,15 +486,20 @@ function NotesContent({ w, h }: { w: number; h: number }) {
   // List layout for narrow cards
   return (
     <div className="space-y-1.5">
-      {notes.slice(0, maxNotes).map((note) => (
+      {sortedNotes.slice(0, maxNotes).map((note) => (
         <button
           key={note.id}
           onClick={() => handleNoteClick(note.id)}
-          className="w-full p-2.5 rounded-xl border border-border hover:bg-accent/50 transition-all text-left group"
+          className="w-full p-2.5 rounded-xl border border-border hover:bg-accent/50 transition-all text-left group relative"
           style={{ borderLeftColor: note.color, borderLeftWidth: '3px' }}
         >
+          {note.pinned && (
+            <div className="absolute top-1.5 right-1.5">
+              <Star className="size-3 text-primary fill-primary" />
+            </div>
+          )}
           <div className="flex items-center justify-between gap-1">
-            <p className="text-sm font-bold text-foreground line-clamp-1 flex-1 group-hover:text-primary transition-colors arabic-text" dir="auto">{note.title}</p>
+            <p className="text-sm font-bold text-foreground line-clamp-1 flex-1 group-hover:text-primary transition-colors arabic-text pr-4" dir="auto">{note.title}</p>
             <ExternalLink className="size-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
           </div>
           {showContent && (
