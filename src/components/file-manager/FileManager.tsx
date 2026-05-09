@@ -579,7 +579,7 @@ export default function FileManager() {
       </div>
 
       {/* Mobile Floating Action Button */}
-      <div className="md:hidden fixed bottom-6 right-6 z-50 flex flex-col gap-3">
+      <div className="md:hidden fixed bottom-20 right-6 z-50 flex flex-col gap-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="icon" className="size-14 rounded-full bg-primary shadow-2xl shadow-primary/40 text-primary-foreground">
