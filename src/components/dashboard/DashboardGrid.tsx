@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { cn } from '@/lib/utils'
+import { toHijri } from 'hijri-converter'
 
 // Widget icon mapping
 const widgetIcons: Record<WidgetType, React.ReactNode> = {
@@ -787,32 +788,32 @@ const POPULAR_TIMEZONES = [
   { label: 'Berlin', timezone: 'Europe/Berlin', value: 'Europe/Berlin|BER' },
 ]
 
-// ===== Hijri Date helper using Intl.DateTimeFormat =====
+const ISLAMIC_MONTHS_EN = [
+  'Muharram', 'Safar', 'Rabi al-Awwal', 'Rabi al-Thani',
+  'Jumada al-Awwal', 'Jumada al-Thani', 'Rajab', "Sha'ban",
+  'Ramadan', 'Shawwal', 'Dhu al-Qi\'dah', 'Dhu al-Hijjah'
+]
+
+const ISLAMIC_MONTHS_AR = [
+  'محرم', 'صفر', 'ربيع الأول', 'ربيع الثاني',
+  'جمادى الأولى', 'جمادى الثانية', 'رجب', 'شعبان',
+  'رمضان', 'شوال', 'ذو القعدة', 'ذو الحجة'
+]
+
+// ===== Hijri Date helper using hijri-converter =====
 function getHijriDate(offset: number): { day: number; month: string; year: number; monthAr: string } | null {
   try {
     const now = new Date()
     now.setDate(now.getDate() + offset)
 
-    const hijriFmt = new Intl.DateTimeFormat('en-US-u-ca-islamic-umalqura', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    })
-    const hijriFmtAr = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    })
+    const hijri = toHijri(now.getFullYear(), now.getMonth() + 1, now.getDate())
 
-    const parts = hijriFmt.formatToParts(now)
-    const arParts = hijriFmtAr.formatToParts(now)
-
-    const day = parseInt(parts.find(p => p.type === 'day')?.value || '0', 10)
-    const month = parts.find(p => p.type === 'month')?.value || ''
-    const year = parseInt(parts.find(p => p.type === 'year')?.value || '0', 10)
-    const monthAr = arParts.find(p => p.type === 'month')?.value || ''
-
-    return { day, month, year, monthAr }
+    return {
+      day: hijri.hd,
+      month: ISLAMIC_MONTHS_EN[hijri.hm - 1],
+      year: hijri.hy,
+      monthAr: ISLAMIC_MONTHS_AR[hijri.hm - 1]
+    }
   } catch {
     return null
   }
