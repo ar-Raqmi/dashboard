@@ -504,7 +504,7 @@ function VerseContent() {
   if (verse) {
     return (
       <div className="space-y-3">
-        <p className="arabic-text text-lg leading-relaxed text-primary">
+        <p className="arabic-text text-lg leading-relaxed text-primary text-right" dir="rtl">
           {verse.arabic}
         </p>
         <p className="text-sm text-on-surface-variant italic">{verse.translation}</p>

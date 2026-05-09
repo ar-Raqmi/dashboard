@@ -87,12 +87,10 @@ export default function VerseWidget() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.5 }}
-              className="mb-3"
+              className="mb-3 w-full"
+              dir="rtl"
             >
-              <p
-                className="arabic-text text-lg leading-loose text-right"
-                dir="rtl"
-              >
+              <p className="arabic-text text-lg leading-loose text-right">
                 {verse.arabic}
               </p>
             </motion.div>
