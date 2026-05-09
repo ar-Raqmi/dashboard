@@ -17,21 +17,14 @@ function getHijriDate(offset: number): { day: number; month: string; year: numbe
       month: 'long',
       year: 'numeric',
     })
-    const hijriFmtAr = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    })
 
     const parts = hijriFmt.formatToParts(now)
-    const arParts = hijriFmtAr.formatToParts(now)
 
     const day = parseInt(parts.find(p => p.type === 'day')?.value || '0', 10)
     const month = parts.find(p => p.type === 'month')?.value || ''
     const year = parseInt(parts.find(p => p.type === 'year')?.value || '0', 10)
-    const monthAr = arParts.find(p => p.type === 'month')?.value || ''
 
-    return { day, month, year, monthAr }
+    return { day, month, year, monthAr: month }
   } catch {
     return null
   }
@@ -225,23 +218,41 @@ export default function Header() {
         </div> */}
       </div>
 
-      {/* Mobile Date Chip (shown below header on small screens) */}
-      <div className="sm:hidden absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2">
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-2xl bg-background/90 backdrop-blur-xl border border-border">
-          {hijri && (
-            <>
-              <MoonStar className="size-2.5 text-primary shrink-0" />
-              <span className="text-primary text-[10px] font-medium">
-                {hijri.day} {hijri.monthAr}
-              </span>
-              <span className="text-muted-foreground/50 mx-0.5">·</span>
-            </>
-          )}
-          <span className="text-[10px] text-muted-foreground font-medium">
-            {gregorian}
-          </span>
-        </div>
+      {/* Mobile Date Bar (shown below header on small screens) */}
+      <div className="sm:hidden absolute top-full left-0 right-0 flex justify-center py-2 bg-background/50 backdrop-blur-md">
+        <MobileDateDisplay />
       </div>
     </motion.header>
+  )
+}
+
+function MobileDateDisplay() {
+  const [showHijri, setShowHijri] = useState(true)
+  const hijriVisible = useAppStore((s) => s.hijriVisible)
+  const hijriOffset = useAppStore((s) => s.hijriOffset)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => setMounted(true), [])
+
+  const hijri = mounted && hijriVisible ? getHijriDate(hijriOffset) : null
+  const gregorian = mounted
+    ? new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+    : ''
+
+  if (!mounted) return null
+
+  return (
+    <button
+      onClick={() => setShowHijri(!showHijri)}
+      className="flex items-center justify-center gap-2 px-6 py-1.5 rounded-full bg-background border border-border/50 text-[11px] font-medium w-[90%] shadow-sm text-primary"
+    >
+      <MoonStar className="size-3 shrink-0" />
+      <span>
+        {showHijri && hijri
+          ? `${hijri.day} ${hijri.month} ${hijri.year} AH`
+          : gregorian
+        }
+      </span>
+    </button>
   )
 }
