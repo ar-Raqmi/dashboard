@@ -90,7 +90,7 @@ export default function VerseWidget() {
               className="mb-3"
             >
               <p
-                className="arabic-text text-lg leading-loose text-right text-[oklch(0.95_0.01_155)] text-right"
+                className="arabic-text text-lg leading-loose text-right"
                 dir="rtl"
               >
                 {verse.arabic}
