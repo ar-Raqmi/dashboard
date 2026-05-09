@@ -178,9 +178,6 @@
 /* Arabic text styling */
 .arabic-text {
   font-family: var(--font-arabic), 'Noto Sans Arabic', sans-serif;
-  direction: rtl;
-  text-align: right;
-  line-height: 2;
 }
 
 /* Material 3 Expressive - Scrollbar */
