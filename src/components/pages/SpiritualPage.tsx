@@ -127,9 +127,11 @@ export default function SpiritualPage() {
             </motion.div>
           ) : verse ? (
             <motion.div key={verse.reference} {...fadeInUp} className="flex flex-col gap-4 relative z-10">
-              <p className="arabic-text text-2xl md:text-3xl text-foreground leading-loose text-right" dir="rtl">
-                {verse.arabic}
-              </p>
+              <div className="w-full text-right" dir="rtl">
+                <p className="arabic-text text-2xl md:text-3xl text-foreground leading-loose">
+                  {verse.arabic}
+                </p>
+              </div>
               <p className="text-base text-foreground italic leading-relaxed">
                 &ldquo;{verse.translation}&rdquo;
               </p>
@@ -193,9 +195,11 @@ export default function SpiritualPage() {
             </motion.div>
           ) : hadith ? (
             <motion.div key={hadith.source} {...fadeInUp} className="flex flex-col gap-4">
-              <p className="arabic-text text-xl md:text-2xl text-foreground leading-loose text-right" dir="rtl">
-                {hadith.arabic}
-              </p>
+              <div className="w-full text-right" dir="rtl">
+                <p className="arabic-text text-xl md:text-2xl text-foreground leading-loose">
+                  {hadith.arabic}
+                </p>
+              </div>
               <p className="text-base text-foreground italic leading-relaxed">
                 &ldquo;{hadith.translation}&rdquo;
               </p>
