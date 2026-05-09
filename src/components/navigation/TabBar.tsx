@@ -66,25 +66,13 @@ export default function TabBar() {
 
   return (
     <nav
-      className="relative flex items-center border-b border-border bg-background/80 backdrop-blur-xl"
+      className="relative flex items-center justify-center p-2"
       aria-label="Main navigation"
     >
-      {/* Left scroll indicator */}
-      {canScrollLeft && (
-        <button
-          onClick={() => scrollBy(-1)}
-          className="absolute left-0 z-10 w-8 h-full flex items-center justify-center
-            bg-gradient-to-r from-background/95 to-transparent"
-          aria-label="Scroll tabs left"
-        >
-          <ChevronLeft className="w-4 h-4 text-muted-foreground" />
-        </button>
-      )}
-
       {/* Scrollable tab bar */}
       <div
         ref={scrollRef}
-        className="flex items-center gap-1 px-2 py-1.5 overflow-x-auto scrollbar-none"
+        className="flex items-center gap-1 overflow-x-auto scrollbar-none"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {navItems.map((item) => {
@@ -96,11 +84,11 @@ export default function TabBar() {
               key={item.id}
               onClick={() => setActivePage(item.id)}
               className={`
-                relative flex items-center gap-1.5 px-3 py-2 rounded-2xl
-                text-sm font-medium whitespace-nowrap transition-colors shrink-0
+                relative flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-2xl
+                text-[10px] font-medium whitespace-nowrap transition-colors shrink-0
                 ${isActive
                   ? 'text-primary'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                  : 'text-muted-foreground'
                 }
               `}
               aria-current={isActive ? 'page' : undefined}
@@ -109,7 +97,7 @@ export default function TabBar() {
               {isActive && (
                 <motion.div
                   layoutId="tab-pill"
-                  className="absolute inset-0 rounded-2xl bg-primary/10 border border-primary/20"
+                  className="absolute inset-0 rounded-2xl bg-primary/10"
                   transition={{
                     type: 'spring',
                     stiffness: 350,
@@ -117,24 +105,12 @@ export default function TabBar() {
                   }}
                 />
               )}
-              <Icon className="relative z-10 w-4 h-4" />
+              <Icon className="relative z-10 w-5 h-5" />
               <span className="relative z-10">{item.label}</span>
             </button>
           )
         })}
       </div>
-
-      {/* Right scroll indicator */}
-      {canScrollRight && (
-        <button
-          onClick={() => scrollBy(1)}
-          className="absolute right-0 z-10 w-8 h-full flex items-center justify-center
-            bg-gradient-to-l from-background/95 to-transparent"
-          aria-label="Scroll tabs right"
-        >
-          <ChevronRight className="w-4 h-4 text-muted-foreground" />
-        </button>
-      )}
     </nav>
   )
 }
