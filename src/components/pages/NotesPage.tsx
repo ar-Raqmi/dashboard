@@ -426,6 +426,7 @@ export default function NotesPage() {
             <DialogContent className="bg-card border-border rounded-3xl max-h-[90vh] flex flex-col">
               <DialogHeader>
                 <DialogTitle className="text-foreground">Add New Note</DialogTitle>
+                <DialogDescription className="sr-only">Create a new note with title, content, and color options.</DialogDescription>
               </DialogHeader>
               <div className="flex flex-col gap-4 py-2 overflow-y-auto min-h-0">
                 <div className="flex flex-col gap-2">
