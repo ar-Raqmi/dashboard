@@ -91,9 +91,8 @@ export default function NotesWidget() {
               <button
                 key={c}
                 onClick={() => setNewColor(c)}
-                className={`w-4 h-4 rounded-full transition-transform ${
-                  newColor === c ? 'scale-125 ring-2 ring-white/30' : ''
-                }`}
+                className={`w-4 h-4 rounded-full transition-transform ${newColor === c ? 'scale-125 ring-2 ring-white/30' : ''
+                  }`}
                 style={{ backgroundColor: c }}
               />
             ))}
@@ -167,14 +166,14 @@ export default function NotesWidget() {
       {/* Delete Confirmation */}
       <Dialog open={!!deleteNoteId} onOpenChange={(open) => !open && setDeleteNoteId(null)}>
         <DialogContent className="bg-card border-border rounded-3xl sm:max-w-sm">
-            <DialogHeader>
-                <DialogTitle className="text-foreground">Delete Note</DialogTitle>
-                <DialogDescription>Are you sure you want to delete this note?</DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="gap-2 sm:gap-0">
-                <DialogClose asChild><Button variant="ghost" className="rounded-2xl">Cancel</Button></DialogClose>
-                <Button onClick={confirmDelete} className="rounded-2xl bg-destructive text-destructive-foreground">Delete</Button>
-            </DialogFooter>
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Delete Note</DialogTitle>
+            <DialogDescription>Are you sure you want to delete this note?</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <DialogClose asChild><Button variant="ghost" className="rounded-2xl">Cancel</Button></DialogClose>
+            <Button onClick={confirmDelete} className="rounded-2xl bg-destructive text-destructive-foreground">Delete</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
