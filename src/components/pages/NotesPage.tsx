@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
-import { Plus, Trash2, StickyNote, Copy, Pencil, Search, Check, Pin, PinOff, X, AlertTriangle } from 'lucide-react'
+import { useState, useMemo, useEffect } from 'react'
+import { Plus, Trash2, StickyNote, Copy, Pencil, Search, Check, Pin, PinOff, AlertTriangle, MoreVertical, Calendar } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useAppStore } from '@/lib/store'
@@ -19,8 +19,15 @@ import {
   DialogClose,
   DialogDescription,
 } from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 const NOTE_COLORS = [
   { value: '#A5D6A7', label: 'Green' },
@@ -31,21 +38,110 @@ const NOTE_COLORS = [
   { value: '#FF8A65', label: 'Orange' },
 ]
 
-const MARKDOWN_STYLES = `[&_h1]:text-xl [&_h1]:font-bold [&_h1]:mb-2 [&_h1]:mt-4 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:mb-2 [&_h2]:mt-3 [&_h3]:text-base [&_h3]:font-bold [&_h3]:mb-1 [&_h3]:mt-2 [&_p]:mb-2 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:ml-4 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:ml-4 [&_ol]:mb-2 [&_li]:mb-1 [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:rounded-xl [&_pre]:overflow-x-auto [&_pre]:mb-2 [&_blockquote]:border-l-3 [&_blockquote]:border-primary [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:mb-2 [&_strong]:font-bold [&_a]:text-primary [&_a]:underline [&_hr]:border-border [&_hr]:my-3 [&_table]:w-full [&_table]:mb-2 [&_th]:border [&_th]:border-border [&_th]:px-2 [&_th]:py-1 [&_th]:bg-muted [&_td]:border [&_td]:border-border [&_td]:px-2 [&_td]:py-1`
+const MARKDOWN_STYLES = `[&_h1]:text-lg [&_h1]:font-bold [&_h1]:mb-2 [&_h1]:mt-3 [&_h2]:text-base [&_h2]:font-bold [&_h2]:mb-2 [&_h2]:mt-2 [&_h3]:text-sm [&_h3]:font-bold [&_h3]:mb-1 [&_h3]:mt-2 [&_p]:mb-2 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:ml-4 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:ml-4 [&_ol]:mb-2 [&_li]:mb-1 [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:rounded-xl [&_pre]:overflow-x-auto [&_pre]:mb-2 [&_blockquote]:border-l-3 [&_blockquote]:border-primary [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:mb-2 [&_strong]:font-bold [&_a]:text-primary [&_a]:underline [&_hr]:border-border [&_hr]:my-3 [&_table]:w-full [&_table]:mb-2 [&_th]:border [&_th]:border-border [&_th]:px-2 [&_th]:py-1 [&_th]:bg-muted [&_td]:border [&_td]:border-border [&_td]:px-2 [&_td]:py-1`
 
-// NoteCard: Responsive and grows with content
-function NoteCard({ note, editMode, onOpen, onPin, onDelete, onCopy, copiedId }: {
-  note: Note; editMode: boolean; onOpen: () => void; onPin: () => void
-  onDelete: () => void; onCopy: () => void; copiedId: string | null
+// Format relative time (e.g., "2 hours ago", "Yesterday")
+function formatRelativeTime(dateStr: string): string {
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+
+  if (diffMins < 1) return 'Just now'
+  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffHours < 24) return `${diffHours}h ago`
+  if (diffDays === 1) return 'Yesterday'
+  if (diffDays < 7) return `${diffDays}d ago`
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+}
+
+// Mobile-optimized Note Card
+function NoteCard({ note, onOpen, onPin, onDelete, onCopy, copiedId, isMobile }: {
+  note: Note; onOpen: () => void; onPin: () => void
+  onDelete: () => void; onCopy: () => void; copiedId: string | null; isMobile: boolean
 }) {
+  const [isPressed, setIsPressed] = useState(false)
+
+  if (isMobile) {
+    // Mobile: Full-width card with swipe-friendly touch targets
+    return (
+      <div
+        className={cn(
+          'rounded-2xl border flex flex-col relative overflow-hidden transition-all duration-200',
+          'border-border bg-card',
+          isPressed ? 'scale-[0.98] bg-accent/30' : 'hover:shadow-md'
+        )}
+        onTouchStart={() => setIsPressed(true)}
+        onTouchEnd={() => setIsPressed(false)}
+        onClick={onOpen}
+      >
+        {/* Color accent bar */}
+        <div className="h-1 shrink-0" style={{ backgroundColor: note.color }} />
+
+        <div className="flex flex-col p-4 gap-2">
+          {/* Title row with actions */}
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              {note.pinned && <Pin className="size-3.5 text-primary -rotate-45 shrink-0" />}
+              <h3 className="font-semibold text-foreground text-sm truncate">
+                {note.title}
+              </h3>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  onClick={(e) => e.stopPropagation()}
+                  className="p-2 -mr-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-colors shrink-0"
+                >
+                  <MoreVertical className="size-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="rounded-xl">
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onPin() }} className="gap-2">
+                  {note.pinned ? <PinOff className="size-4" /> : <Pin className="size-4 -rotate-45" />}
+                  {note.pinned ? 'Unpin' : 'Pin'}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onCopy() }} className="gap-2">
+                  {copiedId === note.id ? <Check className="size-4 text-primary" /> : <Copy className="size-4" />}
+                  {copiedId === note.id ? 'Copied!' : 'Copy'}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete() }} className="gap-2 text-destructive">
+                  <Trash2 className="size-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Content preview */}
+          <div className={cn('text-sm text-muted-foreground line-clamp-3', MARKDOWN_STYLES)}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{note.content || '*No content*'}</ReactMarkdown>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center gap-2 pt-2 mt-auto border-t border-border/50">
+            <div className="size-2 rounded-full shrink-0" style={{ backgroundColor: note.color }} />
+            <Calendar className="size-3 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">
+              {formatRelativeTime(note.updatedAt)}
+            </span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Desktop: Masonry-style card with hover actions
   return (
     <div
       className={cn(
-        'break-inside-avoid mb-4 rounded-3xl border flex flex-col group relative overflow-hidden transition-all duration-300',
-        editMode ? 'border-primary/40 shadow-lg ring-1 ring-primary/20 cursor-grab active:cursor-grabbing' : 'border-border cursor-pointer hover:shadow-xl hover:border-primary/20 hover:-translate-y-1',
+        'break-inside-avoid mb-4 rounded-3xl border flex flex-col group relative overflow-hidden transition-all duration-200',
+        'border-border cursor-pointer hover:shadow-lg hover:border-primary/20 hover:-translate-y-0.5',
         'bg-card'
       )}
-      onClick={editMode ? undefined : onOpen}
+      onClick={onOpen}
     >
       {/* Color accent bar */}
       <div className="absolute top-0 left-0 right-0 h-1.5 shrink-0" style={{ backgroundColor: note.color }} />
@@ -53,11 +149,11 @@ function NoteCard({ note, editMode, onOpen, onPin, onDelete, onCopy, copiedId }:
       <div className="flex flex-col p-5 gap-3 flex-1">
         {/* Title row */}
         <div className="flex items-start justify-between gap-2 shrink-0">
-          <h3 className="font-bold text-foreground text-sm uppercase tracking-wider opacity-60">
-            {note.title}
-          </h3>
-          <div className="flex gap-1 shrink-0">
-            {note.pinned && <Pin className="size-3.5 text-primary -rotate-45" />}
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            {note.pinned && <Pin className="size-3.5 text-primary -rotate-45 shrink-0" />}
+            <h3 className="font-bold text-foreground text-sm uppercase tracking-wider opacity-60 truncate">
+              {note.title}
+            </h3>
           </div>
         </div>
 
@@ -72,7 +168,7 @@ function NoteCard({ note, editMode, onOpen, onPin, onDelete, onCopy, copiedId }:
           <span className="text-[0.65rem] font-medium text-muted-foreground uppercase tracking-tight">
             {new Date(note.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
           </span>
-          <div className="ml-auto flex gap-3 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="ml-auto flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button onClick={(e) => { e.stopPropagation(); onCopy() }}
               className="p-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
               title="Copy content">
@@ -99,43 +195,61 @@ function NotesGridSection({
   title,
   icon,
   notes,
-  editMode,
   onOpen,
   onPin,
   onDelete,
   onCopy,
   copiedId,
+  isMobile,
 }: {
   title: string; icon: React.ReactNode; notes: Note[]
-  editMode: boolean
   onOpen: (id: string) => void; onPin: (id: string) => void
   onDelete: (id: string) => void; onCopy: (id: string) => void
-  copiedId: string | null
+  copiedId: string | null; isMobile: boolean
 }) {
   if (notes.length === 0) return null
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex items-center gap-2 px-2">
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-2 px-1">
         {icon}
-        <h2 className="text-base font-bold text-foreground">{title}</h2>
-        <span className="text-xs font-medium text-muted-foreground bg-muted px-2.5 py-0.5 rounded-full">{notes.length}</span>
+        <h2 className="text-sm font-bold text-foreground uppercase tracking-wide">{title}</h2>
+        <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{notes.length}</span>
       </div>
 
-      <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
-        {notes.map((note) => (
-          <NoteCard
-            key={note.id}
-            note={note}
-            editMode={editMode}
-            onOpen={() => onOpen(note.id)}
-            onPin={() => onPin(note.id)}
-            onDelete={() => onDelete(note.id)}
-            onCopy={() => onCopy(note.id)}
-            copiedId={copiedId}
-          />
-        ))}
-      </div>
+      {isMobile ? (
+        // Mobile: Single column list layout
+        <div className="flex flex-col gap-3">
+          {notes.map((note) => (
+            <NoteCard
+              key={note.id}
+              note={note}
+              onOpen={() => onOpen(note.id)}
+              onPin={() => onPin(note.id)}
+              onDelete={() => onDelete(note.id)}
+              onCopy={() => onCopy(note.id)}
+              copiedId={copiedId}
+              isMobile={isMobile}
+            />
+          ))}
+        </div>
+      ) : (
+        // Desktop: Masonry columns
+        <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+          {notes.map((note) => (
+            <NoteCard
+              key={note.id}
+              note={note}
+              onOpen={() => onOpen(note.id)}
+              onPin={() => onPin(note.id)}
+              onDelete={() => onDelete(note.id)}
+              onCopy={() => onCopy(note.id)}
+              copiedId={copiedId}
+              isMobile={isMobile}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -146,6 +260,7 @@ export default function NotesPage() {
     notes, addNote, updateNote, deleteNote, toggleNotePinned,
   } = useAppStore()
 
+  const isMobile = useIsMobile()
   const [searchQuery, setSearchQuery] = useState('')
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [viewDialogOpen, setViewDialogOpen] = useState(false)
@@ -155,7 +270,6 @@ export default function NotesPage() {
   const [noteColor, setNoteColor] = useState(NOTE_COLORS[0].value)
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
-  const [editMode, setEditMode] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
   const { highlightedNoteId, setHighlightedNote } = useAppStore()
@@ -213,7 +327,6 @@ export default function NotesPage() {
   }
 
   const openNotePreview = (noteId: string) => {
-    if (editMode) return
     const note = notes.find((n) => n.id === noteId)
     if (!note) return
     setActiveNoteId(noteId)
@@ -287,22 +400,6 @@ export default function NotesPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Edit Layout Toggle */}
-          <button
-            onClick={() => setEditMode(!editMode)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-sm font-medium transition-all ${
-              editMode
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'bg-muted border border-border text-muted-foreground hover:text-foreground hover:bg-accent'
-            }`}
-          >
-            {editMode ? (
-              <><Check className="size-3.5" />Done</>
-            ) : (
-              <><Pencil className="size-3.5" />Edit Layout</>
-            )}
-          </button>
-
           {/* Add Note Dialog */}
           <Dialog open={addDialogOpen} onOpenChange={(open) => { setAddDialogOpen(open); if (!open) resetForm() }}>
             <DialogTrigger asChild>
@@ -362,6 +459,7 @@ export default function NotesPage() {
       <Dialog open={viewDialogOpen} onOpenChange={handleViewDialogClose}>
         <DialogContent className={`bg-card border-border rounded-3xl flex flex-col p-0 gap-0 overflow-hidden h-[90vh] sm:max-h-[90vh] ${isEditing ? 'sm:max-w-2xl' : 'sm:max-w-lg'}`}>
           <DialogTitle className="sr-only">{activeNote?.title || 'Note'}</DialogTitle>
+          <DialogDescription className="sr-only">Viewing and editing note details.</DialogDescription>
           {activeNote && (
             <>
               {/* Header */}
@@ -479,8 +577,9 @@ export default function NotesPage() {
         <NotesGridSection
           title="Pinned Notes" icon={<Pin className="size-4 text-primary -rotate-45" />}
           notes={filteredPinned}
-          editMode={editMode} onOpen={openNotePreview} onPin={toggleNotePinned}
+          onOpen={openNotePreview} onPin={toggleNotePinned}
           onDelete={initiateDelete} onCopy={handleCopy} copiedId={copiedId}
+          isMobile={isMobile}
         />
       )}
 
@@ -489,8 +588,9 @@ export default function NotesPage() {
         <NotesGridSection
           title="Notes" icon={<StickyNote className="size-4 text-primary" />}
           notes={filteredRegular}
-          editMode={editMode} onOpen={openNotePreview} onPin={toggleNotePinned}
+          onOpen={openNotePreview} onPin={toggleNotePinned}
           onDelete={initiateDelete} onCopy={handleCopy} copiedId={copiedId}
+          isMobile={isMobile}
         />
       )}
 
