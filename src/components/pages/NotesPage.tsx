@@ -133,18 +133,18 @@ function NoteCard({ note, onOpen, onPin, onDelete, onCopy, copiedId, isMobile }:
     )
   }
 
-  // Desktop: Masonry-style card with hover actions
+  // Desktop: Fixed-size card
   return (
     <div
       className={cn(
-        'break-inside-avoid mb-4 rounded-3xl border flex flex-col group relative overflow-hidden transition-all duration-200',
+        'rounded-3xl border flex flex-col group relative overflow-hidden transition-all duration-200 h-full',
         'border-border cursor-pointer hover:shadow-lg hover:border-primary/20 hover:-translate-y-0.5',
         'bg-card'
       )}
       onClick={onOpen}
     >
       {/* Color accent bar */}
-      <div className="absolute top-0 left-0 right-0 h-1.5 shrink-0" style={{ backgroundColor: note.color }} />
+      <div className="h-1.5 shrink-0" style={{ backgroundColor: note.color }} />
 
       <div className="flex flex-col p-5 gap-3 flex-1">
         {/* Title row */}
@@ -157,9 +157,11 @@ function NoteCard({ note, onOpen, onPin, onDelete, onCopy, copiedId, isMobile }:
           </div>
         </div>
 
-        {/* Content - Showing all, no clamping */}
-        <div className={cn('text-sm text-foreground leading-relaxed', MARKDOWN_STYLES)}>
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{note.content}</ReactMarkdown>
+        {/* Content - Fixed height with line clamp */}
+        <div className={cn('text-sm text-foreground leading-relaxed flex-1 overflow-hidden', MARKDOWN_STYLES)}>
+          <div className="line-clamp-6 min-h-[80px] overflow-hidden">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{note.content || '*No content*'}</ReactMarkdown>
+          </div>
         </div>
 
         {/* Footer */}
@@ -234,8 +236,8 @@ function NotesGridSection({
           ))}
         </div>
       ) : (
-        // Desktop: Masonry columns
-        <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+        // Desktop: Fixed 3-column grid
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {notes.map((note) => (
             <NoteCard
               key={note.id}
@@ -274,30 +276,54 @@ export default function NotesPage() {
 
   const { highlightedNoteId, setHighlightedNote } = useAppStore()
 
+  // Helper functions (defined before useEffect to avoid hook issues)
+  const openNotePreview = (noteId: string) => {
+    const note = notes.find((n) => n.id === noteId)
+    if (!note) return
+    setActiveNoteId(noteId)
+    setNoteTitle(note.title)
+    setNoteContent(note.content)
+    setNoteColor(note.color)
+    setIsEditing(false)
+    setViewDialogOpen(true)
+  }
+
   // Handle highlighting from search
   useEffect(() => {
     if (highlightedNoteId) {
       openNotePreview(highlightedNoteId)
       setHighlightedNote(null)
     }
-  }, [highlightedNoteId, setHighlightedNote, notes]) // Include notes to ensure we can find it
+  }, [highlightedNoteId, setHighlightedNote, notes])
 
   // Separate pinned and regular notes
   const pinnedNotes = useMemo(() => notes.filter((n) => n.pinned), [notes])
   const regularNotes = useMemo(() => notes.filter((n) => !n.pinned), [notes])
 
+  // Sort pinned notes by createdAt (newest first)
+  const sortedPinned = useMemo(() => 
+    [...pinnedNotes].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    [pinnedNotes]
+  )
+
+  // Sort regular notes by createdAt (newest first)
+  const sortedRegular = useMemo(() => 
+    [...regularNotes].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    [regularNotes]
+  )
+
   // Apply search filter
   const filteredPinned = useMemo(() => {
-    if (!searchQuery.trim()) return pinnedNotes
+    if (!searchQuery.trim()) return sortedPinned
     const q = searchQuery.toLowerCase()
-    return pinnedNotes.filter((n) => n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q))
-  }, [pinnedNotes, searchQuery])
+    return sortedPinned.filter((n) => n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q))
+  }, [sortedPinned, searchQuery])
 
   const filteredRegular = useMemo(() => {
-    if (!searchQuery.trim()) return regularNotes
+    if (!searchQuery.trim()) return sortedRegular
     const q = searchQuery.toLowerCase()
-    return regularNotes.filter((n) => n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q))
-  }, [regularNotes, searchQuery])
+    return sortedRegular.filter((n) => n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q))
+  }, [sortedRegular, searchQuery])
 
   const activeNote = useMemo(
     () => notes.find((n) => n.id === activeNoteId) || null,
@@ -324,17 +350,6 @@ export default function NotesPage() {
       color: noteColor,
     })
     setIsEditing(false)
-  }
-
-  const openNotePreview = (noteId: string) => {
-    const note = notes.find((n) => n.id === noteId)
-    if (!note) return
-    setActiveNoteId(noteId)
-    setNoteTitle(note.title)
-    setNoteContent(note.content)
-    setNoteColor(note.color)
-    setIsEditing(false)
-    setViewDialogOpen(true)
   }
 
   const copyToClipboard = async (content: string, noteId: string) => {
@@ -572,7 +587,7 @@ export default function NotesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Pinned Notes Section */}
+{/* Pinned Notes Section */}
       {filteredPinned.length > 0 && (
         <NotesGridSection
           title="Pinned Notes" icon={<Pin className="size-4 text-primary -rotate-45" />}
