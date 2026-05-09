@@ -144,10 +144,8 @@ function AuthenticatedApp({
         />
       )}
       <Header />
-      <div className="fixed top-16 left-0 right-0 z-40">
-        <TabBar />
-      </div>
-      <main className="flex-1 pt-[112px] overflow-y-auto relative z-10">
+      
+      <main className="flex-1 pt-[120px] md:pt-[80px] pb-[60px] overflow-y-auto relative z-10">
         <AnimatePresence mode="wait">
           <motion.div
             key={activePage}
@@ -166,6 +164,11 @@ function AuthenticatedApp({
           </motion.div>
         </AnimatePresence>
       </main>
+      
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-xl border-t border-border">
+        <TabBar />
+      </div>
+      
       <DashboardManager />
       <GlobalSearch />
       <FilePreview />
