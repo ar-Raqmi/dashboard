@@ -234,9 +234,8 @@ function TaskRow({ task, onToggle, compact, isOverdue }: {
 
   return (
     <div
-      className={`flex flex-col gap-1.5 p-2 rounded-xl hover:bg-accent transition-colors cursor-pointer ${
-        isOverdue && !isCompleted ? 'bg-destructive/5 hover:bg-destructive/10' : ''
-      }`}
+      className={`flex flex-col gap-1.5 p-2 rounded-xl hover:bg-accent transition-colors cursor-pointer ${isOverdue && !isCompleted ? 'bg-destructive/5 hover:bg-destructive/10' : ''
+        }`}
       onClick={(e) => { e.stopPropagation(); onToggle(task.id) }}
     >
       <div className="flex items-start gap-2.5">
@@ -265,7 +264,7 @@ function TaskRow({ task, onToggle, compact, isOverdue }: {
           {task.title}
         </span>
       </div>
-      
+
       {(task.dueDate || isOverdue) && !compact && (
         <div className="flex flex-wrap items-center gap-1.5 ml-[26px]">
           {isOverdue && !isCompleted && (
@@ -500,7 +499,6 @@ function NotesContent({ w, h }: { w: number; h: number }) {
           )}
           <div className="flex items-center justify-between gap-1">
             <p className="text-sm font-bold text-foreground line-clamp-1 flex-1 group-hover:text-primary transition-colors arabic-text pr-4" dir="auto">{note.title}</p>
-            <ExternalLink className="size-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
           </div>
           {showContent && (
             <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2 arabic-text" dir="auto">{note.content}</p>
@@ -596,7 +594,7 @@ function GoalsContent() {
 function FilesContent() {
   const { setPreviewFile } = useAppStore()
   const files = useAppStore((s) => s.files)
-  
+
   const recentFiles = useMemo(() => {
     if (!files) return []
     return [...files]
@@ -719,11 +717,10 @@ function ClipboardContent() {
       <button
         onClick={handleCopy}
         disabled={!(isFocused.current ? localText : clipboardText).trim()}
-        className={`shrink-0 h-8 rounded-xl text-xs font-medium flex items-center justify-center gap-1.5 transition-colors ${
-          copied
-            ? 'bg-primary/15 text-primary'
-            : 'bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-30'
-        }`}
+        className={`shrink-0 h-8 rounded-xl text-xs font-medium flex items-center justify-center gap-1.5 transition-colors ${copied
+          ? 'bg-primary/15 text-primary'
+          : 'bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-30'
+          }`}
       >
         {copied ? (
           <>
@@ -1122,7 +1119,7 @@ export function DashboardGrid() {
   const setDashboardEditMode = useAppStore((s) => s.setDashboardEditMode)
   const dashboardEditSubMode = useAppStore((s) => s.dashboardEditSubMode)
   const setDashboardEditSubMode = useAppStore((s) => s.setDashboardEditSubMode)
-  
+
   // 1. Initialize core hooks and refs
   const isMobile = useIsMobile()
   const { containerRef, width } = useContainerWidth()
@@ -1154,7 +1151,7 @@ export function DashboardGrid() {
     (widgetId: string, direction: 'up' | 'down') => {
       // 1. Get visible vs hidden types
       const visibleTypes = new Set(visibleWidgets.map((w) => w.type))
-      
+
       // 2. Separate visible and hidden layouts
       const visibleLayouts = mobileLayouts
         .filter((l) => visibleTypes.has(l.i as any))
@@ -1282,7 +1279,7 @@ export function DashboardGrid() {
       <div className="flex items-center justify-between mb-4 gap-2">
         <div className="flex items-center gap-3 shrink-0">
           <h2 className="text-lg font-semibold text-foreground">Dashboard</h2>
-          
+
           {/* Sub-mode Toggle (Mobile Only) */}
           {dashboardEditMode && isMobile && (
             <div className="flex items-center bg-muted/50 p-1 rounded-xl border border-border/50">
@@ -1290,8 +1287,8 @@ export function DashboardGrid() {
                 onClick={() => setDashboardEditSubMode('move')}
                 className={cn(
                   "px-3 py-1 rounded-lg text-xs font-bold transition-all",
-                  dashboardEditSubMode === 'move' 
-                    ? "bg-primary text-primary-foreground shadow-sm" 
+                  dashboardEditSubMode === 'move'
+                    ? "bg-primary text-primary-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -1301,8 +1298,8 @@ export function DashboardGrid() {
                 onClick={() => setDashboardEditSubMode('resize')}
                 className={cn(
                   "px-3 py-1 rounded-lg text-xs font-bold transition-all",
-                  dashboardEditSubMode === 'resize' 
-                    ? "bg-primary text-primary-foreground shadow-sm" 
+                  dashboardEditSubMode === 'resize'
+                    ? "bg-primary text-primary-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
