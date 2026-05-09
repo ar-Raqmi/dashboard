@@ -456,11 +456,11 @@ function NotesContent({ w, h }: { w: number; h: number }) {
             style={{ borderLeftColor: note.color, borderLeftWidth: '3px' }}
           >
             <div className="flex items-center justify-between gap-1 mb-1">
-              <p className="text-sm font-bold text-foreground line-clamp-1 flex-1 group-hover:text-primary transition-colors">{note.title}</p>
+              <p className="text-sm font-bold text-foreground line-clamp-1 flex-1 group-hover:text-primary transition-colors arabic-text" dir="auto">{note.title}</p>
               <ExternalLink className="size-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
             </div>
             {showContent && (
-              <p className="text-xs text-muted-foreground line-clamp-2">{note.content}</p>
+              <p className="text-xs text-muted-foreground line-clamp-2 arabic-text" dir="auto">{note.content}</p>
             )}
           </button>
         ))}
@@ -479,11 +479,11 @@ function NotesContent({ w, h }: { w: number; h: number }) {
           style={{ borderLeftColor: note.color, borderLeftWidth: '3px' }}
         >
           <div className="flex items-center justify-between gap-1">
-            <p className="text-sm font-bold text-foreground line-clamp-1 flex-1 group-hover:text-primary transition-colors">{note.title}</p>
+            <p className="text-sm font-bold text-foreground line-clamp-1 flex-1 group-hover:text-primary transition-colors arabic-text" dir="auto">{note.title}</p>
             <ExternalLink className="size-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
           </div>
           {showContent && (
-            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{note.content}</p>
+            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2 arabic-text" dir="auto">{note.content}</p>
           )}
         </button>
       ))}
