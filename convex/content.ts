@@ -2,12 +2,8 @@ import { action } from "./_generated/server";
 
 export const getDailyVerseAction = action({
   handler: async () => {
-    const today = new Date();
-    const start = new Date(today.getFullYear(), 0, 0);
-    const diff = today.getTime() - start.getTime();
-    const oneDay = 1000 * 60 * 60 * 24;
-    const dayOfYear = Math.floor(diff / oneDay);
-    const ayahId = (dayOfYear % 6236) + 1;
+    // Random verse selection instead of sequential day-based
+    const ayahId = Math.floor(Math.random() * 6236) + 1;
 
     try {
       const response = await fetch(`https://api.alquran.cloud/v1/ayah/${ayahId}/editions/quran-uthmani,en.sahih`);
@@ -25,9 +21,8 @@ export const getDailyVerseAction = action({
 
 export const getDailyHadithAction = action({
   handler: async () => {
-    const today = new Date();
-    const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
-    const hadithId = (dayOfYear % 7000) + 1;
+    // Random hadith selection instead of sequential day-based
+    const hadithId = Math.floor(Math.random() * 7000) + 1;
 
     try {
       const response = await fetch(`https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-bukhari/${hadithId}.json`);
