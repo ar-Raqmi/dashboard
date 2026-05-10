@@ -21,8 +21,6 @@ export default function VerseWidget() {
   }
 
   const fetchVerse = async () => {
-    // Prevent concurrent fetches
-    if (verseLoading) return
     setVerseLoading(true)
     setError(null)
     try {
@@ -47,29 +45,19 @@ export default function VerseWidget() {
     }
   }, []) // Run once on mount
 
-  // Refresh when tab becomes visible (user returns after a new day)
+  // Also check when user returns to the tab (e.g., after a new day)
   useEffect(() => {
-    const checkAndRefresh = () => {
-      const today = localDateStr(new Date())
-      if (verseDate !== today) {
-        fetchVerse()
-      }
-    }
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        checkAndRefresh()
+        const today = localDateStr(new Date())
+        if (verseDate !== today) {
+          fetchVerse()
+        }
       }
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
-    window.addEventListener('focus', checkAndRefresh)
-    // Check every 5 minutes
-    const interval = setInterval(checkAndRefresh, 5 * 60 * 1000)
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      window.removeEventListener('focus', checkAndRefresh)
-      clearInterval(interval)
-    }
-  }, [verseDate, verseLoading, fetchVerse])
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [verseDate, fetchVerse])
 
   // Loading skeleton
   if (verseLoading && !verse) {
@@ -98,9 +86,9 @@ export default function VerseWidget() {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-1.5">
             <BookOpen className="w-3.5 h-3.5 text-[oklch(0.72_0.19_142)]" />
-            <span className="text-[10px] uppercase tracking-wider text-[oklch(0.5_0.01_155)] font-semibold">
-              Daily Verse
-            </span>
+<span className="text-[10px] uppercase tracking-wider text-[oklch(0.5_0.01_155)] font-semibold">
+               Verse
+             </span>
           </div>
           <button
             onClick={fetchVerse}
