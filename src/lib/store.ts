@@ -231,15 +231,19 @@ interface AppStore {
   previewFile: FileItem | null
   setPreviewFile: (file: FileItem | null) => void
 
-  // Spiritual
-  verse: VerseData | null
-  setVerse: (verse: VerseData | null) => void
-  hadith: HadithData | null
-  setHadith: (hadith: HadithData | null) => void
-  verseLoading: boolean
-  setVerseLoading: (loading: boolean) => void
-  hadithLoading: boolean
-  setHadithLoading: (loading: boolean) => void
+// Spiritual
+   verse: VerseData | null
+   setVerse: (verse: VerseData | null) => void
+   verseDate: string // YYYY-MM-DD of when verse was fetched
+   setVerseDate: (date: string) => void
+   hadith: HadithData | null
+   setHadith: (hadith: HadithData | null) => void
+   hadithDate: string
+   setHadithDate: (date: string) => void
+   verseLoading: boolean
+   setVerseLoading: (loading: boolean) => void
+   hadithLoading: boolean
+   setHadithLoading: (loading: boolean) => void
 
   // Clock
   clocks: ClockConfig[]
@@ -560,15 +564,19 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   previewFile: null,
   setPreviewFile: (file) => set({ previewFile: file }),
 
-  // Spiritual
-  verse: null,
-  setVerse: (verse) => set({ verse }),
-  hadith: null,
-  setHadith: (hadith) => set({ hadith }),
-  verseLoading: false,
-  setVerseLoading: (loading) => set({ verseLoading: loading }),
-  hadithLoading: false,
-  setHadithLoading: (loading) => set({ hadithLoading: loading }),
+// Spiritual
+   verse: null,
+   setVerse: (verse) => set({ verse }),
+   verseDate: '',
+   setVerseDate: (date) => set({ verseDate: date }),
+   hadith: null,
+   setHadith: (hadith) => set({ hadith }),
+   hadithDate: '',
+   setHadithDate: (date) => set({ hadithDate: date }),
+   verseLoading: false,
+   setVerseLoading: (loading) => set({ verseLoading: loading }),
+   hadithLoading: false,
+   setHadithLoading: (loading) => set({ hadithLoading: loading }),
 
   // Clock
   clocks: [],

@@ -11,41 +11,77 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export default function SpiritualPage() {
   const {
-    verse, setVerse, verseLoading, setVerseLoading,
-    hadith, setHadith, hadithLoading, setHadithLoading,
+    verse, setVerse, verseDate, setVerseDate, verseLoading, setVerseLoading,
+    hadith, setHadith, hadithDate, setHadithDate, hadithLoading, setHadithLoading,
   } = useAppStore()
 
   const getVerse = useAction(api.content.getDailyVerseAction)
   const getHadith = useAction(api.content.getDailyHadithAction)
 
+  // Helper to get local date string
+  const localDateStr = (date: Date) => {
+    const y = date.getFullYear()
+    const m = String(date.getMonth() + 1).padStart(2, '0')
+    const d = String(date.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }
+
   const fetchVerse = useCallback(async () => {
+    if (verseLoading) return
     setVerseLoading(true)
     try {
       const data = await getVerse({})
       setVerse(data)
+      setVerseDate(localDateStr(new Date()))
     } catch {
       setVerse(null)
     } finally {
       setVerseLoading(false)
     }
-  }, [getVerse, setVerse, setVerseLoading])
+  }, [getVerse, setVerse, setVerseLoading, setVerseDate, verseLoading])
 
   const fetchHadith = useCallback(async () => {
+    if (hadithLoading) return
     setHadithLoading(true)
     try {
       const data = await getHadith({})
       setHadith(data)
+      setHadithDate(localDateStr(new Date()))
     } catch {
       setHadith(null)
     } finally {
       setHadithLoading(false)
     }
-  }, [getHadith, setHadith, setHadithLoading])
+  }, [getHadith, setHadith, setHadithLoading, setHadithDate, hadithLoading])
 
   useEffect(() => {
-    if (!verse) fetchVerse()
-    if (!hadith) fetchHadith()
-  }, [])
+    const today = localDateStr(new Date())
+    if (!verse || verseDate !== today) fetchVerse()
+    if (!hadith || hadithDate !== today) fetchHadith()
+  }, []) // Run once on mount
+
+  // Refresh when tab becomes visible (user returns after a new day)
+  useEffect(() => {
+    const checkAndRefresh = () => {
+      const today = localDateStr(new Date())
+      if (verseDate !== today && verse) fetchVerse()
+      if (hadithDate !== today && hadith) fetchHadith()
+    }
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        checkAndRefresh()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', checkAndRefresh)
+    // Check every 5 minutes
+    const interval = setInterval(checkAndRefresh, 5 * 60 * 1000)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', checkAndRefresh)
+      clearInterval(interval)
+    }
+  }, [verseDate, hadithDate, verse, hadith, fetchVerse, fetchHadith])
 
   const handleShare = async (text: string) => {
     if (navigator.share) {

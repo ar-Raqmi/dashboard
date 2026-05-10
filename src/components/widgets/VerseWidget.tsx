@@ -8,17 +8,28 @@ import { api } from '@/../convex/_generated/api'
 import { useAppStore } from '@/lib/store'
 
 export default function VerseWidget() {
-  const { verse, setVerse, verseLoading, setVerseLoading } = useAppStore()
+  const { verse, setVerse, verseDate, setVerseDate, verseLoading, setVerseLoading } = useAppStore()
   const [error, setError] = useState<string | null>(null)
   const getVerseAction = useAction(api.content.getDailyVerseAction)
 
+  // Helper to get local date string
+  const localDateStr = (date: Date) => {
+    const y = date.getFullYear()
+    const m = String(date.getMonth() + 1).padStart(2, '0')
+    const d = String(date.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }
+
   const fetchVerse = async () => {
+    // Prevent concurrent fetches
+    if (verseLoading) return
     setVerseLoading(true)
     setError(null)
     try {
       const data = await getVerseAction({})
       if (data) {
         setVerse(data)
+        setVerseDate(localDateStr(new Date()))
       } else {
         throw new Error('No data received')
       }
@@ -30,11 +41,35 @@ export default function VerseWidget() {
   }
 
   useEffect(() => {
-    fetchVerse()
-    // Refresh daily
-    const interval = setInterval(fetchVerse, 24 * 60 * 60 * 1000)
-    return () => clearInterval(interval)
-  }, [])
+    const today = localDateStr(new Date())
+    if (!verse || verseDate !== today) {
+      fetchVerse()
+    }
+  }, []) // Run once on mount
+
+  // Refresh when tab becomes visible (user returns after a new day)
+  useEffect(() => {
+    const checkAndRefresh = () => {
+      const today = localDateStr(new Date())
+      if (verseDate !== today) {
+        fetchVerse()
+      }
+    }
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        checkAndRefresh()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', checkAndRefresh)
+    // Check every 5 minutes
+    const interval = setInterval(checkAndRefresh, 5 * 60 * 1000)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', checkAndRefresh)
+      clearInterval(interval)
+    }
+  }, [verseDate, verseLoading, fetchVerse])
 
   // Loading skeleton
   if (verseLoading && !verse) {
