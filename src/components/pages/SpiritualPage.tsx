@@ -129,7 +129,7 @@ export default function SpiritualPage() {
         <div className="flex items-center justify-between mb-6 relative z-10">
           <div className="flex items-center gap-2">
             <Star className="size-5 text-primary" />
-            <h2 className="text-lg font-semibold text-primary">Daily Verse</h2>
+            <h2 className="text-lg font-semibold text-primary">Verse</h2>
           </div>
           <div className="flex gap-2">
             <Button
@@ -197,7 +197,7 @@ export default function SpiritualPage() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <BookOpen className="size-5 text-secondary" />
-            <h2 className="text-lg font-semibold text-secondary">Daily Hadith</h2>
+            <h2 className="text-lg font-semibold text-secondary">Hadith</h2>
           </div>
           <div className="flex gap-2">
             <Button
