@@ -64,6 +64,7 @@ export function ConvexSync({ children }: { children: React.ReactNode }) {
   const updateTask = useMutation(api.tasks.update)
   const deleteTaskMut = useMutation(api.tasks.remove)
   const deleteCompletedTasksMut = useMutation(api.tasks.deleteCompleted)
+  const deleteOldCompletedTasksMut = useMutation(api.tasks.deleteOldCompleted)
   const toggleTaskStatusMut = useMutation(api.tasks.toggleStatus)
 
   const createGoal = useMutation(api.goals.create)
@@ -233,6 +234,14 @@ export function ConvexSync({ children }: { children: React.ReactNode }) {
       deleteCompletedTasks: () => {
         store.setState((state) => ({ tasks: state.tasks.filter((t) => t.status !== 'completed') }))
         deleteCompletedTasksMut({ sessionToken }).catch(console.error)
+      },
+      cleanupOldTasks: () => {
+        const today = new Date()
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+        store.setState((state) => ({
+          tasks: state.tasks.filter((t) => !(t.status === 'completed' && t.dueDate && t.dueDate < todayStr))
+        }))
+        deleteOldCompletedTasksMut({ sessionToken, today: todayStr }).catch(console.error)
       },
       toggleTaskStatus: (id) => {
         store.setState((state) => ({
@@ -493,6 +502,9 @@ export function ConvexSync({ children }: { children: React.ReactNode }) {
         }).catch(console.error)
       },
     })
+
+    // Auto-cleanup old completed tasks on initial initialization
+    store.getState().cleanupOldTasks()
   }, [sessionToken])
 
   // Reset initialized flag and sync state when user logs out

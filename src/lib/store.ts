@@ -176,6 +176,7 @@ interface AppStore {
   updateTask: (id: string, updates: Partial<Task>) => void
   deleteTask: (id: string) => void
   deleteCompletedTasks: () => void
+  cleanupOldTasks: () => void
   toggleTaskStatus: (id: string) => void
 
   // Goals
@@ -368,6 +369,14 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     set((state) => ({ tasks: state.tasks.filter((t) => t.id !== id) })),
   deleteCompletedTasks: () =>
     set((state) => ({ tasks: state.tasks.filter((t) => t.status !== 'completed') })),
+  cleanupOldTasks: () =>
+    set((state) => {
+      const today = new Date()
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+      return {
+        tasks: state.tasks.filter((t) => !(t.status === 'completed' && t.dueDate && t.dueDate < todayStr))
+      }
+    }),
   toggleTaskStatus: (id) =>
     set((state) => ({
       tasks: state.tasks.map((t) =>
