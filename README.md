@@ -10,6 +10,10 @@ A feature-rich personal dashboard application built with Next.js 16, powered by 
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-38B2AC?logo=tailwindcss)
 
+<br />
+
+<img src=".github/images/dashboard.png" width="800" alt="Dashboard Screenshot" />
+
 </div>
 
 ## Features
@@ -116,7 +120,7 @@ A feature-rich personal dashboard application built with Next.js 16, powered by 
 ```bash
 git clone <your-repo-url>
 cd ar-raqmi-database
-bun install
+npm install
 
 ```
 
@@ -151,7 +155,7 @@ JWT_SECRET=your-secret-key-change-in-production
 Start the development server:
 
 ```bash
-bun run dev
+npm run dev
 
 ```
 
@@ -169,7 +173,7 @@ bun run dev
 ### 5. Development
 
 ```bash
-bun run dev          # Start Next.js dev server (port 3000)
+npm run dev          # Start Next.js dev server (port 3000)
 npx convex dev       # Start Convex dev server (watches for function changes)
 
 ```
