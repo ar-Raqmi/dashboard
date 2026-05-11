@@ -111,7 +111,41 @@ function AuthenticatedApp({
   activePage: ActivePage
   background: any
 }) {
+  const setActivePage = useAppStore((s) => s.setActivePage)
   const PageComponent = pageComponents[activePage]
+
+  // Handle browser back button navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      // If the user hits "back" and we're not on the dashboard,
+      // return to the dashboard instead of exiting the site
+      if (activePage !== 'dashboard') {
+        setActivePage('dashboard')
+      }
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [activePage, setActivePage])
+
+  // Sync internal state to browser history
+  useEffect(() => {
+    if (activePage !== 'dashboard') {
+      // Push a history entry when moving away from dashboard
+      // so the back button has something to "pop" from
+      if (!window.history.state?.isSubPage) {
+        window.history.pushState({ isSubPage: true, page: activePage }, '')
+      } else if (window.history.state?.page !== activePage) {
+        // If we're already in sub-page territory, just update the current state
+        window.history.replaceState({ isSubPage: true, page: activePage }, '')
+      }
+    } else {
+      // If we are on dashboard but the history state thinks we are on a subpage
+      // (happens when navigating back via UI), we don't necessarily need to do anything,
+      // but it helps to keep it clean.
+    }
+  }, [activePage])
+
   const bgStyle = useMemo(() => {
     if (background.type === 'default') return null
     const opacity = background.opacity / 100
