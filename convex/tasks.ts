@@ -97,6 +97,23 @@ export const deleteCompleted = mutation({
   },
 });
 
+export const deleteOldCompleted = mutation({
+  args: { sessionToken: v.string(), today: v.string() },
+  handler: async (ctx, { sessionToken, today }) => {
+    const userId = await getAuthedUserId(ctx, sessionToken);
+    const tasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_user", (q: any) => q.eq("userId", userId))
+      .collect();
+
+    for (const task of tasks) {
+      if (task.status === "completed" && task.dueDate && task.dueDate < today) {
+        await ctx.db.delete(task._id);
+      }
+    }
+  },
+});
+
 export const toggleStatus = mutation({
   args: { sessionToken: v.string(), taskId: v.id("tasks") },
   handler: async (ctx, { sessionToken, taskId }) => {
