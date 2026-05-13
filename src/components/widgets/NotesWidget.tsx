@@ -130,7 +130,7 @@ export default function NotesWidget() {
             </h4>
 
             {/* Content Preview */}
-            <div className="text-[10px] text-[oklch(0.6_0.01_155)] line-clamp-2 mt-1 mb-2 flex-1 prose-sm [&_p]:mb-0.5 [&_strong]:font-bold">
+            <div className="text-[10px] text-[oklch(0.6_0.01_155)] line-clamp-2 mt-1 mb-2 flex-1 prose-sm [&_p]:mb-0.5 [&_strong]:font-bold max-h-[2.5rem] overflow-hidden">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{note.content}</ReactMarkdown>
             </div>
 
