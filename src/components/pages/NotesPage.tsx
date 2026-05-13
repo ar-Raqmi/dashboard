@@ -116,7 +116,7 @@ function NoteCard({ note, onOpen, onPin, onDelete, onCopy, copiedId, isMobile }:
           </div>
 
           {/* Content preview */}
-          <div className={cn('text-sm text-muted-foreground line-clamp-3', MARKDOWN_STYLES)}>
+          <div className={cn('text-sm text-muted-foreground line-clamp-3 max-h-[4.5rem] overflow-hidden', MARKDOWN_STYLES)}>
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{note.content || '*No content*'}</ReactMarkdown>
           </div>
 
@@ -159,7 +159,7 @@ function NoteCard({ note, onOpen, onPin, onDelete, onCopy, copiedId, isMobile }:
 
         {/* Content - Fixed height with line clamp */}
         <div className={cn('text-sm text-foreground leading-relaxed flex-1 overflow-hidden', MARKDOWN_STYLES)}>
-          <div className="line-clamp-6 min-h-[80px] overflow-hidden">
+          <div className="line-clamp-6 min-h-[80px] max-h-[140px] overflow-hidden">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{note.content || '*No content*'}</ReactMarkdown>
           </div>
         </div>
