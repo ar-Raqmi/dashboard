@@ -16,6 +16,7 @@ import type * as events from "../events.js";
 import type * as files from "../files.js";
 import type * as goals from "../goals.js";
 import type * as notes from "../notes.js";
+import type * as r2 from "../r2.js";
 import type * as seed from "../seed.js";
 import type * as sessions from "../sessions.js";
 import type * as settings from "../settings.js";
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   files: typeof files;
   goals: typeof goals;
   notes: typeof notes;
+  r2: typeof r2;
   seed: typeof seed;
   sessions: typeof sessions;
   settings: typeof settings;

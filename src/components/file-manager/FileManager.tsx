@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useMemo } from 'react'
-import { useQuery, useMutation } from 'convex/react'
+import { useQuery, useMutation, useAction } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { useAuth } from '@/hooks/useAuth'
 import { 
@@ -95,10 +95,10 @@ export default function FileManager() {
   const searchResults = useQuery(api.files.search, sessionToken && searchQuery ? { sessionToken, query: searchQuery } : 'skip')
   const path = useQuery(api.files.getPath, sessionToken ? { sessionToken, folderId: currentFolderId as any } : 'skip')
 
-  // Mutations
+  // Mutations & Actions
   const createFile = useMutation(api.files.createFile)
-  const deleteFile = useMutation(api.files.remove)
-  const deleteMultiple = useMutation(api.files.removeMultiple)
+  const deleteFile = useAction(api.r2.removeFile)
+  const deleteMultiple = useAction(api.r2.removeFiles)
   const moveFiles = useMutation(api.files.moveFiles)
   const toggleStar = useMutation(api.files.toggleStar)
   const renameFile = useMutation(api.files.rename)
@@ -506,7 +506,8 @@ export default function FileManager() {
                         size: file.size || 0,
                         createdAt: typeof file.createdAt === 'number' ? new Date(file.createdAt).toISOString() : file.createdAt,
                         updatedAt: typeof file.updatedAt === 'number' ? new Date(file.updatedAt).toISOString() : file.updatedAt,
-                        storageId: file.storageId
+                        storageId: file.storageId,
+                        r2Key: file.r2Key
                       })}
                       onDelete={() => handleDelete(file._id)}
                       onDownload={() => handleBatchDownload([file._id])}
@@ -553,7 +554,8 @@ export default function FileManager() {
                           size: file.size || 0,
                           createdAt: typeof file.createdAt === 'number' ? new Date(file.createdAt).toISOString() : file.createdAt,
                           updatedAt: typeof file.updatedAt === 'number' ? new Date(file.updatedAt).toISOString() : file.updatedAt,
-                          storageId: file.storageId
+                          storageId: file.storageId,
+                          r2Key: file.r2Key
                         })}
                         onDelete={() => handleDelete(file._id)}
                         onDownload={() => handleBatchDownload([file._id])}
@@ -939,7 +941,7 @@ function UploadModal({ open, onClose, folderId }: { open: boolean, onClose: () =
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({})
   const [currentFileIndex, setCurrentFileIndex] = useState(-1)
   
-  const generateUploadUrl = useMutation(api.files.generateUploadUrl)
+  const getR2UploadUrl = useAction(api.r2.getUploadUrl)
   const saveFile = useMutation(api.files.createFile)
 
   const handleUpload = async () => {
@@ -952,11 +954,24 @@ function UploadModal({ open, onClose, folderId }: { open: boolean, onClose: () =
       setUploadProgress(prev => ({ ...prev, [file.name]: 10 }))
       
       try {
-        const url = await generateUploadUrl()
+        const r2Key = `${Date.now()}-${file.name}`
+        const url = await getR2UploadUrl({
+          sessionToken,
+          key: r2Key,
+          contentType: file.type || 'application/octet-stream'
+        })
         setUploadProgress(prev => ({ ...prev, [file.name]: 30 }))
         
-        const result = await fetch(url, { method: 'POST', body: file })
-        const { storageId } = await result.json()
+        const result = await fetch(url, { 
+          method: 'PUT', 
+          body: file,
+          headers: {
+            'Content-Type': file.type || 'application/octet-stream'
+          }
+        })
+        
+        if (!result.ok) throw new Error('Failed to upload to R2')
+        
         setUploadProgress(prev => ({ ...prev, [file.name]: 70 }))
         
         // Determine category
@@ -972,7 +987,8 @@ function UploadModal({ open, onClose, folderId }: { open: boolean, onClose: () =
           name: file.name,
           type: 'file',
           category,
-          storageId,
+          r2Key,
+          storageSource: 'r2',
           parentId: folderId as any,
           size: file.size,
         })

@@ -53,6 +53,8 @@ export interface FileItem {
   createdAt: string
   updatedAt: string
   content?: string // for text files or mock URLs
+  storageId?: string
+  r2Key?: string
 }
 
 export interface VerseData {
