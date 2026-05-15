@@ -77,6 +77,8 @@ export const createFile = mutation({
     parentId: v.optional(v.id("files")),
     size: v.optional(v.number()),
     storageId: v.optional(v.id("_storage")),
+    r2Key: v.optional(v.string()),
+    storageSource: v.optional(v.union(v.literal("convex"), v.literal("r2"))),
   },
   handler: async (ctx, args) => {
     const { sessionToken, ...fileData } = args;
@@ -90,6 +92,58 @@ export const createFile = mutation({
       lastAccessed: now,
       createdAt: now,
       updatedAt: now,
+      storageSource: args.storageSource || (args.storageId ? "convex" : args.r2Key ? "r2" : undefined),
+    });
+  },
+});
+
+export const listAllWithStorage = query({
+  args: { sessionToken: v.optional(v.string()), limit: v.optional(v.number()) },
+  handler: async (ctx, { sessionToken, limit }) => {
+    if (sessionToken) {
+      await getAuthedUserId(ctx, sessionToken);
+    }
+    let q = ctx.db
+      .query("files")
+      .filter((q) => q.neq(q.field("storageId"), undefined));
+    
+    if (limit) {
+      return await q.take(limit);
+    }
+    return await q.collect();
+  },
+});
+
+export const getStorageUrl = query({
+  args: { storageId: v.id("_storage") },
+  handler: async (ctx, { storageId }) => {
+    return await ctx.storage.getUrl(storageId);
+  },
+});
+
+export const updateStorageToR2 = mutation({
+  args: { 
+    sessionToken: v.optional(v.string()), 
+    id: v.id("files"), 
+    r2Key: v.string() 
+  },
+  handler: async (ctx, { sessionToken, id, r2Key }) => {
+    if (sessionToken) {
+      await getAuthedUserId(ctx, sessionToken);
+    }
+    const file = await ctx.db.get(id);
+    if (!file) throw new Error("File not found");
+    
+    // Delete from Convex storage if it exists
+    if (file.storageId) {
+      await ctx.storage.delete(file.storageId);
+    }
+    
+    await ctx.db.patch(id, {
+      storageId: undefined,
+      r2Key,
+      storageSource: "r2",
+      updatedAt: Date.now(),
     });
   },
 });
@@ -157,10 +211,41 @@ export const removeMultiple = mutation({
 });
 
 export const getFileUrl = query({
-  args: { sessionToken: v.string(), storageId: v.id("_storage") },
-  handler: async (ctx, { sessionToken, storageId }) => {
+  args: { 
+    sessionToken: v.string(), 
+    storageId: v.optional(v.id("_storage")),
+    r2Key: v.optional(v.string())
+  },
+  handler: async (ctx, { sessionToken, storageId, r2Key }) => {
     await getAuthedUserId(ctx, sessionToken);
-    return await ctx.storage.getUrl(storageId);
+    if (storageId) return await ctx.storage.getUrl(storageId);
+    if (r2Key) {
+      const baseUrl = process.env.R2_PUBLIC_URL;
+      if (!baseUrl) return null;
+      return `${baseUrl}/${r2Key}`;
+    }
+    return null;
+  },
+});
+
+export const getFileInfo = query({
+  args: { sessionToken: v.string(), id: v.id("files") },
+  handler: async (ctx, { sessionToken, id }) => {
+    const userId = await getAuthedUserId(ctx, sessionToken);
+    const file = await ctx.db.get(id);
+    if (!file || file.userId !== userId) return null;
+    return file;
+  },
+});
+
+export const getChildren = query({
+  args: { sessionToken: v.string(), folderId: v.id("files") },
+  handler: async (ctx, { sessionToken, folderId }) => {
+    const userId = await getAuthedUserId(ctx, sessionToken);
+    return await ctx.db
+      .query("files")
+      .withIndex("by_parent", (q) => q.eq("parentId", folderId))
+      .collect();
   },
 });
 
@@ -250,13 +335,19 @@ export const getFilesRecursive = query({
   handler: async (ctx, { sessionToken, ids }) => {
     const userId = await getAuthedUserId(ctx, sessionToken);
     const result: any[] = [];
+    const baseUrl = process.env.R2_PUBLIC_URL;
 
     const fetchRecursive = async (fileId: any, currentPath: string) => {
       const file = await ctx.db.get(fileId);
       if (!file || file.userId !== userId) return;
 
       if (file.type === "file") {
-        const url = file.storageId ? await ctx.storage.getUrl(file.storageId) : null;
+        let url = null;
+        if (file.storageId) {
+          url = await ctx.storage.getUrl(file.storageId);
+        } else if (file.r2Key && baseUrl) {
+          url = `${baseUrl}/${file.r2Key}`;
+        }
         result.push({
           ...file,
           url,
@@ -279,7 +370,12 @@ export const getFilesRecursive = query({
       if (!file || file.userId !== userId) continue;
       
       if (file.type === "file") {
-        const url = file.storageId ? await ctx.storage.getUrl(file.storageId) : null;
+        let url = null;
+        if (file.storageId) {
+          url = await ctx.storage.getUrl(file.storageId);
+        } else if (file.r2Key && baseUrl) {
+          url = `${baseUrl}/${file.r2Key}`;
+        }
         result.push({
           ...file,
           url,
