@@ -73,6 +73,8 @@ export default defineSchema({
     parentId: v.optional(v.id("files")), // self-referential parent
     size: v.optional(v.number()),
     storageId: v.optional(v.id("_storage")),
+    r2Key: v.optional(v.string()),
+    storageSource: v.optional(v.union(v.literal("convex"), v.literal("r2"))),
     starred: v.optional(v.boolean()),
     lastAccessed: v.optional(v.number()),
     createdAt: v.union(v.number(), v.string()), 

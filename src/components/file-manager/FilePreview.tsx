@@ -31,7 +31,7 @@ import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog'
-import { useQuery, useMutation } from 'convex/react'
+import { useQuery, useMutation, useAction } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from 'sonner'
@@ -204,10 +204,16 @@ export default function FilePreview() {
 
   const fileUrl = useQuery(
     api.files.getFileUrl,
-    previewFile?.storageId ? { sessionToken: sessionToken!, storageId: previewFile.storageId } : 'skip'
+    previewFile?.storageId || previewFile?.r2Key 
+      ? { 
+          sessionToken: sessionToken!, 
+          storageId: previewFile.storageId as any,
+          r2Key: previewFile.r2Key
+        } 
+      : 'skip'
   )
 
-  const removeFile = useMutation(api.files.remove)
+  const removeFile = useAction(api.r2.removeFile)
   const renameFile = useMutation(api.files.rename)
   const toggleStar = useMutation(api.files.toggleStar)
 

@@ -1,13 +1,23 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
+import { api } from "./_generated/api";
 
 // Helper: Validate session token and return userId
+// Works in both Actions (using ctx.runQuery) and Mutations/Queries (using ctx.db)
 export async function getAuthedUserId(ctx: any, sessionToken: string): Promise<Id<"users">> {
-  const session = await ctx.db
-    .query("sessions")
-    .withIndex("by_token", (q: any) => q.eq("token", sessionToken))
-    .first();
+  let session;
+  
+  if (ctx.db) {
+    // We are in a Mutation or Query
+    session = await ctx.db
+      .query("sessions")
+      .withIndex("by_token", (q: any) => q.eq("token", sessionToken))
+      .first();
+  } else {
+    // We are in an Action
+    session = await ctx.runQuery(api.auth.verifySession, { sessionToken });
+  }
 
   if (!session || session.expiresAt < Date.now()) {
     throw new Error("Unauthorized: Invalid or expired session");
@@ -15,6 +25,17 @@ export async function getAuthedUserId(ctx: any, sessionToken: string): Promise<I
 
   return session.userId as Id<"users">;
 }
+
+// Internal query to verify session, used by getAuthedUserId in Actions
+export const verifySession = query({
+  args: { sessionToken: v.string() },
+  handler: async (ctx, { sessionToken }) => {
+    return await ctx.db
+      .query("sessions")
+      .withIndex("by_token", (q: any) => q.eq("token", sessionToken))
+      .first();
+  },
+});
 
 // Query: Validate session and return user info
 export const validateSession = query({
