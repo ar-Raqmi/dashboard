@@ -26,6 +26,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAppStore } from '@/lib/store'
 import { toast } from 'sonner'
 import FilePreview from './FilePreview'
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu'
 
 // ===== TYPES & HELPERS =====
 type ViewMode = 'grid' | 'list'
@@ -66,11 +73,20 @@ export default function FileManager() {
   
   // State
   const [currentFolderId, setCurrentFolderId] = useState<string | undefined>()
-  const [viewMode, setViewMode] = useState<ViewMode>('grid')
+  const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [navCategory, setNavCategory] = useState<NavCategory>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<'name' | 'date' | 'size'>('date')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [lastSelectedId, setLastSelectedId] = useState<string | null>(null)
+  
+  // Drag select marquee states
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null)
+  const [dragCurrent, setDragCurrent] = useState<{ x: number; y: number } | null>(null)
+  const [isDraggingSelection, setIsDraggingSelection] = useState(false)
+  const containerRef = React.useRef<HTMLDivElement>(null)
+  const initialSelectionBeforeDrag = React.useRef<Set<string>>(new Set())
+  const lastActiveSelection = React.useRef<Set<string>>(new Set())
   const [isNewFolderDialogOpen, setIsNewFolderDialogOpen] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
@@ -104,11 +120,121 @@ export default function FileManager() {
   const renameFile = useMutation(api.files.rename)
 
   // Handlers
-  const handleToggleSelect = (id: string) => {
+  const handleToggleSelect = (id: string, isShiftClick?: boolean) => {
     const next = new Set(selectedIds)
-    if (next.has(id)) next.delete(id)
-    else next.add(id)
+    
+    if (isShiftClick && lastSelectedId && displayFiles) {
+      const index1 = displayFiles.findIndex(f => f._id === lastSelectedId)
+      const index2 = displayFiles.findIndex(f => f._id === id)
+      if (index1 !== -1 && index2 !== -1) {
+        const start = Math.min(index1, index2)
+        const end = Math.max(index1, index2)
+        for (let i = start; i <= end; i++) {
+          const item = displayFiles[i]
+          if (item && item._id) {
+            next.add(item._id)
+          }
+        }
+        setSelectedIds(next)
+        setLastSelectedId(id)
+        return
+      }
+    }
+
+    if (next.has(id)) {
+      next.delete(id)
+      if (lastSelectedId === id) setLastSelectedId(null)
+    } else {
+      next.add(id)
+      setLastSelectedId(id)
+    }
     setSelectedIds(next)
+  }
+
+  const selectionChanged = (setA: Set<string>, setB: Set<string>) => {
+    if (setA.size !== setB.size) return true
+    for (const item of setA) {
+      if (!setB.has(item)) return true
+    }
+    return false
+  }
+
+  const handleMarqueePointerDown = (e: React.PointerEvent) => {
+    if (e.pointerType !== 'mouse' || e.button !== 0) return
+
+    const target = e.target as HTMLElement
+    if (target.closest('.file-item, button, input, [role="dialog"], [role="menuitem"]')) {
+      return
+    }
+
+    const containerRect = containerRef.current?.getBoundingClientRect()
+    if (!containerRect) return
+
+    const startX = e.clientX - containerRect.left + (containerRef.current?.scrollLeft || 0)
+    const startY = e.clientY - containerRect.top + (containerRef.current?.scrollTop || 0)
+
+    setDragStart({ x: startX, y: startY })
+    setDragCurrent({ x: startX, y: startY })
+    setIsDraggingSelection(true)
+
+    initialSelectionBeforeDrag.current = new Set(selectedIds)
+    lastActiveSelection.current = new Set()
+
+    if (!e.shiftKey && !e.metaKey && !e.ctrlKey) {
+      setSelectedIds(new Set())
+      initialSelectionBeforeDrag.current = new Set()
+    }
+
+    e.preventDefault()
+  }
+
+  const handleMarqueePointerMove = (e: React.PointerEvent) => {
+    if (!isDraggingSelection || !dragStart || !containerRef.current) return
+
+    const containerRect = containerRef.current.getBoundingClientRect()
+    const currentX = e.clientX - containerRect.left + containerRef.current.scrollLeft
+    const currentY = e.clientY - containerRect.top + containerRef.current.scrollTop
+
+    setDragCurrent({ x: currentX, y: currentY })
+
+    // Selection box in viewport coordinates
+    const selectX1 = Math.min(dragStart.x + containerRect.left - containerRef.current.scrollLeft, e.clientX)
+    const selectY1 = Math.min(dragStart.y + containerRect.top - containerRef.current.scrollTop, e.clientY)
+    const selectX2 = Math.max(dragStart.x + containerRect.left - containerRef.current.scrollLeft, e.clientX)
+    const selectY2 = Math.max(dragStart.y + containerRect.top - containerRef.current.scrollTop, e.clientY)
+
+    const fileElements = containerRef.current.querySelectorAll('.file-item')
+    const newlySelected = new Set<string>()
+
+    fileElements.forEach((el) => {
+      const rect = el.getBoundingClientRect()
+      const id = el.getAttribute('data-id')
+      if (!id) return
+
+      const intersects = !(
+        rect.right < selectX1 ||
+        rect.left > selectX2 ||
+        rect.bottom < selectY1 ||
+        rect.top > selectY2
+      )
+
+      if (intersects) {
+        newlySelected.add(id)
+      }
+    })
+
+    const combined = new Set(initialSelectionBeforeDrag.current)
+    newlySelected.forEach(id => combined.add(id))
+
+    if (selectionChanged(combined, selectedIds)) {
+      setSelectedIds(combined)
+    }
+  }
+
+  const handleMarqueePointerUp = () => {
+    setIsDraggingSelection(false)
+    setDragStart(null)
+    setDragCurrent(null)
   }
 
   const handleSelectAll = () => {
@@ -474,7 +600,25 @@ export default function FileManager() {
 
         {/* Content View */}
         <ScrollArea className="flex-1">
-          <div className="p-4 md:p-6 pb-24 md:pb-6">
+          <div 
+            ref={containerRef}
+            className="p-4 md:p-6 pb-24 md:pb-6 relative min-h-full no-scrollbar select-none"
+            onPointerDown={handleMarqueePointerDown}
+            onPointerMove={handleMarqueePointerMove}
+            onPointerUp={handleMarqueePointerUp}
+            onPointerCancel={handleMarqueePointerUp}
+          >
+            {isDraggingSelection && dragStart && dragCurrent && (
+              <div 
+                className="absolute border border-primary/40 bg-primary/10 rounded-md pointer-events-none z-50 shadow-sm"
+                style={{
+                  left: Math.min(dragStart.x, dragCurrent.x),
+                  top: Math.min(dragStart.y, dragCurrent.y),
+                  width: Math.abs(dragStart.x - dragCurrent.x),
+                  height: Math.abs(dragStart.y - dragCurrent.y),
+                }}
+              />
+            )}
             {!displayFiles ? (
               <div className="flex flex-col items-center justify-center py-20 opacity-50">
                 <Loader2 className="size-10 animate-spin mb-4" />
@@ -496,7 +640,8 @@ export default function FileManager() {
                       key={file._id.toString()} 
                       file={file} 
                       selected={selectedIds.has(file._id)}
-                      onToggleSelect={() => handleToggleSelect(file._id)}
+                      isSelectionMode={selectedIds.size > 0}
+                      onToggleSelect={(isShift) => handleToggleSelect(file._id, isShift)}
                       onOpen={() => file.type === 'folder' ? setCurrentFolderId(file._id) : setPreviewFile({
                         id: file._id,
                         name: file.name,
@@ -522,6 +667,10 @@ export default function FileManager() {
                         setNewRenameName(file.name)
                         setIsRenameDialogOpen(true)
                       }}
+                      onMove={() => {
+                        setSelectedIds(new Set([file._id]))
+                        setIsMoveDialogOpen(true)
+                      }}
                     />
                   ))}
                 </AnimatePresence>
@@ -544,7 +693,8 @@ export default function FileManager() {
                         key={file._id.toString()} 
                         file={file} 
                         selected={selectedIds.has(file._id)}
-                        onToggleSelect={() => handleToggleSelect(file._id)}
+                        isSelectionMode={selectedIds.size > 0}
+                        onToggleSelect={(isShift) => handleToggleSelect(file._id, isShift)}
                         onOpen={() => file.type === 'folder' ? setCurrentFolderId(file._id) : setPreviewFile({
                           id: file._id,
                           name: file.name,
@@ -569,6 +719,10 @@ export default function FileManager() {
                           setRenamingFile({ id: file._id, name: file.name })
                           setNewRenameName(file.name)
                           setIsRenameDialogOpen(true)
+                        }}
+                        onMove={() => {
+                          setSelectedIds(new Set([file._id]))
+                          setIsMoveDialogOpen(true)
                         }}
                       />
                     ))}
@@ -750,8 +904,44 @@ function NavButton({ active, icon, label, onClick }: { active: boolean, icon: Re
   )
 }
 
+function useLongPress(callback: (isShift?: boolean) => void, ms = 600) {
+  const timerRef = React.useRef<NodeJS.Timeout | null>(null)
+  const isLongPressActive = React.useRef(false)
+
+  const start = (e: React.PointerEvent) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return
+    isLongPressActive.current = false
+    timerRef.current = setTimeout(() => {
+      isLongPressActive.current = true
+      callback(e.shiftKey)
+      if (navigator.vibrate) {
+        navigator.vibrate(50)
+      }
+    }, ms)
+  }
+
+  const stop = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+    }
+  }
+
+  const move = () => {
+    stop()
+  }
+
+  return {
+    onPointerDown: start,
+    onPointerUp: stop,
+    onPointerLeave: stop,
+    onPointerMove: move,
+    onPointerCancel: stop,
+    getIsLongPressActive: () => isLongPressActive.current,
+  }
+}
+
 function FileGridItem({ 
-  file, onOpen, onDelete, onDownload, onToggleStar, selected, onToggleSelect, onDragStart, onDrop, onRename 
+  file, onOpen, onDelete, onDownload, onToggleStar, selected, onToggleSelect, onDragStart, onDrop, onRename, onMove, isSelectionMode
 }: { 
   file: any, 
   onOpen: () => void, 
@@ -759,107 +949,143 @@ function FileGridItem({
   onDownload: () => void,
   onToggleStar: (e: React.MouseEvent) => void, 
   selected: boolean, 
-  onToggleSelect: () => void, 
+  onToggleSelect: (isShift?: boolean) => void, 
   onDragStart: (e: React.DragEvent) => void, 
   onDrop: (e: React.DragEvent) => void,
-  onRename: () => void
+  onRename: () => void,
+  onMove: () => void,
+  isSelectionMode: boolean
 }) {
+  const longPressProps = useLongPress(onToggleSelect, 600)
+
   return (
-    <motion.div 
-      layout
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      draggable
-      onDragStart={onDragStart}
-      onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' }}
-      onDrop={onDrop}
-      className={`
-        group relative flex flex-col p-3 rounded-2xl border transition-all duration-200 cursor-pointer overflow-hidden
-        ${selected ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10' : 'border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/20'}
-      `}
-      onClick={(e) => {
-        if (e.metaKey || e.ctrlKey) {
-          onToggleSelect()
-        } else {
-          onOpen()
-        }
-      }}
-      onContextMenu={(e) => {
-        e.preventDefault()
-        onToggleSelect()
-      }}
-    >
-      <div className="aspect-[4/3] rounded-xl bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center mb-2 md:mb-3 relative overflow-hidden">
-        {getFileIcon(file)}
-        
-        {/* Selection Checkbox */}
-        <div 
-          className={`absolute top-2 left-2 transition-all duration-200 z-10 ${selected ? 'opacity-100' : 'opacity-0 md:group-hover:opacity-100'}`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Checkbox 
-            checked={selected} 
-            onCheckedChange={onToggleSelect} 
-            className="rounded-lg border-white/20 bg-black/20"
-          />
-        </div>
-
-        {/* Star Button */}
-        <button 
-          onClick={(e) => { e.stopPropagation(); onToggleStar(e) }}
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <motion.div 
+          layout
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.9 }}
+          draggable
+          onDragStart={onDragStart}
+          onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' }}
+          onDrop={onDrop}
           className={`
-            absolute top-2 right-2 p-1.5 rounded-lg transition-all duration-200 z-10
-            ${file.starred ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' : 'bg-black/20 text-white opacity-0 md:group-hover:opacity-100 hover:bg-black/40'}
+            group relative flex flex-col p-3 rounded-2xl border transition-all duration-200 cursor-pointer overflow-hidden file-item
+            ${selected ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10' : 'border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/20'}
           `}
+          data-id={file._id.toString()}
+          onPointerDown={longPressProps.onPointerDown}
+          onPointerUp={longPressProps.onPointerUp}
+          onPointerLeave={longPressProps.onPointerLeave}
+          onPointerMove={longPressProps.onPointerMove}
+          onPointerCancel={longPressProps.onPointerCancel}
+          onClick={(e) => {
+            if (longPressProps.getIsLongPressActive()) {
+              e.preventDefault()
+              e.stopPropagation()
+              return
+            }
+            if (isSelectionMode || e.metaKey || e.ctrlKey) {
+              onToggleSelect(e.shiftKey)
+            } else {
+              onOpen()
+            }
+          }}
         >
-          <Star className={`size-3 md:size-3.5 ${file.starred ? 'fill-current' : ''}`} />
-        </button>
-      </div>
+          <div className="aspect-[4/3] rounded-xl bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center mb-2 md:mb-3 relative overflow-hidden">
+            {getFileIcon(file)}
+            
+            {/* Selection Checkbox */}
+            <div 
+              className={`absolute top-2 left-2 transition-all duration-200 z-10 ${selected ? 'opacity-100' : 'opacity-0 md:group-hover:opacity-100'}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Checkbox 
+                checked={selected} 
+                onCheckedChange={() => onToggleSelect(false)} 
+                className="rounded-lg border-white/20 bg-black/20"
+              />
+            </div>
 
-      <div className="flex items-start justify-between gap-1 md:gap-2">
-        <div className="min-w-0 flex-1">
-          <p className="text-xs md:text-sm font-medium truncate">{file.name}</p>
-          <p className="text-[9px] md:text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-            {file.type === 'folder' ? 'Folder' : file.category || 'File'}
-          </p>
-        </div>
-        
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="size-7 rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-              <MoreVertical className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 rounded-2xl border-white/10 bg-background/95 backdrop-blur-xl">
-            <DropdownMenuItem onClick={onOpen} className="rounded-xl py-2.5">
-              <Play className="size-4 mr-2" /> Open
-            </DropdownMenuItem>
-            <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}>
-              {selected ? <X className="size-4 mr-2" /> : <Check className="size-4 mr-2" />} {selected ? 'Deselect' : 'Select'}
-            </DropdownMenuItem>
-            <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onRename(); }}>
-              <Edit3 className="size-4 mr-2" /> Rename
-            </DropdownMenuItem>
-            <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); setSelectedIds(new Set([file._id])); setIsMoveDialogOpen(true); }}>
-              <Folder className="size-4 mr-2" /> Move
-            </DropdownMenuItem>
-            <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onDownload(); }}>
-              <Download className="size-4 mr-2" /> {file.type === 'folder' ? 'Download ZIP' : 'Download'}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-white/10" />
-            <DropdownMenuItem onClick={onDelete} className="text-destructive rounded-xl hover:bg-destructive/10 py-2.5">
-              <Trash2 className="size-4 mr-2" /> Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    </motion.div>
+            {/* Star Button */}
+            <button 
+              onClick={(e) => { e.stopPropagation(); onToggleStar(e) }}
+              className={`
+                absolute top-2 right-2 p-1.5 rounded-lg transition-all duration-200 z-10
+                ${file.starred ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' : 'bg-black/20 text-white opacity-0 md:group-hover:opacity-100 hover:bg-black/40'}
+              `}
+            >
+              <Star className={`size-3 md:size-3.5 ${file.starred ? 'fill-current' : ''}`} />
+            </button>
+          </div>
+
+          <div className="flex items-start justify-between gap-1 md:gap-2">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs md:text-sm font-medium truncate">{file.name}</p>
+              <p className="text-[9px] md:text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+                {file.type === 'folder' ? 'Folder' : file.category || 'File'}
+              </p>
+            </div>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="size-7 rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                  <MoreVertical className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent onClick={(e) => e.stopPropagation()} align="end" className="w-48 rounded-2xl border-white/10 bg-background/95 backdrop-blur-xl">
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onOpen(); }} className="rounded-xl py-2.5">
+                  <Play className="size-4 mr-2" /> Open
+                </DropdownMenuItem>
+                <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onToggleSelect(false); }}>
+                  {selected ? <X className="size-4 mr-2" /> : <Check className="size-4 mr-2" />} {selected ? 'Deselect' : 'Select'}
+                </DropdownMenuItem>
+                <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onRename(); }}>
+                  <Edit3 className="size-4 mr-2" /> Rename
+                </DropdownMenuItem>
+                <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onMove(); }}>
+                  <Folder className="size-4 mr-2" /> Move
+                </DropdownMenuItem>
+                <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onDownload(); }}>
+                  <Download className="size-4 mr-2" /> {file.type === 'folder' ? 'Download ZIP' : 'Download'}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-white/10" />
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-destructive rounded-xl hover:bg-destructive/10 py-2.5">
+                  <Trash2 className="size-4 mr-2" /> Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </motion.div>
+      </ContextMenuTrigger>
+      <ContextMenuContent onClick={(e) => e.stopPropagation()} className="w-48 rounded-2xl border-white/10 bg-background/95 backdrop-blur-xl">
+        <ContextMenuItem onClick={(e) => { e.stopPropagation(); onOpen(); }} className="rounded-xl py-2.5">
+          <Play className="size-4 mr-2" /> Open
+        </ContextMenuItem>
+        <ContextMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onToggleSelect(false); }}>
+          {selected ? <X className="size-4 mr-2" /> : <Check className="size-4 mr-2" />} {selected ? 'Deselect' : 'Select'}
+        </ContextMenuItem>
+        <ContextMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onRename(); }}>
+          <Edit3 className="size-4 mr-2" /> Rename
+        </ContextMenuItem>
+        <ContextMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onMove(); }}>
+          <Folder className="size-4 mr-2" /> Move
+        </ContextMenuItem>
+        <ContextMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onDownload(); }}>
+          <Download className="size-4 mr-2" /> {file.type === 'folder' ? 'Download ZIP' : 'Download'}
+        </ContextMenuItem>
+        <ContextMenuSeparator className="bg-white/10" />
+        <ContextMenuItem onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-destructive rounded-xl hover:bg-destructive/10 py-2.5 focus:text-destructive">
+          <Trash2 className="size-4 mr-2" /> Delete
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   )
 }
 
 function FileListItem({ 
-  file, onOpen, onDelete, onDownload, onToggleStar, selected, onToggleSelect, onDragStart, onDrop, onRename 
+  file, onOpen, onDelete, onDownload, onToggleStar, selected, onToggleSelect, onDragStart, onDrop, onRename, onMove, isSelectionMode
 }: { 
   file: any, 
   onOpen: () => void, 
@@ -867,70 +1093,116 @@ function FileListItem({
   onDownload: () => void,
   onToggleStar: (e: React.MouseEvent) => void, 
   selected: boolean, 
-  onToggleSelect: () => void, 
+  onToggleSelect: (isShift?: boolean) => void, 
   onDragStart: (e: React.DragEvent) => void, 
   onDrop: (e: React.DragEvent) => void,
-  onRename: () => void
+  onRename: () => void,
+  onMove: () => void,
+  isSelectionMode: boolean
 }) {
+  const longPressProps = useLongPress(onToggleSelect, 600)
+
   return (
-    <TableRow 
-      className={`group border-white/5 cursor-pointer transition-colors ${selected ? 'bg-primary/10 hover:bg-primary/15' : 'hover:bg-white/10'}`}
-      onClick={(e) => {
-        if (e.metaKey || e.ctrlKey) {
-          onToggleSelect()
-        } else {
-          onOpen()
-        }
-      }}
-      draggable
-      onDragStart={onDragStart}
-      onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' }}
-      onDrop={onDrop}
-    >
-      <TableCell className="font-medium">
-        <div className="flex items-center gap-3">
-          <div onClick={(e) => e.stopPropagation()}>
-            <Checkbox checked={selected} onCheckedChange={onToggleSelect} className="rounded-lg border-white/20" />
-          </div>
-          <button onClick={(e) => { e.stopPropagation(); onToggleStar(e); }} className="p-1 rounded-lg hover:bg-white/10 transition-colors">
-            <Star className={`size-4 ${file.starred ? 'text-amber-500 fill-amber-500' : 'text-muted-foreground'}`} />
-          </button>
-          <div className="size-8 rounded-lg bg-white/5 flex items-center justify-center">
-            {getFileIcon(file)}
-          </div>
-          <span className="truncate max-w-[150px] md:max-w-[300px] text-xs md:text-sm">{file.name}</span>
-      </div>
-    </TableCell>
-    <TableCell className="text-muted-foreground text-[10px] md:text-xs hidden sm:table-cell">{formatSize(file.size)}</TableCell>
-    <TableCell className="text-muted-foreground text-[10px] md:text-xs uppercase tracking-tighter font-semibold hidden md:table-cell">
-      {file.type === 'folder' ? 'Folder' : file.category || 'File'}
-    </TableCell>
-    <TableCell className="text-muted-foreground text-[10px] md:text-xs hidden sm:table-cell">{formatDate(file.updatedAt)}</TableCell>
-      <TableCell className="text-right">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="size-8 rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-              <MoreHorizontal className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 rounded-2xl border-white/10 bg-background/95 backdrop-blur-xl">
-            <DropdownMenuItem onClick={onOpen} className="rounded-xl py-2.5"><Play className="size-4 mr-2" /> Open</DropdownMenuItem>
-            <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}>
-              {selected ? <X className="size-4 mr-2" /> : <Check className="size-4 mr-2" />} {selected ? 'Deselect' : 'Select'}
-            </DropdownMenuItem>
-            <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onRename(); }}>
-              <Edit3 className="size-4 mr-2" /> Rename
-            </DropdownMenuItem>
-            <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); setSelectedIds(new Set([file._id])); setIsMoveDialogOpen(true); }}>
-              <Folder className="size-4 mr-2" /> Move
-            </DropdownMenuItem>
-            <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onDownload(); }}><Download className="size-4 mr-2" /> Download</DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-white/10" />
-            <DropdownMenuItem onClick={onDelete} className="text-destructive rounded-xl hover:bg-destructive/10 py-2.5"><Trash2 className="size-4 mr-2" /> Delete</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </TableCell>
-    </TableRow>
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <TableRow 
+          className={`group border-white/5 cursor-pointer transition-colors file-item ${selected ? 'bg-primary/10 hover:bg-primary/15' : 'hover:bg-white/10'}`}
+          data-id={file._id.toString()}
+          onPointerDown={longPressProps.onPointerDown}
+          onPointerUp={longPressProps.onPointerUp}
+          onPointerLeave={longPressProps.onPointerLeave}
+          onPointerMove={longPressProps.onPointerMove}
+          onPointerCancel={longPressProps.onPointerCancel}
+          onClick={(e) => {
+            if (longPressProps.getIsLongPressActive()) {
+              e.preventDefault()
+              e.stopPropagation()
+              return
+            }
+            if (isSelectionMode || e.metaKey || e.ctrlKey) {
+              onToggleSelect(e.shiftKey)
+            } else {
+              onOpen()
+            }
+          }}
+          draggable
+          onDragStart={onDragStart}
+          onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' }}
+          onDrop={onDrop}
+        >
+          <TableCell className="font-medium">
+            <div className="flex items-center gap-3">
+              <div onClick={(e) => e.stopPropagation()}>
+                <Checkbox checked={selected} onCheckedChange={() => onToggleSelect(false)} className="rounded-lg border-white/20" />
+              </div>
+              <button onClick={(e) => { e.stopPropagation(); onToggleStar(e); }} className="p-1 rounded-lg hover:bg-white/10 transition-colors">
+                <Star className={`size-4 ${file.starred ? 'text-amber-500 fill-amber-500' : 'text-muted-foreground'}`} />
+              </button>
+              <div className="size-8 rounded-lg bg-white/5 flex items-center justify-center">
+                {getFileIcon(file)}
+              </div>
+              <span className="truncate max-w-[150px] md:max-w-[300px] text-xs md:text-sm">{file.name}</span>
+            </div>
+          </TableCell>
+          <TableCell className="text-muted-foreground text-[10px] md:text-xs hidden sm:table-cell">{formatSize(file.size)}</TableCell>
+          <TableCell className="text-muted-foreground text-[10px] md:text-xs uppercase tracking-tighter font-semibold hidden md:table-cell">
+            {file.type === 'folder' ? 'Folder' : file.category || 'File'}
+          </TableCell>
+          <TableCell className="text-muted-foreground text-[10px] md:text-xs hidden sm:table-cell">{formatDate(file.updatedAt)}</TableCell>
+          <TableCell className="text-right">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="size-8 rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                  <MoreHorizontal className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent onClick={(e) => e.stopPropagation()} align="end" className="w-48 rounded-2xl border-white/10 bg-background/95 backdrop-blur-xl">
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onOpen(); }} className="rounded-xl py-2.5">
+                  <Play className="size-4 mr-2" /> Open
+                </DropdownMenuItem>
+                <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onToggleSelect(false); }}>
+                  {selected ? <X className="size-4 mr-2" /> : <Check className="size-4 mr-2" />} {selected ? 'Deselect' : 'Select'}
+                </DropdownMenuItem>
+                <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onRename(); }}>
+                  <Edit3 className="size-4 mr-2" /> Rename
+                </DropdownMenuItem>
+                <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onMove(); }}>
+                  <Folder className="size-4 mr-2" /> Move
+                </DropdownMenuItem>
+                <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onDownload(); }}>
+                  <Download className="size-4 mr-2" /> Download
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-white/10" />
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-destructive rounded-xl hover:bg-destructive/10 py-2.5">
+                  <Trash2 className="size-4 mr-2" /> Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </TableCell>
+        </TableRow>
+      </ContextMenuTrigger>
+      <ContextMenuContent onClick={(e) => e.stopPropagation()} className="w-48 rounded-2xl border-white/10 bg-background/95 backdrop-blur-xl">
+        <ContextMenuItem onClick={(e) => { e.stopPropagation(); onOpen(); }} className="rounded-xl py-2.5">
+          <Play className="size-4 mr-2" /> Open
+        </ContextMenuItem>
+        <ContextMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onToggleSelect(false); }}>
+          {selected ? <X className="size-4 mr-2" /> : <Check className="size-4 mr-2" />} {selected ? 'Deselect' : 'Select'}
+        </ContextMenuItem>
+        <ContextMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onRename(); }}>
+          <Edit3 className="size-4 mr-2" /> Rename
+        </ContextMenuItem>
+        <ContextMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onMove(); }}>
+          <Folder className="size-4 mr-2" /> Move
+        </ContextMenuItem>
+        <ContextMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onDownload(); }}>
+          <Download className="size-4 mr-2" /> Download
+        </ContextMenuItem>
+        <ContextMenuSeparator className="bg-white/10" />
+        <ContextMenuItem onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-destructive rounded-xl hover:bg-destructive/10 py-2.5 focus:text-destructive">
+          <Trash2 className="size-4 mr-2" /> Delete
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   )
 }
 
