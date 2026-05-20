@@ -602,7 +602,7 @@ export default function FileManager() {
         <ScrollArea className="flex-1">
           <div 
             ref={containerRef}
-            className="p-4 md:p-6 pb-24 md:pb-6 relative min-h-full no-scrollbar select-none"
+            className="p-4 md:p-6 pb-24 md:pb-6 relative min-h-[calc(100vh-240px)] md:min-h-[calc(100vh-280px)] no-scrollbar select-none"
             onPointerDown={handleMarqueePointerDown}
             onPointerMove={handleMarqueePointerMove}
             onPointerUp={handleMarqueePointerUp}

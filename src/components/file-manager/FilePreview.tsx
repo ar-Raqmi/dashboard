@@ -242,6 +242,7 @@ export default function FilePreview() {
         <DialogContent
           className="bg-background/95 backdrop-blur-2xl border-white/10 text-foreground sm:max-w-2xl w-[95vw] sm:w-full rounded-[2rem] sm:rounded-[2.5rem] p-0 overflow-hidden shadow-2xl max-h-[90vh] overflow-y-auto no-scrollbar"
           showCloseButton={false}
+          aria-describedby={undefined}
         >
           <DialogTitle>
             <VisuallyHidden.Root>{previewFile.name}</VisuallyHidden.Root>
