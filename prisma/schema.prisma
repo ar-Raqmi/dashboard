@@ -163,6 +163,7 @@ model TwoFactorSecret {
   accountName String
   secret      String   // Encrypted/encoded TOTP secret
   category    String?  // Optional category/group like 'Work', 'Social', 'Finance', etc.
+  icon        String?  // Optional custom Material icon name
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

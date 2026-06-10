@@ -257,9 +257,16 @@ export default function FilePreview() {
                         {getCategoryIcon(previewFile.category)}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <input
-                          className="bg-transparent border-none text-xl font-bold text-foreground focus:outline-none focus:ring-0 w-full hover:bg-black/10 rounded px-1 transition-colors"
+                        <textarea
+                          className="bg-transparent border-none text-xl font-bold text-foreground focus:outline-none focus:ring-0 w-full hover:bg-black/10 rounded px-1 transition-colors resize-none overflow-hidden break-all h-auto min-h-[3rem] py-1"
                           defaultValue={previewFile.name}
+                          rows={2}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              e.currentTarget.blur()
+                            }
+                          }}
                           onBlur={async (e) => {
                             if (e.target.value && e.target.value !== previewFile.name) {
                               try {

@@ -402,6 +402,7 @@ export async function handleQuery(path: string, args: any, env?: any) {
           id: s.id,
           accountName: s.accountName,
           category: s.category || 'Other',
+          icon: s.icon || undefined,
           token,
           remainingSeconds,
         })
@@ -450,11 +451,14 @@ export async function handleQuery(path: string, args: any, env?: any) {
         return `/api/storage/${storageId}`
       }
       if (r2Key) {
-        const s3 = getS3Client()
-        if (s3 && process.env.R2_PUBLIC_URL) {
-          return `${process.env.R2_PUBLIC_URL}/${r2Key}`
+        const fs = require('fs')
+        const pathModule = require('path')
+        const filePath = pathModule.join(process.cwd(), 'public', 'uploads', r2Key)
+        if (fs.existsSync(filePath)) {
+          return `/uploads/${r2Key}`
         }
-        return `/uploads/${r2Key}`
+        const baseUrl = process.env.R2_PUBLIC_URL || 'https://pub-84d412ad01eb46349942a1f49615a6b0.r2.dev'
+        return `${baseUrl}/${r2Key}`
       }
       return null
     }
@@ -1187,7 +1191,7 @@ export async function handleMutation(path: string, args: any, env?: any) {
 
     case 'twoFactor:create': {
       const user = await getAuthedUser(db, args.sessionToken)
-      const { accountName, secret, category } = args
+      const { accountName, secret, category, icon } = args
       
       // Clean and validate the secret key format
       const cleanSecret = secret.replace(/\s+/g, '').toUpperCase()
@@ -1205,7 +1209,39 @@ export async function handleMutation(path: string, args: any, env?: any) {
           accountName,
           secret: encrypted,
           category: category || 'Other',
+          icon: icon || undefined,
         },
+      })
+      return { success: true }
+    }
+
+    case 'twoFactor:update': {
+      const user = await getAuthedUser(db, args.sessionToken)
+      const { id, accountName, category, icon, secret } = args
+      if (!id) throw new Error('Missing account id')
+      const item = await db.twoFactorSecret.findUnique({ where: { id } })
+      if (!item || item.userId !== user.id) {
+        throw new Error('2FA account not found or unauthorized')
+      }
+
+      const updates: any = {}
+      if (accountName !== undefined) updates.accountName = accountName
+      if (category !== undefined) updates.category = category || 'Other'
+      if (icon !== undefined) updates.icon = icon || null
+
+      if (secret !== undefined && secret.trim() !== '') {
+        const cleanSecret = secret.replace(/\s+/g, '').toUpperCase()
+        try {
+          new TOTP({ secret: cleanSecret })
+        } catch (err) {
+          return { success: false, error: 'Invalid secret key. Must be a valid Base32 string.' }
+        }
+        updates.secret = await encryptText(cleanSecret)
+      }
+
+      await db.twoFactorSecret.update({
+        where: { id },
+        data: updates,
       })
       return { success: true }
     }
