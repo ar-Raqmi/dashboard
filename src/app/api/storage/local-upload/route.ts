@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
-import fs from 'fs'
-import path from 'path'
+
+
+export const runtime = 'edge'
 
 export async function PUT(request: Request) {
   try {
@@ -14,17 +15,20 @@ export async function PUT(request: Request) {
     const buffer = await request.arrayBuffer()
     const uint8Array = new Uint8Array(buffer)
 
-    // Ensure uploads directory exists
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads')
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true })
+    // Ensure uploads directory exists if running in Node.js local dev
+    if (typeof process !== 'undefined' && process.release?.name === 'node') {
+      const fs = require('fs')
+      const path = require('path')
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads')
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true })
+      }
+      const filePath = path.join(uploadDir, key)
+      fs.writeFileSync(filePath, uint8Array)
+      return NextResponse.json({ success: true, url: `/uploads/${key}` })
     }
 
-    // Save the file
-    const filePath = path.join(uploadDir, key)
-    fs.writeFileSync(filePath, uint8Array)
-
-    return NextResponse.json({ success: true, url: `/uploads/${key}` })
+    return NextResponse.json({ error: 'Local uploading is disabled in cloud production' }, { status: 403 })
   } catch (err: any) {
     console.error('Local upload endpoint error:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })

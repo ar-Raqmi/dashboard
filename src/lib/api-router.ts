@@ -19,10 +19,10 @@ async function getAuthedUser(db: any, sessionToken: string) {
   return session.user
 }
 
-const getS3Client = () => {
-  const accessKeyId = process.env.R2_ACCESS_KEY_ID || process.env.NEXT_PUBLIC_R2_ACCESS_KEY_ID
-  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY || process.env.NEXT_PUBLIC_R2_SECRET_ACCESS_KEY
-  const endpoint = process.env.R2_ENDPOINT || process.env.NEXT_PUBLIC_R2_ENDPOINT
+const getS3Client = (env?: any) => {
+  const accessKeyId = env?.R2_ACCESS_KEY_ID || process.env.R2_ACCESS_KEY_ID || process.env.NEXT_PUBLIC_R2_ACCESS_KEY_ID
+  const secretAccessKey = env?.R2_SECRET_ACCESS_KEY || process.env.R2_SECRET_ACCESS_KEY || process.env.NEXT_PUBLIC_R2_SECRET_ACCESS_KEY
+  const endpoint = env?.R2_ENDPOINT || process.env.R2_ENDPOINT || process.env.NEXT_PUBLIC_R2_ENDPOINT || 'https://1253834dc9cac8e48edc6a7fec740ac9.r2.cloudflarestorage.com'
 
   if (!accessKeyId || !secretAccessKey || !endpoint) {
     return null
@@ -447,30 +447,44 @@ export async function handleQuery(path: string, args: any, env?: any) {
     case 'files:getFileUrl': {
       await getAuthedUser(db, args.sessionToken)
       const { storageId, r2Key } = args
+
       if (storageId) {
         return `/api/storage/${storageId}`
       }
+
       if (r2Key) {
-        const fs = require('fs')
-        const pathModule = require('path')
-        const filePath = pathModule.join(process.cwd(), 'public', 'uploads', r2Key)
-        if (fs.existsSync(filePath)) {
-          return `/uploads/${r2Key}`
+        // Try to generate a signed URL (R2 bucket is private)
+        const s3 = getS3Client(env)
+        if (s3) {
+          try {
+            const { GetObjectCommand } = require('@aws-sdk/client-s3')
+            const command = new GetObjectCommand({
+              Bucket: env?.R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'ar-raqmi-files',
+              Key: r2Key,
+            })
+            const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 })
+            return signedUrl
+          } catch (err) {
+            console.error('Failed to generate signed GET URL:', err)
+          }
         }
-        const baseUrl = process.env.R2_PUBLIC_URL || 'https://pub-84d412ad01eb46349942a1f49615a6b0.r2.dev'
-        return `${baseUrl}/${r2Key}`
+
+        // Fallback: route through our proxy (lets the server use its own R2 credentials)
+        return `/api/storage/proxy?key=${encodeURIComponent(r2Key)}&token=${encodeURIComponent(args.sessionToken)}`
       }
+
       return null
     }
+
 
     case 'r2:getUploadUrl': {
       await getAuthedUser(db, args.sessionToken)
       const { key, contentType } = args
-      const s3 = getS3Client()
+      const s3 = getS3Client(env)
       if (s3) {
         try {
           const command = new PutObjectCommand({
-            Bucket: process.env.R2_BUCKET_NAME || 'dashboard',
+            Bucket: env?.R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'ar-raqmi-files',
             Key: key,
             ContentType: contentType
           })
@@ -493,29 +507,21 @@ export async function handleQuery(path: string, args: any, env?: any) {
         throw new Error('File not found or unauthorized')
       }
       const filesToDelete = await getFilesToDelete(db, user.id, id)
-      const s3 = getS3Client()
+      const s3 = getS3Client(env)
       for (const f of filesToDelete) {
         if (f.r2Key) {
           if (s3) {
             try {
               await s3.send(new DeleteObjectCommand({
-                Bucket: process.env.R2_BUCKET_NAME || 'dashboard',
+                Bucket: env?.R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'ar-raqmi-files',
                 Key: f.r2Key
               }))
             } catch (err) {
               console.error(`Failed to delete ${f.r2Key} from R2:`, err)
             }
           } else {
-            try {
-              const fs = require('fs')
-              const pathModule = require('path')
-              const filePath = pathModule.join(process.cwd(), 'public', 'uploads', f.r2Key)
-              if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath)
-              }
-            } catch (err) {
-              console.error(`Failed to delete local file ${f.r2Key}:`, err)
-            }
+            // Local filesystem not available in edge runtime — skip
+            console.warn(`Skipping local file delete for ${f.r2Key} (edge runtime)`)
           }
         }
       }
@@ -527,7 +533,7 @@ export async function handleQuery(path: string, args: any, env?: any) {
       const user = await getAuthedUser(db, args.sessionToken)
       const { ids } = args
       if (!ids || !Array.isArray(ids)) throw new Error('Missing ids array')
-      const s3 = getS3Client()
+      const s3 = getS3Client(env)
       for (const id of ids) {
         const filesToDelete = await getFilesToDelete(db, user.id, id)
         for (const f of filesToDelete) {
@@ -535,23 +541,15 @@ export async function handleQuery(path: string, args: any, env?: any) {
             if (s3) {
               try {
                 await s3.send(new DeleteObjectCommand({
-                  Bucket: process.env.R2_BUCKET_NAME || 'dashboard',
+                  Bucket: env?.R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'ar-raqmi-files',
                   Key: f.r2Key
                 }))
               } catch (err) {
                 console.error(`Failed to delete ${f.r2Key} from R2:`, err)
               }
             } else {
-              try {
-                const fs = require('fs')
-                const pathModule = require('path')
-                const filePath = pathModule.join(process.cwd(), 'public', 'uploads', f.r2Key)
-                if (fs.existsSync(filePath)) {
-                  fs.unlinkSync(filePath)
-                }
-              } catch (err) {
-                console.error(`Failed to delete local file ${f.r2Key}:`, err)
-              }
+              // Local filesystem not available in edge runtime — skip
+              console.warn(`Skipping local file delete for ${f.r2Key} (edge runtime)`)
             }
           }
         }
@@ -843,6 +841,7 @@ export async function handleMutation(path: string, args: any, env?: any) {
           content,
           color,
           pinned,
+          updatedAt: new Date(),
         },
       })
       return n.id
@@ -934,6 +933,7 @@ export async function handleMutation(path: string, args: any, env?: any) {
           storageId: storageId || null,
           r2Key: r2Key || null,
           storageSource: storageSource || (storageId ? 'convex' : r2Key ? 'r2' : null),
+          updatedAt: new Date(),
         },
       })
       return f.id
@@ -964,13 +964,13 @@ export async function handleMutation(path: string, args: any, env?: any) {
         throw new Error('File not found or unauthorized')
       }
       const filesToDelete = await getFilesToDelete(db, user.id, id)
-      const s3 = getS3Client()
+      const s3 = getS3Client(env)
       for (const f of filesToDelete) {
         if (f.r2Key) {
           if (s3) {
             try {
               await s3.send(new DeleteObjectCommand({
-                Bucket: process.env.R2_BUCKET_NAME || 'dashboard',
+                Bucket: env?.R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'ar-raqmi-files',
                 Key: f.r2Key
               }))
             } catch (err) {
@@ -1210,6 +1210,7 @@ export async function handleMutation(path: string, args: any, env?: any) {
           secret: encrypted,
           category: category || 'Other',
           icon: icon || undefined,
+          updatedAt: new Date(),
         },
       })
       return { success: true }

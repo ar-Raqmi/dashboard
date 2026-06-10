@@ -56,6 +56,21 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${notoSansArabic.variable} antialiased bg-background text-foreground font-sans`}
       >
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                const originalSet = Element.prototype.setAttribute;
+                Element.prototype.setAttribute = function(name, val) {
+                  if (name === 'aria-hidden' && val === 'true' && this.contains(document.activeElement)) {
+                    return;
+                  }
+                  originalSet.call(this, name, val);
+                };
+              })();
+            `
+          }}
+        />
         <ThemeProvider
           attribute="class"
           defaultTheme="light"

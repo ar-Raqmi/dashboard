@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { cn } from '@/lib/utils'
 import { toHijri } from 'hijri-converter'
+import { toast } from 'sonner'
 
 // Widget icon mapping
 const widgetIcons: Record<WidgetType, React.ReactNode> = {
@@ -822,7 +823,10 @@ function TwoFactorContent() {
             </div>
           </div>
           <button
-            onClick={() => copyToClipboard(item.id, item.token)}
+            onClick={(e) => {
+              e.stopPropagation()
+              copyToClipboard(item.id, item.token)
+            }}
             className="p-1.5 rounded-lg hover:bg-surface-variant text-muted-foreground hover:text-primary transition-colors shrink-0"
             title="Copy Code"
           >

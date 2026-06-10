@@ -202,6 +202,7 @@ export default function FilePreview() {
   const { sessionToken } = useAuth()
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false)
 
+
   const fileUrl = useQuery(
     api.files.getFileUrl,
     previewFile?.storageId || previewFile?.r2Key 
@@ -335,17 +336,27 @@ export default function FilePreview() {
                     <Button
                       size="lg"
                       className="w-full sm:flex-1 rounded-xl sm:rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 gap-2 h-12 sm:h-14 font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
-                      onClick={async () => {
+                      onClick={() => {
                         if (!fileUrl) return
                         toast.info('Starting download...')
-                        const response = await fetch(fileUrl)
-                        const blob = await response.blob()
-                        const url = window.URL.createObjectURL(blob)
+
+                        let downloadUrl: string
+                        if (fileUrl.startsWith('/')) {
+                          // Local file or proxy URL — use directly
+                          downloadUrl = fileUrl.includes('?')
+                            ? `${fileUrl}&download=1`
+                            : `${fileUrl}?download=1`
+                        } else {
+                          // External URL (e.g. signed R2 URL) — use download proxy  
+                          downloadUrl = `/api/storage/download?url=${encodeURIComponent(fileUrl)}&name=${encodeURIComponent(previewFile.name)}`
+                        }
+                        
                         const a = document.createElement('a')
-                        a.href = url
+                        a.href = downloadUrl
                         a.download = previewFile.name
+                        document.body.appendChild(a)
                         a.click()
-                        window.URL.revokeObjectURL(url)
+                        document.body.removeChild(a)
                       }}
                       disabled={!fileUrl}
                     >
@@ -368,7 +379,10 @@ export default function FilePreview() {
                         variant="outline"
                         size="lg"
                         className="flex-1 sm:flex-none rounded-xl sm:rounded-2xl border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10 hover:text-red-300 gap-2 h-12 sm:h-14 sm:w-14 p-0 shadow-lg"
-                        onClick={() => setShowDeleteConfirm(true)}
+                        onClick={() => {
+                          ;(document.activeElement as HTMLElement)?.blur()
+                          setShowDeleteConfirm(true)
+                        }}
                       >
                         <Trash2 className="size-5" />
                         <span className="sm:hidden font-medium">Delete</span>
