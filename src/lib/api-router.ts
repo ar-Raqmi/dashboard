@@ -118,6 +118,62 @@ export async function handleQuery(path: string, args: any, env?: any) {
       }))
     }
 
+    case 'files:list': {
+      const user = await getAuthedUser(db, args.sessionToken)
+      const { parentId, starred, category } = args
+
+      const whereClause: any = { userId: user.id }
+      if (starred !== undefined) {
+        whereClause.starred = starred
+      } else if (category !== undefined) {
+        whereClause.category = category
+      } else {
+        whereClause.parentId = parentId || null
+      }
+
+      const files = await db.fileItem.findMany({
+        where: whereClause,
+        orderBy: { updatedAt: 'desc' },
+      })
+
+      return files.map((f: any) => ({
+        id: f.id,
+        name: f.name,
+        type: f.type,
+        category: f.category || undefined,
+        parentId: f.parentId || null,
+        size: f.size || 0,
+        storageId: f.storageId || undefined,
+        r2Key: f.r2Key || undefined,
+        storageSource: f.storageSource || undefined,
+        starred: f.starred || false,
+        lastAccessed: f.lastAccessed || undefined,
+        createdAt: f.createdAt.toISOString(),
+        updatedAt: f.updatedAt.toISOString(),
+      }))
+    }
+
+    case 'files:getPath': {
+      const user = await getAuthedUser(db, args.sessionToken)
+      const { folderId } = args
+      if (!folderId) return []
+
+      const path = []
+      let currentId = folderId
+      while (currentId) {
+        const folder = await db.fileItem.findUnique({
+          where: { id: currentId },
+        })
+        if (!folder || folder.userId !== user.id) break
+        path.unshift({
+          id: folder.id,
+          name: folder.name,
+        })
+        currentId = folder.parentId
+      }
+      return path
+    }
+
     case 'files:listAll': {
       const user = await getAuthedUser(db, args.sessionToken)
       const files = await db.fileItem.findMany({
