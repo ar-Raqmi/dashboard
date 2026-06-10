@@ -122,7 +122,11 @@ export function ConvexSync({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (files !== undefined) {
-      useAppStore.setState({ files })
+      const mappedFiles = (files ?? []).map((f: any) => ({
+        ...f,
+        _id: f.id,
+      }))
+      useAppStore.setState({ files: mappedFiles })
     }
   }, [files])
 

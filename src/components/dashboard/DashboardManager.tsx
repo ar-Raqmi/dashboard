@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CheckCircle, CalendarDays, StickyNote, BookOpen, Flag, Clock, Folder, ClipboardList } from 'lucide-react'
+import { CheckCircle, CalendarDays, StickyNote, BookOpen, Flag, Clock, Folder, ClipboardList, ShieldCheck } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Switch } from '@/components/ui/switch'
 import { useAppStore } from '@/lib/store'
@@ -18,6 +18,7 @@ const widgetIconMap: Record<WidgetType, React.ReactNode> = {
   clock: <Clock className="w-5 h-5" />,
   files: <Folder className="w-5 h-5" />,
   clipboard: <ClipboardList className="w-5 h-5" />,
+  twoFactor: <ShieldCheck className="w-5 h-5" />,
 }
 
 export function DashboardManager() {
