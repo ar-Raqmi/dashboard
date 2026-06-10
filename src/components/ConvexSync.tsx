@@ -140,49 +140,49 @@ export function ConvexSync({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (desktopLayouts !== undefined) {
-      useAppStore.setState({ layouts: desktopLayouts })
+      useAppStore.setState({ layouts: desktopLayouts ?? [] })
     }
   }, [desktopLayouts])
 
   useEffect(() => {
     if (mobileLayouts !== undefined) {
-      useAppStore.setState({ mobileLayouts })
+      useAppStore.setState({ mobileLayouts: mobileLayouts ?? [] })
     }
   }, [mobileLayouts])
 
   useEffect(() => {
     if (notesDesktopLayouts !== undefined) {
-      useAppStore.setState({ noteLayouts: notesDesktopLayouts })
+      useAppStore.setState({ noteLayouts: notesDesktopLayouts ?? [] })
     }
   }, [notesDesktopLayouts])
 
   useEffect(() => {
     if (notesMobileLayouts !== undefined) {
-      useAppStore.setState({ noteMobileLayouts: notesMobileLayouts })
+      useAppStore.setState({ noteMobileLayouts: notesMobileLayouts ?? [] })
     }
   }, [notesMobileLayouts])
 
   useEffect(() => {
     if (pinnedDesktopLayouts !== undefined) {
-      useAppStore.setState({ pinnedNoteLayouts: pinnedDesktopLayouts })
+      useAppStore.setState({ pinnedNoteLayouts: pinnedDesktopLayouts ?? [] })
     }
   }, [pinnedDesktopLayouts])
 
   useEffect(() => {
     if (pinnedMobileLayouts !== undefined) {
-      useAppStore.setState({ pinnedNoteMobileLayouts: pinnedMobileLayouts })
+      useAppStore.setState({ pinnedNoteMobileLayouts: pinnedMobileLayouts ?? [] })
     }
   }, [pinnedMobileLayouts])
   
   useEffect(() => {
     if (goalDesktopLayouts !== undefined) {
-      useAppStore.setState({ goalLayouts: goalDesktopLayouts })
+      useAppStore.setState({ goalLayouts: goalDesktopLayouts ?? [] })
     }
   }, [goalDesktopLayouts])
 
   useEffect(() => {
     if (goalMobileLayouts !== undefined) {
-      useAppStore.setState({ goalMobileLayouts })
+      useAppStore.setState({ goalMobileLayouts: goalMobileLayouts ?? [] })
     }
   }, [goalMobileLayouts])
 
