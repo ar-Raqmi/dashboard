@@ -226,7 +226,11 @@ export async function handleQuery(path: string, args: any, env?: any) {
         }
         return []
       }
-      return JSON.parse(entry.layouts)
+      let parsed = JSON.parse(entry.layouts)
+      if (typeof parsed === 'string') {
+        parsed = JSON.parse(parsed)
+      }
+      return Array.isArray(parsed) ? parsed : []
     }
 
     case 'settings:get': {
