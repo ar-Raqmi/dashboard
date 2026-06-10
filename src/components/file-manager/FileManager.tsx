@@ -1,8 +1,8 @@
 'use client'
 
 import React, { useState, useMemo } from 'react'
-import { useQuery, useMutation, useAction } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
+import { useQuery, useMutation, useAction } from '@/hooks/useCloudflareConvex'
+import { api } from '@/lib/convex-client'
 import { useAuth } from '@/hooks/useAuth'
 import { 
   Folder, File, Upload, FolderPlus, ArrowLeft, MoreVertical, 

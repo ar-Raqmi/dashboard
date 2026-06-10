@@ -23,7 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [sessionToken, setSessionToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isConvexConfigured] = useState(() => !!process.env.NEXT_PUBLIC_CONVEX_URL)
+  const [isConvexConfigured] = useState(true)
 
   // Helper to set cookie
   const setSessionCookie = (token: string, days: number) => {
@@ -54,14 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
-        if (!convexUrl) {
-          setLoading(false)
-          return
-        }
-
-        // Use fetch for the initial check to avoid dependency loops with ConvexProvider
-        const res = await fetch(`${convexUrl}/api/query`, {
+        const res = await fetch('/api/query', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -95,11 +88,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(async (username: string, password: string) => {
     try {
-      const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
-      if (!convexUrl) return { success: false, error: 'Convex not configured' }
-
       // 1. Get user by username
-      const userRes = await fetch(`${convexUrl}/api/query`, {
+      const userRes = await fetch('/api/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -124,7 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const token = crypto.randomUUID()
       const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000 // 7 days
 
-      const sessionRes = await fetch(`${convexUrl}/api/mutation`, {
+      const sessionRes = await fetch('/api/mutation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -156,9 +146,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
-      if (convexUrl && sessionToken) {
-        await fetch(`${convexUrl}/api/mutation`, {
+      if (sessionToken) {
+        await fetch('/api/mutation', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -176,8 +165,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateCredentials = useCallback(async (newUsername?: string, newPassword?: string) => {
     try {
-      const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
-      if (!convexUrl || !sessionToken) return { success: false, error: 'Unauthorized' }
+      if (!sessionToken) return { success: false, error: 'Unauthorized' }
 
       const args: any = { sessionToken }
       if (newUsername) args.newUsername = newUsername
@@ -189,7 +177,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         args.newSalt = salt
       }
 
-      const res = await fetch(`${convexUrl}/api/mutation`, {
+      const res = await fetch('/api/mutation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

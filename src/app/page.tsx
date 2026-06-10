@@ -19,9 +19,10 @@ import SpiritualPage from '@/components/pages/SpiritualPage'
 import GoalsPage from '@/components/pages/GoalsPage'
 import SettingsPage from '@/components/pages/SettingsPage'
 import LoginPage from '@/components/pages/LoginPage'
+import TwoFactorPage from '@/components/pages/TwoFactorPage'
 import { Loader2 } from 'lucide-react'
-import { useAction } from 'convex/react'
-import { api } from '@/../convex/_generated/api'
+import { useAction } from '@/hooks/useCloudflareConvex'
+import { api } from '@/lib/convex-client'
 
 const pageComponents: Record<ActivePage, React.ComponentType> = {
   dashboard: DashboardGrid,
@@ -32,6 +33,7 @@ const pageComponents: Record<ActivePage, React.ComponentType> = {
   spiritual: SpiritualPage,
   goals: GoalsPage,
   settings: SettingsPage,
+  twoFactor: TwoFactorPage,
 }
 
 const GRADIENT_MAP: Record<string, string> = {

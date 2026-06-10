@@ -74,7 +74,7 @@ export interface HadithData {
   grade: string
 }
 
-export type WidgetType = 'tasks' | 'calendar' | 'notes' | 'verse' | 'goals' | 'clock' | 'files' | 'clipboard'
+export type WidgetType = 'tasks' | 'calendar' | 'notes' | 'verse' | 'goals' | 'clock' | 'files' | 'clipboard' | 'twoFactor'
 
 export interface DashboardWidget {
   type: WidgetType
@@ -83,7 +83,7 @@ export interface DashboardWidget {
   visible: boolean
 }
 
-export type ActivePage = 'dashboard' | 'tasks' | 'calendar' | 'notes' | 'files' | 'spiritual' | 'goals' | 'settings'
+export type ActivePage = 'dashboard' | 'tasks' | 'calendar' | 'notes' | 'files' | 'spiritual' | 'goals' | 'settings' | 'twoFactor'
 export type EditSubMode = 'move' | 'resize'
 
 export interface ClockConfig {
@@ -112,6 +112,7 @@ const defaultWidgets: DashboardWidget[] = [
   { type: 'clock', label: 'World Clock', icon: 'schedule', visible: true },
   { type: 'files', label: 'Files', icon: 'folder', visible: true },
   { type: 'clipboard', label: 'Clipboard', icon: 'content_paste', visible: true },
+  { type: 'twoFactor', label: '2FA Authenticator', icon: 'security', visible: true },
 ]
 
 // Max dimensions for grid widgets
@@ -132,6 +133,7 @@ const defaultLayouts: Layout[] = [
   { i: 'clock', x: 0, y: 4, w: 1, h: 2, minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H },
   { i: 'files', x: 1, y: 4, w: 1, h: 1, minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H },
   { i: 'clipboard', x: 2, y: 4, w: 1, h: 2, minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H },
+  { i: 'twoFactor', x: 1, y: 5, w: 1, h: 2, minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H },
 ]
 
 // Mobile layouts: 1-column stack (preserves h, forces w:1, x:0)
@@ -144,6 +146,7 @@ const defaultMobileLayouts: Layout[] = [
   { i: 'clock', x: 0, y: 10, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
   { i: 'files', x: 0, y: 12, w: 1, h: 1, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
   { i: 'clipboard', x: 0, y: 13, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
+  { i: 'twoFactor', x: 0, y: 15, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
 ]
 
 // Helper: local date string to avoid UTC shift from toISOString()

@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { BookOpen, RefreshCw } from 'lucide-react'
-import { useAction } from 'convex/react'
-import { api } from '@/../convex/_generated/api'
+import { useAction } from '@/hooks/useCloudflareConvex'
+import { api } from '@/lib/convex-client'
 import { useAppStore } from '@/lib/store'
 
 export default function VerseWidget() {

@@ -2,7 +2,7 @@
 
 import React, { useCallback, useMemo, useRef, useMemo as useMemoReact } from 'react'
 import { ResponsiveGridLayout, useContainerWidth } from 'react-grid-layout'
-import { CheckCircle, CalendarDays, StickyNote, BookOpen, Flag, Folder, FileText, Image as ImageIcon, Music, Film, Pencil, Check, Plus, Settings2, Trash2, ChevronUp, ChevronDown, MoonStar, ClipboardList, Copy, CheckCheck, Star, Clock, Loader2, ExternalLink } from 'lucide-react'
+import { CheckCircle, CalendarDays, StickyNote, BookOpen, Flag, Folder, FileText, Image as ImageIcon, Music, Film, Pencil, Check, Plus, Settings2, Trash2, ChevronUp, ChevronDown, MoonStar, ClipboardList, Copy, CheckCheck, Star, Clock, Loader2, ExternalLink, ShieldCheck } from 'lucide-react'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import { useAppStore, MAX_GRID_W, MAX_GRID_H } from '@/lib/store'
@@ -12,8 +12,8 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { Switch } from '@/components/ui/switch'
 import { Slider } from '@/components/ui/slider'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
-import { useQuery } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
+import { useQuery } from '@/hooks/useCloudflareConvex'
+import { api } from '@/lib/convex-client'
 import { useAuth } from '@/hooks/useAuth'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -31,6 +31,7 @@ const widgetIcons: Record<WidgetType, React.ReactNode> = {
   clock: <MoonStar className="w-4 h-4" />,
   files: <Folder className="w-4 h-4" />,
   clipboard: <ClipboardList className="w-4 h-4" />,
+  twoFactor: <ShieldCheck className="w-4 h-4" />,
 }
 
 // Widget title mapping
@@ -43,6 +44,7 @@ const widgetTitles: Record<WidgetType, string> = {
   clock: 'World Clock',
   files: 'Files',
   clipboard: 'Clipboard',
+  twoFactor: '2FA Authenticator',
 }
 
 // Widget navigation mapping
@@ -55,6 +57,7 @@ const widgetPageMap: Record<WidgetType, ActivePage> = {
   clock: 'dashboard',
   files: 'files',
   clipboard: 'dashboard',
+  twoFactor: 'twoFactor',
 }
 
 // Helper to format file size
@@ -739,6 +742,102 @@ function ClipboardContent() {
   )
 }
 
+// ===== 2FA Authenticator Content =====
+function TwoFactorContent() {
+  const { sessionToken } = useAuth()
+  const list = useQuery(api.twoFactor.list, sessionToken ? { sessionToken } : 'skip')
+  const [items, setItems] = React.useState<any[]>([])
+  const [copiedId, setCopiedId] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    if (list) {
+      setItems(list)
+    }
+  }, [list])
+
+  // Countdown timer
+  React.useEffect(() => {
+    if (items.length === 0) return
+
+    const interval = setInterval(() => {
+      setItems((prev) =>
+        prev.map((item) => {
+          if (item.remainingSeconds <= 1) {
+            return { ...item, remainingSeconds: 30 }
+          }
+          return { ...item, remainingSeconds: item.remainingSeconds - 1 }
+        })
+      )
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [items.length])
+
+  const copyToClipboard = (id: string, code: string) => {
+    navigator.clipboard.writeText(code)
+    setCopiedId(id)
+    toast.success('OTP code copied to clipboard')
+    setTimeout(() => setCopiedId(null), 2000)
+  }
+
+  if (list === undefined) {
+    return (
+      <div className="flex items-center justify-center h-24">
+        <Loader2 className="w-5 h-5 text-primary animate-spin" />
+      </div>
+    )
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full min-h-[120px] text-center p-4">
+        <ShieldCheck className="w-8 h-8 text-muted-foreground/50 mb-2" />
+        <p className="text-xs text-muted-foreground">No 2FA accounts added yet.</p>
+        <button
+          onClick={() => useAppStore.getState().setActivePage('twoFactor')}
+          className="text-xs text-primary font-medium hover:underline mt-1.5 no-drag"
+        >
+          Add your first account
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-2.5 h-full overflow-y-auto pr-1 no-drag">
+      {items.map((item) => (
+        <div
+          key={item.id}
+          className="flex items-center justify-between p-2 rounded-xl bg-surface-variant/30 hover:bg-surface-variant/50 transition-colors border border-outline/10 group"
+        >
+          <div className="min-w-0 flex-1 pr-2">
+            <p className="text-xs font-semibold text-foreground truncate">{item.accountName}</p>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-lg font-mono font-bold tracking-wider text-primary tabular-nums">
+                {item.token.slice(0, 3)} {item.token.slice(3)}
+              </span>
+              <span className={`text-[10px] font-medium tabular-nums ${item.remainingSeconds <= 5 ? 'text-destructive animate-pulse' : 'text-muted-foreground'}`}>
+                {item.remainingSeconds}s
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={() => copyToClipboard(item.id, item.token)}
+            className="p-1.5 rounded-lg hover:bg-surface-variant text-muted-foreground hover:text-primary transition-colors shrink-0"
+            title="Copy Code"
+          >
+            {copiedId === item.id ? (
+              <CheckCheck className="w-4 h-4 text-emerald-500" />
+            ) : (
+              <Copy className="w-4 h-4" />
+            )}
+          </button>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ===== Timezone UTC offset helper =====
 function getTimezoneOffset(timezone: string): string {
   try {
@@ -1106,6 +1205,7 @@ const widgetComponents: Record<WidgetType, React.ComponentType<WidgetContentProp
   clock: ClockContent as React.ComponentType<WidgetContentProps>,
   files: FilesContent as React.ComponentType<WidgetContentProps>,
   clipboard: ClipboardContent as unknown as React.ComponentType<WidgetContentProps>,
+  twoFactor: TwoFactorContent as unknown as React.ComponentType<WidgetContentProps>,
 }
 
 export function DashboardGrid() {

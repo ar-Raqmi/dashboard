@@ -1,23 +1,45 @@
 'use client'
 
-import { ConvexReactClient } from 'convex/react'
-import { api } from '../../convex/_generated/api'
-
-const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || ''
-
-// Singleton Convex client - used by both ConvexProvider and direct mutation calls
-let convexClient: ConvexReactClient | null = null
-
-export function getConvexClient(): ConvexReactClient | null {
-  if (!convexUrl) return null
-  if (!convexClient) {
-    convexClient = new ConvexReactClient(convexUrl)
-  }
-  return convexClient
+export function getConvexClient() {
+  return null
 }
 
 export function isConvexConfigured(): boolean {
-  return !!convexUrl
+  return false
 }
 
-export { convexUrl, api }
+export const convexUrl = ''
+
+// Helper to recursively create a path proxy
+function createProxy(parts: string[]): any {
+  const fn = () => {}
+  // Set the path property on the function object itself
+  Object.defineProperty(fn, 'path', {
+    get() {
+      return parts.join(':')
+    }
+  })
+  
+  return new Proxy(fn, {
+    get(target, prop) {
+      if (prop === 'path') {
+        return parts.join(':')
+      }
+      // Handle symbol checking or built-in properties
+      if (typeof prop === 'symbol' || prop === 'then' || prop === 'prototype') {
+        return undefined
+      }
+      return createProxy([...parts, String(prop)])
+    }
+  })
+}
+
+// Global API builder proxy
+export const api = new Proxy({}, {
+  get(target, prop) {
+    if (typeof prop === 'symbol' || prop === 'then' || prop === 'prototype') {
+      return undefined
+    }
+    return createProxy([String(prop)])
+  }
+}) as any

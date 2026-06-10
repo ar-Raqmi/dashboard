@@ -13,6 +13,7 @@ import type * as clocks from "../clocks.js";
 import type * as content from "../content.js";
 import type * as dashboard from "../dashboard.js";
 import type * as events from "../events.js";
+import type * as exportData from "../exportData.js";
 import type * as files from "../files.js";
 import type * as goals from "../goals.js";
 import type * as notes from "../notes.js";
@@ -34,6 +35,7 @@ declare const fullApi: ApiFromModules<{
   content: typeof content;
   dashboard: typeof dashboard;
   events: typeof events;
+  exportData: typeof exportData;
   files: typeof files;
   goals: typeof goals;
   notes: typeof notes;
