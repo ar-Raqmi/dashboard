@@ -26,21 +26,15 @@
 # 1. Install dependencies
 npm install
 
-# 2. Connect to Convex
-npx convex dev
+# 2. Sync SQLite Database (Prisma)
+npx prisma db push
 
-# 3. Create your user
-# Run the seed mutation in the Convex dashboard
-npx convex dashboard
-
-# 4. Launch the app
+# 3. Launch the app
 npm run dev
 ```
 
-> **Note:** Use the Convex dashboard to run the `seed:admin` mutation for initial setup.
-
 ### 🛠️ The Stack
-**Next.js 16** • **Convex** • **Tailwind 4** • **Zustand**
+**Next.js 16** • **Cloudflare Edge / Pages** • **Prisma + SQLite/D1** • **Tailwind 4** • **Zustand**
 
 ---
 

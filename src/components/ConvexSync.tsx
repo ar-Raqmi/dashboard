@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useQuery, useMutation } from 'convex/react'
-import { api } from '../../convex/_generated/api'
+import { useQuery, useMutation } from '@/hooks/useCloudflareConvex'
+import { api } from '@/lib/convex-client'
 import { useAuth } from '@/hooks/useAuth'
 import { useAppStore } from '@/lib/store'
 import { Loader2 } from 'lucide-react'
