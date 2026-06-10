@@ -11,17 +11,17 @@ import {
   CheckCheck, 
   Loader2, 
   Search, 
-  Filter, 
   LayoutGrid, 
   List, 
   ChevronDown, 
-  ChevronRight, 
-  AlertCircle,
+  ChevronRight,
   Briefcase,
   Users,
   Wallet,
   Gamepad2,
-  Tag
+  Tag,
+  Edit2,
+  X
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useQuery, useMutation } from '@/hooks/useCloudflareConvex'
@@ -33,7 +33,8 @@ import { toast } from 'sonner'
 
 const PRESET_CATEGORIES = ['Work', 'Social', 'Finance', 'Gaming', 'Other']
 
-const CATEGORY_ICONS: { [key: string]: React.ReactNode } = {
+// Helper icons mapping
+const CATEGORY_LUCIDE_ICONS: { [key: string]: React.ReactNode } = {
   Work: <Briefcase className="w-4 h-4" />,
   Social: <Users className="w-4 h-4" />,
   Finance: <Wallet className="w-4 h-4" />,
@@ -74,13 +75,38 @@ const CATEGORY_THEMES: { [key: string]: { border: string; text: string; bg: stri
   }
 }
 
+// Popular Google Material Symbols Library
+const POPULAR_MATERIAL_ICONS = [
+  'security', 'key', 'lock', 'fingerprint', 'shield', 
+  'person', 'group', 'forum', 'share', 'public',
+  'work', 'business_center', 'assignment', 'event', 'analytics',
+  'payments', 'account_balance', 'shopping_cart', 'monetization_on', 'trending_up',
+  'sports_esports', 'videogame_asset', 'games',
+  'cloud', 'dns', 'terminal', 'code', 'smartphone', 'computer',
+  'home', 'school', 'star', 'favorite', 'lightbulb',
+  'mail', 'chat', 'call', 'notifications', 'settings',
+  'folder', 'description', 'image', 'play_circle', 'link'
+]
+
 export default function TwoFactorPage() {
   const { sessionToken } = useAuth()
   const setActivePage = useAppStore((s) => s.setActivePage)
   
+  // Dynamic CSS Injector for Material Symbols Outlined Font
+  useEffect(() => {
+    const link = document.createElement('link')
+    link.rel = 'stylesheet'
+    link.href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200'
+    document.head.appendChild(link)
+    return () => {
+      document.head.removeChild(link)
+    }
+  }, [])
+
   // Queries & Mutations
   const list = useQuery(api.twoFactor.list, sessionToken ? { sessionToken } : 'skip')
   const createAccount = useMutation(api.twoFactor.create)
+  const updateAccount = useMutation(api.twoFactor.update)
   const removeAccount = useMutation(api.twoFactor.remove)
 
   // Local State
@@ -95,8 +121,18 @@ export default function TwoFactorPage() {
   const [accountName, setAccountName] = useState('')
   const [secret, setSecret] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('Work')
+  const [selectedIcon, setSelectedIcon] = useState('security')
   const [isAdding, setIsAdding] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [iconSearchText, setIconSearchText] = useState('')
+
+  // Edit Account Form
+  const [editingItem, setEditingItem] = useState<any | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editSecret, setEditSecret] = useState('')
+  const [editCategory, setEditCategory] = useState('')
+  const [editIcon, setEditIcon] = useState('')
+  const [editIconSearchText, setEditIconSearchText] = useState('')
 
   useEffect(() => {
     if (list) {
@@ -142,7 +178,8 @@ export default function TwoFactorPage() {
         sessionToken,
         accountName: accountName.trim(),
         secret: secret.trim(),
-        category: selectedCategory,
+        category: selectedCategory.trim(),
+        icon: selectedIcon,
       })
 
       if (res && res.success === false) {
@@ -152,7 +189,40 @@ export default function TwoFactorPage() {
         setAccountName('')
         setSecret('')
         setSelectedCategory('Work')
+        setSelectedIcon('security')
         setIsAdding(false)
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'An error occurred')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleEditAccount = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingItem || !editName.trim()) {
+      toast.error('Account Name is required')
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      const res = await updateAccount({
+        sessionToken,
+        id: editingItem.id,
+        accountName: editName.trim(),
+        category: editCategory.trim(),
+        icon: editIcon || null,
+        secret: editSecret.trim() || undefined
+      })
+
+      if (res && res.success === false) {
+        toast.error(res.error || 'Failed to update account')
+      } else {
+        toast.success('2FA Account updated successfully')
+        setEditingItem(null)
+        setEditSecret('')
       }
     } catch (err: any) {
       toast.error(err.message || 'An error occurred')
@@ -199,6 +269,29 @@ export default function TwoFactorPage() {
     return items.filter(item => item.category === cat).length
   }
 
+  const renderIcon = (iconName: string | undefined, defaultCategory: string) => {
+    if (iconName) {
+      return (
+        <span 
+          className="material-symbols-outlined select-none text-[18px] w-5 h-5 flex items-center justify-center"
+          style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}
+        >
+          {iconName}
+        </span>
+      )
+    }
+    return CATEGORY_LUCIDE_ICONS[defaultCategory] || <Tag className="w-4 h-4" />
+  }
+
+  // Filter lists of Material Symbols based on user typing
+  const filteredPopularIcons = POPULAR_MATERIAL_ICONS.filter(name => 
+    name.toLowerCase().includes(iconSearchText.toLowerCase())
+  )
+
+  const filteredEditPopularIcons = POPULAR_MATERIAL_ICONS.filter(name => 
+    name.toLowerCase().includes(editIconSearchText.toLowerCase())
+  )
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Header */}
@@ -208,10 +301,10 @@ export default function TwoFactorPage() {
             <ShieldCheck className="w-6 h-6 text-primary" />
             2FA Authenticator
           </h1>
-          <p className="text-sm text-muted-foreground">Manage and group your dynamic two-factor verification codes</p>
+          <p className="text-sm text-muted-foreground">Manage, search and customize your dynamic two-factor verification codes</p>
         </div>
 
-        {!isAdding && (
+        {!isAdding && !editingItem && (
           <Button
             onClick={() => setIsAdding(true)}
             className="rounded-xl flex items-center gap-1.5 shadow-md shadow-primary/10 hover:shadow-primary/25 transition-all duration-300 self-start md:self-auto"
@@ -231,10 +324,15 @@ export default function TwoFactorPage() {
             exit={{ opacity: 0, y: -20 }}
             className="mb-8 p-6 rounded-2xl bg-surface/40 backdrop-blur-md border border-outline/10 shadow-lg"
           >
-            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
-              <Key className="w-5 h-5 text-primary" />
-              Add 2FA Account
-            </h2>
+            <div className="flex justify-between items-start mb-4">
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <Key className="w-5 h-5 text-primary" />
+                Add 2FA Account
+              </h2>
+              <button onClick={() => setIsAdding(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
             <form onSubmit={handleAddAccount} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
@@ -259,29 +357,91 @@ export default function TwoFactorPage() {
                 </div>
               </div>
 
-              {/* Category selector pills */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">Category / Group</label>
-                <div className="flex flex-wrap gap-2">
-                  {PRESET_CATEGORIES.map((cat) => {
-                    const theme = CATEGORY_THEMES[cat]
-                    const isSelected = selectedCategory === cat
-                    return (
+              {/* Group text input / Preset selector */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Group Name (Custom Category)</label>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Input
+                    placeholder="Type custom group name e.g. AWS Keys"
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="rounded-xl flex-1"
+                  />
+                  <div className="flex flex-wrap gap-1.5 items-center">
+                    <span className="text-[10px] text-muted-foreground mr-1">Presets:</span>
+                    {PRESET_CATEGORIES.map((cat) => (
                       <button
                         key={cat}
                         type="button"
                         onClick={() => setSelectedCategory(cat)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all duration-200 ${
-                          isSelected 
-                            ? theme.activeBg + ' scale-105 shadow-sm' 
+                        className={`px-2.5 py-1 rounded-lg border text-[10px] font-medium transition-all ${
+                          selectedCategory === cat 
+                            ? 'bg-primary/25 border-primary text-primary' 
                             : 'border-outline/10 text-muted-foreground hover:bg-surface-variant/30'
                         }`}
                       >
-                        {CATEGORY_ICONS[cat]}
                         {cat}
                       </button>
-                    )
-                  })}
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Icon Picker (Emoji style) */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">Choose Icon</label>
+                <div className="border border-outline/10 rounded-xl p-3 bg-surface-variant/10 space-y-3">
+                  <div className="flex items-center justify-between gap-3 border-b border-outline/5 pb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-muted-foreground">Selected:</span>
+                      <span className="material-symbols-outlined text-primary bg-primary/10 border border-primary/20 p-1 rounded-lg text-lg select-none">
+                        {selectedIcon}
+                      </span>
+                      <span className="text-xs text-foreground font-mono">{selectedIcon}</span>
+                    </div>
+                    {/* Icon Search */}
+                    <div className="relative max-w-[150px]">
+                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                      <input
+                        placeholder="Search icon..."
+                        value={iconSearchText}
+                        onChange={(e) => setIconSearchText(e.target.value)}
+                        className="pl-7 pr-2 py-0.5 text-xs rounded-lg bg-surface/20 border border-outline/10 focus:border-primary/50 focus:outline-none w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-8 sm:grid-cols-12 gap-1.5 max-h-[120px] overflow-y-auto custom-scrollbar p-1">
+                    {filteredPopularIcons.map((iconName) => (
+                      <button
+                        key={iconName}
+                        type="button"
+                        onClick={() => setSelectedIcon(iconName)}
+                        className={`p-1.5 rounded-lg border transition-all text-center flex items-center justify-center hover:bg-surface-variant/50 ${
+                          selectedIcon === iconName 
+                            ? 'bg-primary text-primary-foreground border-primary' 
+                            : 'border-outline/5 text-foreground/80'
+                        }`}
+                        title={iconName}
+                      >
+                        <span className="material-symbols-outlined text-[20px] select-none">{iconName}</span>
+                      </button>
+                    ))}
+                    {filteredPopularIcons.length === 0 && (
+                      <div className="col-span-full py-2 text-center text-xs text-muted-foreground">
+                        No matching icons. Type name below manually.
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 pt-1">
+                    <span className="text-[10px] text-muted-foreground">Or type Material Icon Name:</span>
+                    <input
+                      placeholder="e.g. key"
+                      value={selectedIcon}
+                      onChange={(e) => setSelectedIcon(e.target.value.toLowerCase().trim())}
+                      className="px-2 py-0.5 text-xs rounded-lg bg-surface/20 border border-outline/10 focus:border-primary/50 focus:outline-none font-mono"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -312,6 +472,174 @@ export default function TwoFactorPage() {
         )}
       </AnimatePresence>
 
+      <AnimatePresence mode="wait">
+        {/* Edit Account Panel */}
+        {editingItem && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="mb-8 p-6 rounded-2xl bg-surface/40 backdrop-blur-md border border-outline/15 shadow-lg"
+          >
+            <div className="flex justify-between items-start mb-4">
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <Edit2 className="w-5 h-5 text-primary" />
+                Edit Account Settings
+              </h2>
+              <button onClick={() => setEditingItem(null)} className="text-muted-foreground hover:text-foreground">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <form onSubmit={handleEditAccount} className="space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Account Name</label>
+                  <Input
+                    placeholder="e.g. GitHub - user123"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    disabled={isSubmitting}
+                    className="rounded-xl"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    New Secret Key <span className="text-[10px] lowercase text-muted-foreground">(optional - leave blank to keep existing)</span>
+                  </label>
+                  <Input
+                    placeholder="••••••••••••••••"
+                    value={editSecret}
+                    onChange={(e) => setEditSecret(e.target.value)}
+                    disabled={isSubmitting}
+                    className="rounded-xl font-mono uppercase tracking-wider"
+                  />
+                </div>
+              </div>
+
+              {/* Group category input */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Group Name (Custom Category)</label>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Input
+                    placeholder="Type custom group name"
+                    value={editCategory}
+                    onChange={(e) => setEditCategory(e.target.value)}
+                    className="rounded-xl flex-1"
+                  />
+                  <div className="flex flex-wrap gap-1.5 items-center">
+                    {PRESET_CATEGORIES.map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setEditCategory(cat)}
+                        className={`px-2.5 py-1 rounded-lg border text-[10px] font-medium transition-all ${
+                          editCategory === cat 
+                            ? 'bg-primary/25 border-primary text-primary' 
+                            : 'border-outline/10 text-muted-foreground hover:bg-surface-variant/30'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Icon Picker for Edit */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">Choose Icon</label>
+                <div className="border border-outline/10 rounded-xl p-3 bg-surface-variant/10 space-y-3">
+                  <div className="flex items-center justify-between gap-3 border-b border-outline/5 pb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-muted-foreground">Selected:</span>
+                      {editIcon ? (
+                        <span className="material-symbols-outlined text-primary bg-primary/10 border border-primary/20 p-1 rounded-lg text-lg select-none">
+                          {editIcon}
+                        </span>
+                      ) : (
+                        <span className="p-1 rounded-lg bg-surface-variant border border-outline/10 text-xs text-muted-foreground select-none">
+                          None
+                        </span>
+                      )}
+                      <span className="text-xs text-foreground font-mono">{editIcon || 'None'}</span>
+                    </div>
+                    {/* Icon Search */}
+                    <div className="relative max-w-[150px]">
+                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                      <input
+                        placeholder="Search icon..."
+                        value={editIconSearchText}
+                        onChange={(e) => setEditIconSearchText(e.target.value)}
+                        className="pl-7 pr-2 py-0.5 text-xs rounded-lg bg-surface/20 border border-outline/10 focus:border-primary/50 focus:outline-none w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-8 sm:grid-cols-12 gap-1.5 max-h-[120px] overflow-y-auto custom-scrollbar p-1">
+                    <button
+                      type="button"
+                      onClick={() => setEditIcon('')}
+                      className={`p-1.5 rounded-lg border text-xs text-muted-foreground hover:bg-surface-variant/50 transition-all ${
+                        editIcon === '' ? 'bg-primary/20 border-primary text-primary' : 'border-outline/5'
+                      }`}
+                    >
+                      None
+                    </button>
+                    {filteredEditPopularIcons.map((iconName) => (
+                      <button
+                        key={iconName}
+                        type="button"
+                        onClick={() => setEditIcon(iconName)}
+                        className={`p-1.5 rounded-lg border transition-all text-center flex items-center justify-center hover:bg-surface-variant/50 ${
+                          editIcon === iconName 
+                            ? 'bg-primary text-primary-foreground border-primary' 
+                            : 'border-outline/5 text-foreground/80'
+                        }`}
+                        title={iconName}
+                      >
+                        <span className="material-symbols-outlined text-[20px] select-none">{iconName}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2 pt-1">
+                    <span className="text-[10px] text-muted-foreground">Or type Material Icon Name:</span>
+                    <input
+                      placeholder="e.g. key"
+                      value={editIcon}
+                      onChange={(e) => setEditIcon(e.target.value.toLowerCase().trim())}
+                      className="px-2 py-0.5 text-xs rounded-lg bg-surface/20 border border-outline/10 focus:border-primary/50 focus:outline-none font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 justify-end pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEditingItem(null)}
+                  disabled={isSubmitting}
+                  className="rounded-xl"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="rounded-xl min-w-[120px]"
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    'Save Changes'
+                  )}
+                </Button>
+              </div>
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {list !== undefined && items.length > 0 && (
         <div className="space-y-5 mb-6">
           {/* Controls: Search, Filters, Grouping toggle */}
@@ -320,7 +648,7 @@ export default function TwoFactorPage() {
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search accounts or categories..."
+                placeholder="Search accounts or groups..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-4 rounded-xl bg-surface/20 border-outline/10 focus:border-primary/50 transition-all duration-300 w-full"
@@ -373,12 +701,17 @@ export default function TwoFactorPage() {
               </span>
             </button>
             
-            {PRESET_CATEGORIES.map((cat) => {
+            {Array.from(new Set(items.map(i => i.category || 'Other'))).map((cat) => {
               const count = getCategoryCount(cat)
-              if (count === 0 && selectedCategoryFilter !== cat) return null // Hide empty categories in filter unless selected
+              if (count === 0 && selectedCategoryFilter !== cat) return null
               
               const isSelected = selectedCategoryFilter === cat
-              const theme = CATEGORY_THEMES[cat]
+              const theme = CATEGORY_THEMES[cat] || CATEGORY_THEMES.Other
+              
+              // Find an icon for this category
+              const matchingItem = items.find(i => i.category === cat && i.icon)
+              const iconElement = matchingItem ? renderIcon(matchingItem.icon, cat) : renderIcon(undefined, cat)
+              
               return (
                 <button
                   key={cat}
@@ -389,7 +722,7 @@ export default function TwoFactorPage() {
                       : 'border-outline/10 text-muted-foreground hover:bg-surface-variant/30'
                   }`}
                 >
-                  {CATEGORY_ICONS[cat]}
+                  {iconElement}
                   {cat}
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                     isSelected ? 'bg-foreground/10 text-foreground' : 'bg-surface-variant/50 text-muted-foreground'
@@ -444,6 +777,10 @@ export default function TwoFactorPage() {
             const isCollapsed = collapsedCategories[cat]
             const theme = CATEGORY_THEMES[cat] || CATEGORY_THEMES.Other
 
+            // Pull custom icon from first item in this category if it exists
+            const matchingItem = catItems.find(i => i.icon)
+            const iconElement = matchingItem ? renderIcon(matchingItem.icon, cat) : renderIcon(undefined, cat)
+
             return (
               <div key={cat} className="space-y-4">
                 {/* Category Header */}
@@ -453,7 +790,7 @@ export default function TwoFactorPage() {
                 >
                   <div className="flex items-center gap-2">
                     <div className={`p-1.5 rounded-lg border ${theme.border} ${theme.bg} ${theme.text}`}>
-                      {CATEGORY_ICONS[cat] || CATEGORY_ICONS.Other}
+                      {iconElement}
                     </div>
                     <span className="font-semibold text-foreground text-sm">{cat}</span>
                     <span className="text-[10px] font-semibold bg-surface-variant/50 text-muted-foreground px-2 py-0.5 rounded-full">
@@ -484,6 +821,7 @@ export default function TwoFactorPage() {
                             item={item}
                             copiedId={copiedId}
                             handleCopy={handleCopy}
+                            handleEdit={handleOpenEdit}
                             handleDelete={handleDelete}
                           />
                         ))}
@@ -505,6 +843,7 @@ export default function TwoFactorPage() {
                 item={item}
                 copiedId={copiedId}
                 handleCopy={handleCopy}
+                handleEdit={handleOpenEdit}
                 handleDelete={handleDelete}
               />
             ))}
@@ -513,22 +852,48 @@ export default function TwoFactorPage() {
       )}
     </div>
   )
+
+  function handleOpenEdit(item: any) {
+    setEditingItem(item)
+    setEditName(item.accountName)
+    setEditSecret('')
+    setEditCategory(item.category || 'Other')
+    setEditIcon(item.icon || '')
+    setEditIconSearchText('')
+    setIsAdding(false) // Close add panel if open
+  }
 }
 
 function AccountCard({ 
   item, 
   copiedId, 
   handleCopy, 
+  handleEdit,
   handleDelete 
 }: { 
   item: any
   copiedId: string | null
   handleCopy: (id: string, token: string) => void
+  handleEdit: (item: any) => void
   handleDelete: (id: string, name: string) => void 
 }) {
   const remainingPct = (item.remainingSeconds / 30) * 100
   const progressColor = item.remainingSeconds <= 5 ? 'bg-destructive' : 'bg-primary'
   const theme = CATEGORY_THEMES[item.category] || CATEGORY_THEMES.Other
+
+  const renderIcon = (iconName: string | undefined, defaultCategory: string) => {
+    if (iconName) {
+      return (
+        <span 
+          className="material-symbols-outlined select-none text-[16px] w-4 h-4 flex items-center justify-center"
+          style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20" }}
+        >
+          {iconName}
+        </span>
+      )
+    }
+    return CATEGORY_LUCIDE_ICONS[defaultCategory] || <Tag className="w-3.5 h-3.5" />
+  }
 
   return (
     <motion.div
@@ -539,10 +904,10 @@ function AccountCard({
       className="relative overflow-hidden p-5 rounded-2xl bg-surface/30 backdrop-blur-sm border border-outline/10 shadow-sm hover:shadow-md transition-all duration-300 group flex flex-col justify-between"
     >
       <div className="flex items-start justify-between mb-4">
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1 pr-2">
           <div className="flex items-center gap-2 mb-1">
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-semibold ${theme.border} ${theme.bg} ${theme.text}`}>
-              {CATEGORY_ICONS[item.category] || CATEGORY_ICONS.Other}
+            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border text-[10px] font-semibold ${theme.border} ${theme.bg} ${theme.text}`}>
+              {renderIcon(item.icon, item.category)}
               {item.category || 'Other'}
             </span>
           </div>
@@ -554,7 +919,7 @@ function AccountCard({
         <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity shrink-0">
           <button
             onClick={() => handleCopy(item.id, item.token)}
-            className="p-2 rounded-xl hover:bg-surface-variant text-muted-foreground hover:text-primary transition-all duration-200"
+            className="p-1.5 rounded-xl hover:bg-surface-variant text-muted-foreground hover:text-primary transition-all duration-200"
             title="Copy Verification Code"
           >
             {copiedId === item.id ? (
@@ -564,8 +929,15 @@ function AccountCard({
             )}
           </button>
           <button
+            onClick={() => handleEdit(item)}
+            className="p-1.5 rounded-xl hover:bg-surface-variant text-muted-foreground hover:text-primary transition-all duration-200"
+            title="Edit Settings"
+          >
+            <Edit2 className="w-4 h-4" />
+          </button>
+          <button
             onClick={() => handleDelete(item.id, item.accountName)}
-            className="p-2 rounded-xl hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all duration-200"
+            className="p-1.5 rounded-xl hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all duration-200"
             title="Delete Account"
           >
             <Trash2 className="w-4 h-4" />
