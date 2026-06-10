@@ -34,7 +34,16 @@ export function useQuery(apiEndpoint: any, args: any) {
         if (!res.ok) throw new Error('Query failed')
         const json = await res.json()
         if (active) {
-          setData(json.value)
+          let val = json.value
+          if (Array.isArray(val)) {
+            val = val.map((item: any) => {
+              if (item && typeof item === 'object' && 'id' in item && !('_id' in item)) {
+                return { ...item, _id: item.id }
+              }
+              return item
+            })
+          }
+          setData(val)
         }
       } catch (err) {
         console.error(`useQuery error for ${path}:`, err)
