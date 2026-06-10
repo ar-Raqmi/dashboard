@@ -10,11 +10,7 @@ import {
   Copy, 
   CheckCheck, 
   Loader2, 
-  Search, 
-  LayoutGrid, 
-  List, 
-  ChevronDown, 
-  ChevronRight,
+  Search,
   Briefcase,
   Users,
   Wallet,
@@ -114,8 +110,6 @@ export default function TwoFactorPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('All')
-  const [groupByCategory, setGroupByCategory] = useState(true)
-  const [collapsedCategories, setCollapsedCategories] = useState<{ [key: string]: boolean }>({})
   
   // Add Account Form
   const [accountName, setAccountName] = useState('')
@@ -244,9 +238,6 @@ export default function TwoFactorPage() {
     }
   }
 
-  const toggleCategoryCollapse = (cat: string) => {
-    setCollapsedCategories(prev => ({ ...prev, [cat]: !prev[cat] }))
-  }
 
   // Filter Items
   const filteredItems = items.filter((item) => {
@@ -273,8 +264,16 @@ export default function TwoFactorPage() {
     if (iconName) {
       return (
         <span 
-          className="material-symbols-outlined select-none text-[18px] w-5 h-5 flex items-center justify-center"
-          style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}
+          className="material-symbols-outlined select-none leading-none shrink-0"
+          style={{
+            fontSize: '16px',
+            width: '16px',
+            height: '16px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20"
+          }}
         >
           {iconName}
         </span>
@@ -642,45 +641,15 @@ export default function TwoFactorPage() {
 
       {list !== undefined && items.length > 0 && (
         <div className="space-y-5 mb-6">
-          {/* Controls: Search, Filters, Grouping toggle */}
-          <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
-            {/* Search Input */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search accounts or groups..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 rounded-xl bg-surface/20 border-outline/10 focus:border-primary/50 transition-all duration-300 w-full"
-              />
-            </div>
-
-            {/* Layout Toggles */}
-            <div className="flex items-center gap-2 self-end md:self-auto">
-              <span className="text-xs text-muted-foreground mr-1">Layout:</span>
-              <button
-                onClick={() => setGroupByCategory(false)}
-                className={`p-2 rounded-xl border transition-all ${
-                  !groupByCategory 
-                    ? 'bg-primary/10 border-primary/30 text-primary' 
-                    : 'border-outline/10 text-muted-foreground hover:bg-surface-variant/30'
-                }`}
-                title="Plain list view"
-              >
-                <List className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setGroupByCategory(true)}
-                className={`p-2 rounded-xl border transition-all ${
-                  groupByCategory 
-                    ? 'bg-primary/10 border-primary/30 text-primary' 
-                    : 'border-outline/10 text-muted-foreground hover:bg-surface-variant/30'
-                }`}
-                title="Group by category"
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </button>
-            </div>
+          {/* Search Input */}
+          <div className="relative max-w-md">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search accounts or groups..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-4 rounded-xl bg-surface/20 border-outline/10 focus:border-primary/50 transition-all duration-300 w-full"
+            />
           </div>
 
           {/* Category Pills Filters */}
@@ -769,72 +738,8 @@ export default function TwoFactorPage() {
             We couldn't find any accounts matching "{searchQuery}"
           </p>
         </div>
-      ) : groupByCategory ? (
-        /* Grouped Category rendering */
-        <div className="space-y-8">
-          {Object.keys(groupedItems).map((cat) => {
-            const catItems = groupedItems[cat]
-            const isCollapsed = collapsedCategories[cat]
-            const theme = CATEGORY_THEMES[cat] || CATEGORY_THEMES.Other
-
-            // Pull custom icon from first item in this category if it exists
-            const matchingItem = catItems.find(i => i.icon)
-            const iconElement = matchingItem ? renderIcon(matchingItem.icon, cat) : renderIcon(undefined, cat)
-
-            return (
-              <div key={cat} className="space-y-4">
-                {/* Category Header */}
-                <button
-                  onClick={() => toggleCategoryCollapse(cat)}
-                  className="flex items-center justify-between w-full p-2.5 rounded-xl bg-surface/20 border border-outline/5 hover:bg-surface/30 hover:border-outline/10 transition-all text-left"
-                >
-                  <div className="flex items-center gap-2">
-                    <div className={`p-1.5 rounded-lg border ${theme.border} ${theme.bg} ${theme.text}`}>
-                      {iconElement}
-                    </div>
-                    <span className="font-semibold text-foreground text-sm">{cat}</span>
-                    <span className="text-[10px] font-semibold bg-surface-variant/50 text-muted-foreground px-2 py-0.5 rounded-full">
-                      {catItems.length}
-                    </span>
-                  </div>
-                  {isCollapsed ? (
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                  )}
-                </button>
-
-                {/* Collapsible card grid */}
-                <AnimatePresence initial={false}>
-                  {!isCollapsed && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-                        {catItems.map((item) => (
-                          <AccountCard
-                            key={item.id}
-                            item={item}
-                            copiedId={copiedId}
-                            handleCopy={handleCopy}
-                            handleEdit={handleOpenEdit}
-                            handleDelete={handleDelete}
-                          />
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            )
-          })}
-        </div>
       ) : (
-        /* Flat plain list rendering */
+        /* Cards — flat grid, category pills above handle filtering */
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <AnimatePresence>
             {filteredItems.map((item) => (
@@ -885,8 +790,16 @@ function AccountCard({
     if (iconName) {
       return (
         <span 
-          className="material-symbols-outlined select-none text-[16px] w-4 h-4 flex items-center justify-center"
-          style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20" }}
+          className="material-symbols-outlined select-none leading-none shrink-0"
+          style={{
+            fontSize: '14px',
+            width: '14px',
+            height: '14px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20"
+          }}
         >
           {iconName}
         </span>

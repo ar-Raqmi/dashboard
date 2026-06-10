@@ -25,7 +25,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/co
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAppStore } from '@/lib/store'
 import { toast } from 'sonner'
-import FilePreview from './FilePreview'
+
 import {
   ContextMenu,
   ContextMenuContent,
@@ -875,8 +875,6 @@ export default function FileManager() {
         onClose={() => setIsUploadModalOpen(false)} 
         folderId={currentFolderId} 
       />
-
-      <FilePreview />
     </div>
   )
 }

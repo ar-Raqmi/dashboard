@@ -397,21 +397,6 @@ export default function SettingsPage() {
           >
             {isUpdatingAuth ? 'Updating...' : 'Update Credentials'}
           </Button>
-
-          <div className="border-t border-border pt-4 mt-4 flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">Two-Factor Authentication (2FA)</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">Manage your dynamic TOTP codes and secrets</p>
-            </div>
-            <Button
-              onClick={() => useAppStore.getState().setActivePage('twoFactor')}
-              variant="outline"
-              className="rounded-2xl gap-1.5"
-            >
-              <ShieldCheck className="w-4 h-4 text-primary" />
-              Configure 2FA
-            </Button>
-          </div>
         </div>
       </motion.section>
 

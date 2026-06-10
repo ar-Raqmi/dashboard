@@ -33,6 +33,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
+  // Only intercept GET requests and http/https protocols
+  if (event.request.method !== 'GET' || !url.protocol.startsWith('http')) {
+    return;
+  }
+
   // For HTML requests, use Network First strategy to avoid stale "blank screen" issues
   if (event.request.mode === 'navigate') {
     event.respondWith(

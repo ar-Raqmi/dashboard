@@ -1,8 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
@@ -10,136 +8,147 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id               String            @id @default(cuid())
-  username         String            @unique
-  passwordHash     String
-  salt             String
-  createdAt        DateTime          @default(now())
-  sessions         Session[]
-  tasks            Task[]
-  goals            Goal[]
-  notes            Note[]
-  events           CalendarEvent[]
-  files            FileItem[]
-  clocks           Clock[]
-  widgets          DashboardWidget[]
-  layouts          DashboardLayout[]
-  settings         UserSettings?
-  twoFactorSecrets TwoFactorSecret[]
+model CalendarEvent {
+  id     String  @id @default(uuid())
+  userId String
+  title  String
+  date   String
+  color  String?
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model Session {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token     String   @unique
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+model Clock {
+  id       String @id @default(uuid())
+  userId   String
+  label    String
+  timezone String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model Task {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title     String
-  dueDate   String?
-  priority  String   // 'high' | 'medium' | 'low'
-  status    String   // 'pending' | 'completed'
-  createdAt DateTime @default(now())
+model DashboardLayout {
+  id         String @id @default(uuid())
+  userId     String
+  layoutType String
+  layouts    String
+  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model DashboardWidget {
+  id      String  @id @default(uuid())
+  userId  String
+  type    String
+  label   String
+  icon    String
+  visible Boolean
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model FileItem {
+  id             String     @id @default(uuid())
+  userId         String
+  name           String
+  type           String
+  category       String?
+  parentId       String?
+  size           Int?
+  storageId      String?
+  r2Key          String?
+  storageSource  String?
+  starred        Boolean?   @default(false)
+  lastAccessed   Float?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime
+  parent         FileItem?  @relation("FileItemToFileItem", fields: [parentId], references: [id], onDelete: Cascade)
+  children       FileItem[] @relation("FileItemToFileItem")
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Goal {
-  id         String      @id @default(cuid())
-  userId     String
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title      String
-  progress   Int
-  order      Int?
-  createdAt  DateTime    @default(now())
+  id        String      @id @default(uuid())
+  userId    String
+  title     String
+  progress  Int
+  order     Int?
+  createdAt DateTime    @default(now())
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   milestones Milestone[]
 }
 
 model Milestone {
-  id        String   @id @default(cuid())
+  id        String  @id @default(uuid())
   goalId    String
-  goal      Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
   label     String
   completed Boolean
   order     Int
+  goal      Goal    @relation(fields: [goalId], references: [id], onDelete: Cascade)
 }
 
 model Note {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String
   content   String
   color     String
   pinned    Boolean
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model CalendarEvent {
-  id     String  @id @default(cuid())
-  userId String
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title  String
-  date   String
-  color  String?
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model FileItem {
-  id            String     @id @default(cuid())
-  userId        String
-  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name          String
-  type          String     // 'file' | 'folder'
-  category      String?    // 'image' | 'audio' | 'pdf' | 'doc' | 'video' | 'folder' | 'other'
-  parentId      String?
-  parent        FileItem?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  children      FileItem[] @relation("FolderHierarchy")
-  size          Int?
-  storageId     String?
-  r2Key         String?
-  storageSource String?    // 'convex' | 'r2' | 'cloudflare'
-  starred       Boolean?   @default(false)
-  lastAccessed  Float?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+model Task {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  dueDate   String?
+  priority  String
+  status    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model Clock {
-  id       String @id @default(cuid())
-  userId   String
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  label    String
-  timezone String
+model TwoFactorSecret {
+  id          String   @id @default(uuid())
+  userId      String
+  accountName String
+  secret      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+  category    String?
+  icon        String?
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model DashboardWidget {
-  id      String  @id @default(cuid())
-  userId  String
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type    String
-  label   String
-  icon    String
-  visible Boolean
-}
-
-model DashboardLayout {
-  id         String @id @default(cuid())
-  userId     String
-  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  layoutType String // 'desktop' | 'mobile' | 'notesDesktop' | 'notesMobile' | 'pinnedDesktop' | 'pinnedMobile' | 'goalsDesktop' | 'goalsMobile'
-  layouts    String // JSON string of Layout[]
+model User {
+  id              String            @id @default(uuid())
+  username        String            @unique
+  passwordHash    String
+  salt            String
+  createdAt       DateTime          @default(now())
+  calendarEvents  CalendarEvent[]
+  clocks          Clock[]
+  dashboardLayouts DashboardLayout[]
+  dashboardWidgets DashboardWidget[]
+  fileItems        FileItem[]
+  goals            Goal[]
+  notes            Note[]
+  sessions         Session[]
+  tasks            Task[]
+  twoFactorSecrets TwoFactorSecret[]
+  userSettings    UserSettings?
 }
 
 model UserSettings {
-  id                  String  @id @default(cuid())
+  id                  String  @id @default(uuid())
   userId              String  @unique
-  user                User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   profileName         String
   profilePicture      String?
   appTitle            String
@@ -154,16 +163,5 @@ model UserSettings {
   backgroundGradient  String
   backgroundImage     String
   backgroundOpacity   Int
-}
-
-model TwoFactorSecret {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accountName String
-  secret      String   // Encrypted/encoded TOTP secret
-  category    String?  // Optional category/group like 'Work', 'Social', 'Finance', etc.
-  icon        String?  // Optional custom Material icon name
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  user                User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

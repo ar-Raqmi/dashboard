@@ -49,6 +49,7 @@ export function useQuery(apiEndpoint: any, args: any) {
         }
       } catch (err) {
         console.error(`useQuery error for ${path}:`, err)
+        if (active) setData(null)
       }
     }
 
