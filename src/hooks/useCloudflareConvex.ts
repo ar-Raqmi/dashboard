@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react'
 
 function getPathString(apiEndpoint: any): string {
+  if (!apiEndpoint) return ''
   if (typeof apiEndpoint === 'string') return apiEndpoint
-  if (apiEndpoint && typeof apiEndpoint === 'object' && 'path' in apiEndpoint) {
-    return apiEndpoint.path
+  if (typeof apiEndpoint === 'object' || typeof apiEndpoint === 'function') {
+    if ('path' in apiEndpoint && typeof apiEndpoint.path === 'string') {
+      return apiEndpoint.path
+    }
   }
   return String(apiEndpoint)
 }

@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { handleMutation } from '@/lib/api-router'
 
-export const runtime = 'edge'
 
 export async function POST(request: Request) {
   try {
