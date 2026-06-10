@@ -1,6 +1,8 @@
 import { getDb } from './db'
 import { encryptText, decryptText } from './crypto'
 import { TOTP } from 'otpauth'
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
 // Helper: Verify session token and return user
 async function getAuthedUser(db: any, sessionToken: string) {
@@ -15,6 +17,42 @@ async function getAuthedUser(db: any, sessionToken: string) {
     throw new Error('Unauthorized: Invalid or expired session')
   }
   return session.user
+}
+
+const getS3Client = () => {
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID || process.env.NEXT_PUBLIC_R2_ACCESS_KEY_ID
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY || process.env.NEXT_PUBLIC_R2_SECRET_ACCESS_KEY
+  const endpoint = process.env.R2_ENDPOINT || process.env.NEXT_PUBLIC_R2_ENDPOINT
+
+  if (!accessKeyId || !secretAccessKey || !endpoint) {
+    return null
+  }
+
+  return new S3Client({
+    region: 'auto',
+    endpoint,
+    credentials: {
+      accessKeyId,
+      secretAccessKey,
+    },
+  })
+}
+
+async function getFilesToDelete(db: any, userId: string, id: string): Promise<any[]> {
+  const file = await db.fileItem.findUnique({
+    where: { id },
+    include: { children: true }
+  })
+  if (!file || file.userId !== userId) return []
+
+  let results = [file]
+  if (file.type === 'folder') {
+    for (const child of file.children) {
+      const childResults = await getFilesToDelete(db, userId, child.id)
+      results = results.concat(childResults)
+    }
+  }
+  return results
 }
 
 // Queries Router
@@ -363,6 +401,7 @@ export async function handleQuery(path: string, args: any, env?: any) {
         list.push({
           id: s.id,
           accountName: s.accountName,
+          category: s.category || 'Other',
           token,
           remainingSeconds,
         })
@@ -402,6 +441,119 @@ export async function handleQuery(path: string, args: any, env?: any) {
         console.error('Hadith fetch error:', err)
         return null
       }
+    }
+
+    case 'files:getFileUrl': {
+      await getAuthedUser(db, args.sessionToken)
+      const { storageId, r2Key } = args
+      if (storageId) {
+        return `/api/storage/${storageId}`
+      }
+      if (r2Key) {
+        const s3 = getS3Client()
+        if (s3 && process.env.R2_PUBLIC_URL) {
+          return `${process.env.R2_PUBLIC_URL}/${r2Key}`
+        }
+        return `/uploads/${r2Key}`
+      }
+      return null
+    }
+
+    case 'r2:getUploadUrl': {
+      await getAuthedUser(db, args.sessionToken)
+      const { key, contentType } = args
+      const s3 = getS3Client()
+      if (s3) {
+        try {
+          const command = new PutObjectCommand({
+            Bucket: process.env.R2_BUCKET_NAME || 'dashboard',
+            Key: key,
+            ContentType: contentType
+          })
+          const url = await getSignedUrl(s3, command, { expiresIn: 3600 })
+          return url
+        } catch (err) {
+          console.error('Failed to generate R2 signed url:', err)
+        }
+      }
+      // Fallback: Local upload URL
+      return `/api/storage/local-upload?key=${encodeURIComponent(key)}`
+    }
+
+    case 'r2:removeFile': {
+      const user = await getAuthedUser(db, args.sessionToken)
+      const id = args.id || args.fileId
+      if (!id) throw new Error('Missing file id')
+      const file = await db.fileItem.findUnique({ where: { id } })
+      if (!file || file.userId !== user.id) {
+        throw new Error('File not found or unauthorized')
+      }
+      const filesToDelete = await getFilesToDelete(db, user.id, id)
+      const s3 = getS3Client()
+      for (const f of filesToDelete) {
+        if (f.r2Key) {
+          if (s3) {
+            try {
+              await s3.send(new DeleteObjectCommand({
+                Bucket: process.env.R2_BUCKET_NAME || 'dashboard',
+                Key: f.r2Key
+              }))
+            } catch (err) {
+              console.error(`Failed to delete ${f.r2Key} from R2:`, err)
+            }
+          } else {
+            try {
+              const fs = require('fs')
+              const pathModule = require('path')
+              const filePath = pathModule.join(process.cwd(), 'public', 'uploads', f.r2Key)
+              if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath)
+              }
+            } catch (err) {
+              console.error(`Failed to delete local file ${f.r2Key}:`, err)
+            }
+          }
+        }
+      }
+      await db.fileItem.delete({ where: { id } })
+      return { success: true }
+    }
+
+    case 'r2:removeFiles': {
+      const user = await getAuthedUser(db, args.sessionToken)
+      const { ids } = args
+      if (!ids || !Array.isArray(ids)) throw new Error('Missing ids array')
+      const s3 = getS3Client()
+      for (const id of ids) {
+        const filesToDelete = await getFilesToDelete(db, user.id, id)
+        for (const f of filesToDelete) {
+          if (f.r2Key) {
+            if (s3) {
+              try {
+                await s3.send(new DeleteObjectCommand({
+                  Bucket: process.env.R2_BUCKET_NAME || 'dashboard',
+                  Key: f.r2Key
+                }))
+              } catch (err) {
+                console.error(`Failed to delete ${f.r2Key} from R2:`, err)
+              }
+            } else {
+              try {
+                const fs = require('fs')
+                const pathModule = require('path')
+                const filePath = pathModule.join(process.cwd(), 'public', 'uploads', f.r2Key)
+                if (fs.existsSync(filePath)) {
+                  fs.unlinkSync(filePath)
+                }
+              } catch (err) {
+                console.error(`Failed to delete local file ${f.r2Key}:`, err)
+              }
+            }
+          }
+        }
+        await db.fileItem.delete({ where: { id } })
+      }
+      return { success: true }
     }
 
     default:
@@ -785,7 +937,9 @@ export async function handleMutation(path: string, args: any, env?: any) {
 
     case 'files:rename': {
       const user = await getAuthedUser(db, args.sessionToken)
-      const { id, name } = args
+      const id = args.id || args.fileId
+      const { name } = args
+      if (!id) throw new Error('Missing file id')
       const file = await db.fileItem.findUnique({ where: { id } })
       if (!file || file.userId !== user.id) {
         throw new Error('File not found or unauthorized')
@@ -799,10 +953,38 @@ export async function handleMutation(path: string, args: any, env?: any) {
 
     case 'files:remove': {
       const user = await getAuthedUser(db, args.sessionToken)
-      const { id } = args
+      const id = args.id || args.fileId
+      if (!id) throw new Error('Missing file id')
       const file = await db.fileItem.findUnique({ where: { id } })
       if (!file || file.userId !== user.id) {
         throw new Error('File not found or unauthorized')
+      }
+      const filesToDelete = await getFilesToDelete(db, user.id, id)
+      const s3 = getS3Client()
+      for (const f of filesToDelete) {
+        if (f.r2Key) {
+          if (s3) {
+            try {
+              await s3.send(new DeleteObjectCommand({
+                Bucket: process.env.R2_BUCKET_NAME || 'dashboard',
+                Key: f.r2Key
+              }))
+            } catch (err) {
+              console.error(`Failed to delete ${f.r2Key} from R2:`, err)
+            }
+          } else {
+            try {
+              const fs = require('fs')
+              const pathModule = require('path')
+              const filePath = pathModule.join(process.cwd(), 'public', 'uploads', f.r2Key)
+              if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath)
+              }
+            } catch (err) {
+              console.error(`Failed to delete local file ${f.r2Key}:`, err)
+            }
+          }
+        }
       }
       await db.fileItem.delete({ where: { id } })
       return { success: true }
@@ -810,11 +992,29 @@ export async function handleMutation(path: string, args: any, env?: any) {
 
     case 'files:move': {
       const user = await getAuthedUser(db, args.sessionToken)
-      const { fileId, newParentId } = args
+      const fileId = args.fileId || args.id
+      const newParentId = args.newParentId !== undefined ? args.newParentId : args.targetFolderId
+      if (!fileId) throw new Error('Missing fileId')
       const file = await db.fileItem.findUnique({ where: { id: fileId } })
       if (!file || file.userId !== user.id) {
         throw new Error('File not found or unauthorized')
       }
+      
+      // Prevent cyclic moves for folders
+      if (newParentId) {
+        let current: any = newParentId
+        let isCyclic = false
+        while (current) {
+          if (current === fileId) {
+            isCyclic = true
+            break
+          }
+          const parent = await db.fileItem.findUnique({ where: { id: current } })
+          current = parent?.parentId
+        }
+        if (isCyclic) throw new Error('Cannot move folder inside itself or its children')
+      }
+
       await db.fileItem.update({
         where: { id: fileId },
         data: { parentId: newParentId || null },
@@ -824,14 +1024,33 @@ export async function handleMutation(path: string, args: any, env?: any) {
 
     case 'files:moveFiles': {
       const user = await getAuthedUser(db, args.sessionToken)
-      const { ids, targetFolderId } = args
-      await db.fileItem.updateMany({
-        where: {
-          userId: user.id,
-          id: { in: ids },
-        },
-        data: { parentId: targetFolderId || null },
-      })
+      const { ids } = args
+      const newParentId = args.newParentId !== undefined ? args.newParentId : args.targetFolderId
+      
+      for (const id of ids) {
+        const file = await db.fileItem.findUnique({ where: { id } })
+        if (!file || file.userId !== user.id) continue
+        
+        // Prevent cyclic moves for folders
+        if (newParentId) {
+          let current: any = newParentId
+          let isCyclic = false
+          while (current) {
+            if (current === id) {
+              isCyclic = true
+              break
+            }
+            const parent = await db.fileItem.findUnique({ where: { id: current } })
+            current = parent?.parentId
+          }
+          if (isCyclic) continue
+        }
+
+        await db.fileItem.update({
+          where: { id },
+          data: { parentId: newParentId || null },
+        })
+      }
       return { success: true }
     }
 
@@ -968,7 +1187,7 @@ export async function handleMutation(path: string, args: any, env?: any) {
 
     case 'twoFactor:create': {
       const user = await getAuthedUser(db, args.sessionToken)
-      const { accountName, secret } = args
+      const { accountName, secret, category } = args
       
       // Clean and validate the secret key format
       const cleanSecret = secret.replace(/\s+/g, '').toUpperCase()
@@ -985,6 +1204,7 @@ export async function handleMutation(path: string, args: any, env?: any) {
           userId: user.id,
           accountName,
           secret: encrypted,
+          category: category || 'Other',
         },
       })
       return { success: true }

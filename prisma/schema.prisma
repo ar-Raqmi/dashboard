@@ -162,6 +162,7 @@ model TwoFactorSecret {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   accountName String
   secret      String   // Encrypted/encoded TOTP secret
+  category    String?  // Optional category/group like 'Work', 'Social', 'Finance', etc.
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
