@@ -625,9 +625,9 @@ function FilesContent() {
       <div className="space-y-1">
         {recentFiles.map((file) => (
           <button
-            key={file._id}
+            key={file.id}
             onClick={() => setPreviewFile({
-              id: file._id,
+              id: file.id,
               name: file.name,
               type: file.type as any,
               category: (file.category || 'other') as any,
