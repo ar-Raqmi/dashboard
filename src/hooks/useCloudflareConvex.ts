@@ -42,6 +42,8 @@ export function useQuery(apiEndpoint: any, args: any) {
               }
               return item
             })
+          } else if (val && typeof val === 'object' && 'id' in val && !('_id' in val)) {
+            val = { ...val, _id: val.id }
           }
           setData(val)
         }
@@ -77,7 +79,18 @@ export function useMutation(apiEndpoint: any) {
     if (!res.ok) {
       throw new Error(json.error || 'Mutation failed')
     }
-    return json.value
+    let val = json.value
+    if (Array.isArray(val)) {
+      val = val.map((item: any) => {
+        if (item && typeof item === 'object' && 'id' in item && !('_id' in item)) {
+          return { ...item, _id: item.id }
+        }
+        return item
+      })
+    } else if (val && typeof val === 'object' && 'id' in val && !('_id' in val)) {
+      val = { ...val, _id: val.id }
+    }
+    return val
   }
 }
 
@@ -94,6 +107,17 @@ export function useAction(apiEndpoint: any) {
     if (!res.ok) {
       throw new Error(json.error || 'Action failed')
     }
-    return json.value
+    let val = json.value
+    if (Array.isArray(val)) {
+      val = val.map((item: any) => {
+        if (item && typeof item === 'object' && 'id' in item && !('_id' in item)) {
+          return { ...item, _id: item.id }
+        }
+        return item
+      })
+    } else if (val && typeof val === 'object' && 'id' in val && !('_id' in val)) {
+      val = { ...val, _id: val.id }
+    }
+    return val
   }
 }
