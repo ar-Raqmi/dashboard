@@ -11,6 +11,7 @@ import {
   BookOpen,
   Flag,
   Settings,
+  ShieldCheck,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
@@ -30,6 +31,7 @@ const navItems: NavItem[] = [
   { id: 'files', label: 'Files', icon: Folder },
   { id: 'spiritual', label: 'Spiritual', icon: BookOpen },
   { id: 'goals', label: 'Goals', icon: Flag },
+  { id: 'twoFactor', label: '2FA', icon: ShieldCheck },
   { id: 'settings', label: 'Settings', icon: Settings },
 ]
 

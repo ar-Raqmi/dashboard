@@ -763,7 +763,8 @@ export async function handleMutation(path: string, args: any, env?: any) {
       return { success: true }
     }
 
-    case 'files:create': {
+    case 'files:create':
+    case 'files:createFile': {
       const user = await getAuthedUser(db, args.sessionToken)
       const { name, type, category, parentId, size, storageId, r2Key, storageSource } = args
       const f = await db.fileItem.create({
@@ -819,6 +820,33 @@ export async function handleMutation(path: string, args: any, env?: any) {
         data: { parentId: newParentId || null },
       })
       return { success: true }
+    }
+
+    case 'files:moveFiles': {
+      const user = await getAuthedUser(db, args.sessionToken)
+      const { ids, targetFolderId } = args
+      await db.fileItem.updateMany({
+        where: {
+          userId: user.id,
+          id: { in: ids },
+        },
+        data: { parentId: targetFolderId || null },
+      })
+      return { success: true }
+    }
+
+    case 'files:toggleStar': {
+      const user = await getAuthedUser(db, args.sessionToken)
+      const { id } = args
+      const file = await db.fileItem.findUnique({ where: { id } })
+      if (!file || file.userId !== user.id) {
+        throw new Error('File not found or unauthorized')
+      }
+      const updated = await db.fileItem.update({
+        where: { id },
+        data: { starred: !file.starred },
+      })
+      return { success: true, starred: updated.starred }
     }
 
     case 'clocks:add': {
