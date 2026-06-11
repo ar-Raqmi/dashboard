@@ -97,31 +97,31 @@ export function ConvexSync({ children }: { children: React.ReactNode }) {
 
   // Sync Convex query results to Zustand store
   useEffect(() => {
-    if (tasks !== undefined) {
+    if (tasks !== undefined && tasks !== null) {
       useAppStore.setState({ tasks })
     }
   }, [tasks])
 
   useEffect(() => {
-    if (goals !== undefined) {
+    if (goals !== undefined && goals !== null) {
       useAppStore.setState({ goals })
     }
   }, [goals])
 
   useEffect(() => {
-    if (notes !== undefined) {
+    if (notes !== undefined && notes !== null) {
       useAppStore.setState({ notes })
     }
   }, [notes])
 
   useEffect(() => {
-    if (events !== undefined) {
+    if (events !== undefined && events !== null) {
       useAppStore.setState({ events })
     }
   }, [events])
 
   useEffect(() => {
-    if (files !== undefined) {
+    if (files !== undefined && files !== null) {
       const mappedFiles = (files ?? []).map((f: any) => ({
         ...f,
         _id: f.id,
@@ -131,62 +131,62 @@ export function ConvexSync({ children }: { children: React.ReactNode }) {
   }, [files])
 
   useEffect(() => {
-    if (clocks !== undefined) {
+    if (clocks !== undefined && clocks !== null) {
       useAppStore.setState({ clocks })
     }
   }, [clocks])
 
   useEffect(() => {
-    if (widgets !== undefined) {
+    if (widgets !== undefined && widgets !== null) {
       useAppStore.setState({ widgets })
     }
   }, [widgets])
 
   useEffect(() => {
-    if (desktopLayouts !== undefined) {
-      useAppStore.setState({ layouts: desktopLayouts ?? [] })
+    if (desktopLayouts !== undefined && desktopLayouts !== null) {
+      useAppStore.setState({ layouts: desktopLayouts })
     }
   }, [desktopLayouts])
 
   useEffect(() => {
-    if (mobileLayouts !== undefined) {
-      useAppStore.setState({ mobileLayouts: mobileLayouts ?? [] })
+    if (mobileLayouts !== undefined && mobileLayouts !== null) {
+      useAppStore.setState({ mobileLayouts: mobileLayouts })
     }
   }, [mobileLayouts])
 
   useEffect(() => {
-    if (notesDesktopLayouts !== undefined) {
-      useAppStore.setState({ noteLayouts: notesDesktopLayouts ?? [] })
+    if (notesDesktopLayouts !== undefined && notesDesktopLayouts !== null) {
+      useAppStore.setState({ noteLayouts: notesDesktopLayouts })
     }
   }, [notesDesktopLayouts])
 
   useEffect(() => {
-    if (notesMobileLayouts !== undefined) {
-      useAppStore.setState({ noteMobileLayouts: notesMobileLayouts ?? [] })
+    if (notesMobileLayouts !== undefined && notesMobileLayouts !== null) {
+      useAppStore.setState({ noteMobileLayouts: notesMobileLayouts })
     }
   }, [notesMobileLayouts])
 
   useEffect(() => {
-    if (pinnedDesktopLayouts !== undefined) {
-      useAppStore.setState({ pinnedNoteLayouts: pinnedDesktopLayouts ?? [] })
+    if (pinnedDesktopLayouts !== undefined && pinnedDesktopLayouts !== null) {
+      useAppStore.setState({ pinnedNoteLayouts: pinnedDesktopLayouts })
     }
   }, [pinnedDesktopLayouts])
 
   useEffect(() => {
-    if (pinnedMobileLayouts !== undefined) {
-      useAppStore.setState({ pinnedNoteMobileLayouts: pinnedMobileLayouts ?? [] })
+    if (pinnedMobileLayouts !== undefined && pinnedMobileLayouts !== null) {
+      useAppStore.setState({ pinnedNoteMobileLayouts: pinnedMobileLayouts })
     }
   }, [pinnedMobileLayouts])
   
   useEffect(() => {
-    if (goalDesktopLayouts !== undefined) {
-      useAppStore.setState({ goalLayouts: goalDesktopLayouts ?? [] })
+    if (goalDesktopLayouts !== undefined && goalDesktopLayouts !== null) {
+      useAppStore.setState({ goalLayouts: goalDesktopLayouts })
     }
   }, [goalDesktopLayouts])
 
   useEffect(() => {
-    if (goalMobileLayouts !== undefined) {
-      useAppStore.setState({ goalMobileLayouts: goalMobileLayouts ?? [] })
+    if (goalMobileLayouts !== undefined && goalMobileLayouts !== null) {
+      useAppStore.setState({ goalMobileLayouts: goalMobileLayouts })
     }
   }, [goalMobileLayouts])
 
