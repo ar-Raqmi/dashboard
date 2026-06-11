@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { RefreshCw, Share2, BookOpen, Star } from 'lucide-react'
 import { useAction } from '@/hooks/useCloudflareConvex'
 import { api } from '@/lib/convex-client'
-import { useAppStore } from '@/lib/store'
+import { useAppStore, getGMT8DateStr } from '@/lib/store'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -18,13 +18,7 @@ export default function SpiritualPage() {
   const getVerse = useAction(api.content.getDailyVerseAction)
   const getHadith = useAction(api.content.getDailyHadithAction)
 
-  // Helper to get local date string
-  const localDateStr = (date: Date) => {
-    const y = date.getFullYear()
-    const m = String(date.getMonth() + 1).padStart(2, '0')
-    const d = String(date.getDate()).padStart(2, '0')
-    return `${y}-${m}-${d}`
-  }
+
 
   const fetchVerse = useCallback(async () => {
     const state = useAppStore.getState()
@@ -33,7 +27,7 @@ export default function SpiritualPage() {
     try {
       const data = await getVerse({})
       setVerse(data)
-      setVerseDate(localDateStr(new Date()))
+      setVerseDate(getGMT8DateStr())
     } catch {
       setVerse(null)
     } finally {
@@ -48,7 +42,7 @@ export default function SpiritualPage() {
     try {
       const data = await getHadith({})
       setHadith(data)
-      setHadithDate(localDateStr(new Date()))
+      setHadithDate(getGMT8DateStr())
     } catch {
       setHadith(null)
     } finally {
@@ -57,7 +51,7 @@ export default function SpiritualPage() {
   }, [getHadith, setHadith, setHadithLoading, setHadithDate])
 
   useEffect(() => {
-    const today = localDateStr(new Date())
+    const today = getGMT8DateStr()
     if (!verse || verseDate !== today) fetchVerse()
     if (!hadith || hadithDate !== today) fetchHadith()
   }, []) // Run once on mount
@@ -65,7 +59,7 @@ export default function SpiritualPage() {
   // Refresh when tab becomes visible (user returns after a new day)
   useEffect(() => {
     const checkAndRefresh = () => {
-      const today = localDateStr(new Date())
+      const today = getGMT8DateStr()
       if (verseDate !== today && verse) fetchVerse()
       if (hadithDate !== today && hadith) fetchHadith()
     }

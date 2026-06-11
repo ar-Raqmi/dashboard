@@ -5,20 +5,14 @@ import { motion } from 'framer-motion'
 import { BookOpen, RefreshCw } from 'lucide-react'
 import { useAction } from '@/hooks/useCloudflareConvex'
 import { api } from '@/lib/convex-client'
-import { useAppStore } from '@/lib/store'
+import { useAppStore, getGMT8DateStr } from '@/lib/store'
 
 export default function VerseWidget() {
   const { verse, setVerse, verseDate, setVerseDate, verseLoading, setVerseLoading } = useAppStore()
   const [error, setError] = useState<string | null>(null)
   const getVerseAction = useAction(api.content.getDailyVerseAction)
 
-  // Helper to get local date string
-  const localDateStr = (date: Date) => {
-    const y = date.getFullYear()
-    const m = String(date.getMonth() + 1).padStart(2, '0')
-    const d = String(date.getDate()).padStart(2, '0')
-    return `${y}-${m}-${d}`
-  }
+
 
   const fetchVerse = async () => {
     setVerseLoading(true)
@@ -27,7 +21,7 @@ export default function VerseWidget() {
       const data = await getVerseAction({})
       if (data) {
         setVerse(data)
-        setVerseDate(localDateStr(new Date()))
+        setVerseDate(getGMT8DateStr())
       } else {
         throw new Error('No data received')
       }
@@ -39,7 +33,7 @@ export default function VerseWidget() {
   }
 
   useEffect(() => {
-    const today = localDateStr(new Date())
+    const today = getGMT8DateStr()
     if (!verse || verseDate !== today) {
       fetchVerse()
     }
@@ -49,7 +43,7 @@ export default function VerseWidget() {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        const today = localDateStr(new Date())
+        const today = getGMT8DateStr()
         if (verseDate !== today) {
           fetchVerse()
         }

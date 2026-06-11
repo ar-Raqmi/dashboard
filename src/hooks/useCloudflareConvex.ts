@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 function getPathString(apiEndpoint: any): string {
   if (!apiEndpoint) return ''
@@ -70,7 +70,7 @@ export function useQuery(apiEndpoint: any, args: any) {
 export function useMutation(apiEndpoint: any) {
   const path = getPathString(apiEndpoint)
 
-  return async (args: any) => {
+  return useCallback(async (args: any) => {
     const res = await fetch('/api/mutation', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -92,13 +92,13 @@ export function useMutation(apiEndpoint: any) {
       val = { ...val, _id: val.id }
     }
     return val
-  }
+  }, [path])
 }
 
 export function useAction(apiEndpoint: any) {
   const path = getPathString(apiEndpoint)
 
-  return async (args: any) => {
+  return useCallback(async (args: any) => {
     const res = await fetch('/api/query', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -120,5 +120,5 @@ export function useAction(apiEndpoint: any) {
       val = { ...val, _id: val.id }
     }
     return val
-  }
+  }, [path])
 }

@@ -62,20 +62,45 @@ export default function Home() {
   // Fetch spiritual data on mount
   useEffect(() => {
     const fetchSpiritual = async () => {
-      setVerseLoading(true)
-      setHadithLoading(true)
+      const { verseDate, hadithDate } = useAppStore.getState()
+      const { getGMT8DateStr } = await import('@/lib/store')
+      const today = getGMT8DateStr()
+      
+      const needsVerse = !useAppStore.getState().verse || verseDate !== today
+      const needsHadith = !useAppStore.getState().hadith || hadithDate !== today
+      
+      if (!needsVerse && !needsHadith) return
+      
+      if (needsVerse) setVerseLoading(true)
+      if (needsHadith) setHadithLoading(true)
+      
       try {
-        const [verse, hadith] = await Promise.all([
-          getVerseAction({}),
-          getHadithAction({}),
-        ])
-        if (verse) setVerse(verse)
-        if (hadith) setHadith(hadith)
+        const promises = []
+        if (needsVerse) promises.push(getVerseAction({}))
+        if (needsHadith) promises.push(getHadithAction({}))
+        
+        const results = await Promise.all(promises)
+        
+        if (needsVerse) {
+          const verseRes = results[0]
+          if (verseRes) {
+            setVerse(verseRes)
+            useAppStore.getState().setVerseDate(today)
+          }
+        }
+        
+        if (needsHadith) {
+          const hadithRes = needsVerse ? results[1] : results[0]
+          if (hadithRes) {
+            setHadith(hadithRes)
+            useAppStore.getState().setHadithDate(today)
+          }
+        }
       } catch (err) {
         console.error('Failed to fetch daily content:', err)
       } finally {
-        setVerseLoading(false)
-        setHadithLoading(false)
+        if (needsVerse) setVerseLoading(false)
+        if (needsHadith) setHadithLoading(false)
       }
     }
     fetchSpiritual()

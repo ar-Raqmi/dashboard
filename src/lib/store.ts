@@ -149,12 +149,11 @@ const defaultMobileLayouts: Layout[] = [
   { i: 'twoFactor', x: 0, y: 15, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
 ]
 
-// Helper: local date string to avoid UTC shift from toISOString()
-const localDateStr = (date: Date) => {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
+// Helper: get date string based on GMT+8
+export const getGMT8DateStr = () => {
+  const d = new Date()
+  d.setTime(d.getTime() + 8 * 60 * 60 * 1000)
+  return d.toISOString().split('T')[0]
 }
 
 // ===== GENERATE ID =====
