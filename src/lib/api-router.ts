@@ -978,11 +978,17 @@ export async function handleMutation(path: string, args: any, env?: any) {
             }
           } else {
             try {
-              const fs = require('fs')
-              const pathModule = require('path')
-              const filePath = pathModule.join(process.cwd(), 'public', 'uploads', f.r2Key)
-              if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath)
+              const proc = (globalThis as any).process
+              if (proc && proc.cwd) {
+                const getModule = (name: string) => typeof require !== 'undefined' ? require(name) : null;
+                const fs = getModule('fs');
+                const pathModule = getModule('path');
+                if (fs && pathModule) {
+                  const filePath = pathModule.join(proc.cwd(), 'public', 'uploads', f.r2Key)
+                  if (fs.existsSync(filePath)) {
+                    fs.unlinkSync(filePath)
+                  }
+                }
               }
             } catch (err) {
               console.error(`Failed to delete local file ${f.r2Key}:`, err)

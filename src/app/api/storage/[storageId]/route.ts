@@ -36,22 +36,25 @@ export async function GET(
       return NextResponse.json({ error: 'Missing storageId' }, { status: 400 })
     }
 
-    // Serve from local public/uploads directory if running in Node.js local dev
-    if (typeof process !== 'undefined' && process.release?.name === 'node') {
-      const fs = require('fs')
-      const path = require('path')
-      const uploadDir = path.join(process.cwd(), 'public', 'uploads')
-      const filePath = path.resolve(uploadDir, storageId)
+    const proc = (globalThis as any).process
+    if (typeof proc !== 'undefined' && proc.release?.name === 'node') {
+      const getModule = (name: string) => typeof require !== 'undefined' ? require(name) : null;
+      const fs = getModule('fs');
+      const path = getModule('path');
+      if (fs && path) {
+        const uploadDir = path.join(proc.cwd(), 'public', 'uploads')
+        const filePath = path.resolve(uploadDir, storageId)
 
-      if (filePath.startsWith(uploadDir + path.sep) && fs.existsSync(filePath)) {
-        const buffer = fs.readFileSync(filePath)
-        const mimeType = getMimeType(storageId)
-        return new Response(buffer, {
-          headers: {
-            'Content-Type': mimeType,
-            'Cache-Control': 'public, max-age=31536000, immutable',
-          },
-        })
+        if (filePath.startsWith(uploadDir + path.sep) && fs.existsSync(filePath)) {
+          const buffer = fs.readFileSync(filePath)
+          const mimeType = getMimeType(storageId)
+          return new Response(buffer, {
+            headers: {
+              'Content-Type': mimeType,
+              'Cache-Control': 'public, max-age=31536000, immutable',
+            },
+          })
+        }
       }
     }
 
