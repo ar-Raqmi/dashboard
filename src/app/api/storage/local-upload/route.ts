@@ -16,16 +16,20 @@ export async function PUT(request: Request) {
     const uint8Array = new Uint8Array(buffer)
 
     // Ensure uploads directory exists if running in Node.js local dev
-    if (typeof process !== 'undefined' && process.release?.name === 'node') {
-      const fs = require('fs')
-      const path = require('path')
-      const uploadDir = path.join(process.cwd(), 'public', 'uploads')
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true })
+    const proc = (globalThis as any).process
+    if (typeof proc !== 'undefined' && proc.release?.name === 'node') {
+      const getModule = (name: string) => typeof require !== 'undefined' ? require(name) : null;
+      const fs = getModule('fs');
+      const path = getModule('path');
+      if (fs && path) {
+        const uploadDir = path.join(proc.cwd(), 'public', 'uploads')
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true })
+        }
+        const filePath = path.join(uploadDir, key)
+        fs.writeFileSync(filePath, uint8Array)
+        return NextResponse.json({ success: true, url: `/uploads/${key}` })
       }
-      const filePath = path.join(uploadDir, key)
-      fs.writeFileSync(filePath, uint8Array)
-      return NextResponse.json({ success: true, url: `/uploads/${key}` })
     }
 
     return NextResponse.json({ error: 'Local uploading is disabled in cloud production' }, { status: 403 })

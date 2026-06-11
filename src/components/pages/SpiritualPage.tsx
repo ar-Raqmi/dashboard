@@ -27,7 +27,8 @@ export default function SpiritualPage() {
   }
 
   const fetchVerse = useCallback(async () => {
-    if (verseLoading) return
+    const state = useAppStore.getState()
+    if (state.verseLoading) return
     setVerseLoading(true)
     try {
       const data = await getVerse({})
@@ -38,10 +39,11 @@ export default function SpiritualPage() {
     } finally {
       setVerseLoading(false)
     }
-  }, [getVerse, setVerse, setVerseLoading, setVerseDate, verseLoading])
+  }, [getVerse, setVerse, setVerseLoading, setVerseDate])
 
   const fetchHadith = useCallback(async () => {
-    if (hadithLoading) return
+    const state = useAppStore.getState()
+    if (state.hadithLoading) return
     setHadithLoading(true)
     try {
       const data = await getHadith({})
@@ -52,7 +54,7 @@ export default function SpiritualPage() {
     } finally {
       setHadithLoading(false)
     }
-  }, [getHadith, setHadith, setHadithLoading, setHadithDate, hadithLoading])
+  }, [getHadith, setHadith, setHadithLoading, setHadithDate])
 
   useEffect(() => {
     const today = localDateStr(new Date())
