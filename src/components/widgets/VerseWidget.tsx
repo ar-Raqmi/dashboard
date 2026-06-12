@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { BookOpen, RefreshCw } from 'lucide-react'
-import { useAction } from '@/hooks/useCloudflareConvex'
-import { api } from '@/lib/convex-client'
+import { useAction } from '@/hooks/useApi'
+import { api } from '@/lib/api-client'
 import { useAppStore, getGMT8DateStr } from '@/lib/store'
 
 export default function VerseWidget() {

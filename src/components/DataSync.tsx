@@ -1,23 +1,23 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useQuery, useMutation } from '@/hooks/useCloudflareConvex'
-import { api } from '@/lib/convex-client'
+import { useQuery, useMutation } from '@/hooks/useApi'
+import { api } from '@/lib/api-client'
 import { useAuth } from '@/hooks/useAuth'
 import { useAppStore } from '@/lib/store'
 import { Loader2 } from 'lucide-react'
 
 /**
- * ConvexSync subscribes to all Convex queries and syncs data to the Zustand store.
+ * DataSync subscribes to all API queries and syncs data to the Zustand store.
  * This allows existing components to continue using the Zustand store for reads,
- * while data is actually sourced from Convex.
+ * while data is actually sourced from Cloudflare D1.
  */
-export function ConvexSync({ children }: { children: React.ReactNode }) {
+export function DataSync({ children }: { children: React.ReactNode }) {
   const { sessionToken, user } = useAuth()
   const initialized = useRef(false)
   const [isInitialSyncComplete, setIsInitialSyncComplete] = useState(false)
 
-  // Subscribe to all Convex queries
+  // Subscribe to all API queries
   const tasks = useQuery(api.tasks.list, sessionToken ? { sessionToken } : 'skip')
   const goals = useQuery(api.goals.list, sessionToken ? { sessionToken } : 'skip')
   const notes = useQuery(api.notes.list, sessionToken ? { sessionToken } : 'skip')
@@ -59,7 +59,7 @@ export function ConvexSync({ children }: { children: React.ReactNode }) {
     desktopLayouts, mobileLayouts, settings, isInitialSyncComplete
   ])
 
-  // Convex mutations for write operations
+  // API mutations for write operations
   const createTask = useMutation(api.tasks.create)
   const updateTask = useMutation(api.tasks.update)
   const deleteTaskMut = useMutation(api.tasks.remove)
@@ -95,7 +95,7 @@ export function ConvexSync({ children }: { children: React.ReactNode }) {
 
   const updateSettingsMut = useMutation(api.settings.update)
 
-  // Sync Convex query results to Zustand store
+  // Sync API query results to Zustand store
   useEffect(() => {
     if (tasks !== undefined && tasks !== null) {
       useAppStore.setState({ tasks })
@@ -207,9 +207,9 @@ export function ConvexSync({ children }: { children: React.ReactNode }) {
     }
   }, [settings])
 
-  // Override Zustand actions with Convex-aware versions
+  // Override Zustand actions with API-aware versions
   // This is the key part: when components call Zustand actions,
-  // we also persist the changes to Convex
+  // we also persist the changes to the database
   useEffect(() => {
     if (!sessionToken || initialized.current) return
     initialized.current = true

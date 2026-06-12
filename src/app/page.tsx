@@ -4,7 +4,7 @@ import { useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAppStore, type ActivePage } from '@/lib/store'
 import { useAuth } from '@/hooks/useAuth'
-import { ConvexSync } from '@/components/ConvexSync'
+import { DataSync } from '@/components/DataSync'
 import Header from '@/components/navigation/Header'
 import TabBar from '@/components/navigation/TabBar'
 import { DashboardGrid } from '@/components/dashboard/DashboardGrid'
@@ -21,8 +21,8 @@ import SettingsPage from '@/components/pages/SettingsPage'
 import LoginPage from '@/components/pages/LoginPage'
 import TwoFactorPage from '@/components/pages/TwoFactorPage'
 import { Loader2 } from 'lucide-react'
-import { useAction } from '@/hooks/useCloudflareConvex'
-import { api } from '@/lib/convex-client'
+import { useAction } from '@/hooks/useApi'
+import { api } from '@/lib/api-client'
 
 const pageComponents: Record<ActivePage, React.ComponentType> = {
   dashboard: DashboardGrid,
@@ -122,12 +122,12 @@ export default function Home() {
   }
 
   return (
-    <ConvexSync key={user?.id || 'public'}>
+    <DataSync key={user?.id || 'public'}>
       <AuthenticatedApp
         activePage={activePage}
         background={background}
       />
-    </ConvexSync>
+    </DataSync>
   )
 }
 

@@ -20,8 +20,8 @@ import {
   X
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
-import { useQuery, useMutation } from '@/hooks/useCloudflareConvex'
-import { api } from '@/lib/convex-client'
+import { useQuery, useMutation } from '@/hooks/useApi'
+import { api } from '@/lib/api-client'
 import { useAppStore } from '@/lib/store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
