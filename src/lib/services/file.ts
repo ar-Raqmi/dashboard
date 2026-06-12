@@ -1,6 +1,7 @@
 import { BaseService } from './base'
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+
 
 export class FileService extends BaseService {
   private getS3Client() {
@@ -207,6 +208,7 @@ export class FileService extends BaseService {
             const proc = (globalThis as any).process
             if (proc && proc.cwd) {
               const getModule = (name: string) =>
+                // eslint-disable-next-line @typescript-eslint/no-require-imports
                 typeof require !== 'undefined' ? require(name) : null
               const fs = getModule('fs')
               const pathModule = getModule('path')
@@ -328,8 +330,7 @@ export class FileService extends BaseService {
       const s3 = this.getS3Client()
       if (s3) {
         try {
-          const { GetObjectCommand: GetCommand } = require('@aws-sdk/client-s3')
-          const command = new GetCommand({
+          const command = new GetObjectCommand({
             Bucket: this.env?.R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'ar-raqmi-files',
             Key: r2Key,
           })
