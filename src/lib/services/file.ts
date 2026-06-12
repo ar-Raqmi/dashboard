@@ -196,7 +196,7 @@ export class FileService extends BaseService {
           try {
             await s3.send(
               new DeleteObjectCommand({
-                Bucket: this.env?.R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'ar-raqmi-files',
+                Bucket: this.env?.R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'dashboard-files',
                 Key: f.r2Key,
               })
             )
@@ -331,7 +331,7 @@ export class FileService extends BaseService {
       if (s3) {
         try {
           const command = new GetObjectCommand({
-            Bucket: this.env?.R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'ar-raqmi-files',
+            Bucket: this.env?.R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'dashboard-files',
             Key: r2Key,
           })
           const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 })
@@ -356,7 +356,7 @@ export class FileService extends BaseService {
     if (s3) {
       try {
         const command = new PutObjectCommand({
-          Bucket: this.env?.R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'ar-raqmi-files',
+          Bucket: this.env?.R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'dashboard-files',
           Key: key,
           ContentType: contentType,
         })
@@ -386,7 +386,7 @@ export class FileService extends BaseService {
             try {
               await s3.send(
                 new DeleteObjectCommand({
-                  Bucket: this.env?.R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'ar-raqmi-files',
+                  Bucket: this.env?.R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'dashboard-files',
                   Key: f.r2Key,
                 })
               )

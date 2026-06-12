@@ -1,4 +1,4 @@
-# ar-Raqmi Dashboard Developer Guidelines
+# Dashboard Developer Guidelines
 
 This project is built on a fully local and serverless architecture powered by Cloudflare Pages.
 

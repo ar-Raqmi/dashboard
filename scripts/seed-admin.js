@@ -30,7 +30,7 @@ async function main() {
     data: {
       userId: user.id,
       profileName: "User",
-      appTitle: "ar-Raqmi Dashboard",
+      appTitle: "Dashboard",
       appLogo: "https://cdn-icons-png.flaticon.com/512/8323/8323511.png",
       iconBackgroundColor: "#A5D6A7",
       hijriVisible: true,

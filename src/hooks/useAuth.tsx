@@ -27,12 +27,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Helper to set cookie
   const setSessionCookie = (token: string, days: number) => {
     const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString()
-    document.cookie = `ar-raqmi-token=${token}; expires=${expires}; path=/; SameSite=Lax`
+    document.cookie = `dashboard-token=${token}; expires=${expires}; path=/; SameSite=Lax`
   }
 
   // Helper to get cookie
   const getSessionCookie = () => {
-    const name = "ar-raqmi-token="
+    const name = "dashboard-token="
     const decodedCookie = decodeURIComponent(document.cookie)
     const ca = decodedCookie.split(';')
     for (let i = 0; i < ca.length; i++) {
@@ -62,7 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setSessionToken(token)
         } else {
           // Invalid token
-          document.cookie = "ar-raqmi-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
+          document.cookie = "dashboard-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
         }
       } catch (err) {
         console.error('Auth check error:', err)
@@ -120,7 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.error('Logout error:', err)
     } finally {
-      document.cookie = "ar-raqmi-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
+      document.cookie = "dashboard-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
       setUser(null)
       setSessionToken(null)
     }

@@ -83,7 +83,7 @@ export async function GET(request: Request) {
     }
 
     const command = new GetObjectCommand({
-      Bucket: env?.R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'ar-raqmi-files',
+      Bucket: env?.R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'dashboard-files',
       Key: key,
     })
 

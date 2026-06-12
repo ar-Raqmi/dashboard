@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ar-raqmi-cache-v1';
+const CACHE_NAME = 'dashboard-cache-v1';
 
 // Assets to cache immediately
 const PRECACHE_ASSETS = [
