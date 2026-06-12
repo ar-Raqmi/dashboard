@@ -28,7 +28,7 @@
 
 #### 1. Clone the project and install dependencies
 ```bash
-git clone https://github.com/your-username/dashboard.git
+git clone https://github.com/ar-Raqmi/dashboard.git
 cd dashboard
 npm install
 ```
