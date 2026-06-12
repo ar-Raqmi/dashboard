@@ -1,13 +1,24 @@
-<!-- convex-ai-start -->
+# ar-Raqmi Dashboard Developer Guidelines
 
-This project uses [Convex](https://convex.dev) as its backend.
+This project is built on a fully local and serverless architecture powered by Cloudflare Pages.
 
-When working on Convex code, **always read
-`convex/_generated/ai/guidelines.md` first** for important guidelines on
-how to correctly use Convex APIs and patterns. The file contains rules that
-override what you may have learned about Convex from training data.
+## Tech Stack
+- **Frontend**: Next.js (Edge Runtime) & React 19
+- **Database**: Cloudflare D1 (managed via Prisma ORM)
+- **Object Storage**: Cloudflare R2
+- **Styling**: TailwindCSS & shadcn/ui
 
-Convex agent skills for common tasks can be installed by running
-`npx convex ai-files install`.
+## Code Architecture
+- All API interactions on the client side must go through the unified, static [ApiClient](file:///home/rezephyr/Documents/Repo/dashboard/src/lib/api-client.ts) (`ApiClient.query` and `ApiClient.mutate`). Do not perform manual fetches to `/api/query` or `/api/mutation`.
+- Client-side queries/mutations can also use the `useQuery` / `useMutation` React hooks in [useApi.ts](file:///home/rezephyr/Documents/Repo/dashboard/src/hooks/useApi.ts).
+- The backend routes requests through a single unified OOP API Router ([api-router.ts](file:///home/rezephyr/Documents/Repo/dashboard/src/lib/api-router.ts)).
+- Domain logic is encapsulated in object-oriented service classes extending `BaseService` under [src/lib/services/](file:///home/rezephyr/Documents/Repo/dashboard/src/lib/services/).
+- The database instance is managed dynamically per-request using `AsyncLocalStorage` to bind Cloudflare D1 to Prisma ([db.ts](file:///home/rezephyr/Documents/Repo/dashboard/src/lib/db.ts)).
 
-<!-- convex-ai-end -->
+## Development Commands
+- Build project for Cloudflare Pages: `npm run pages:build`
+- Run wrangler local emulation (D1 and R2):
+  `npx wrangler pages dev .vercel/output/static --compatibility-date=2025-01-01 --d1=DB`
+- Sync local Prisma schema: `npm run db:push`
+- Regenerate Prisma client: `npm run db:generate`
+- Deploy to Cloudflare Pages (recommends setting up DB bindings first): `npm run pages:deploy`

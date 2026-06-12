@@ -34,6 +34,23 @@ export function getDb(env?: any): PrismaClient {
     return d1PrismaInstance
   }
 
+  // Safety check for Edge runtime to prevent fatal 1101 worker crashes
+  const isEdge =
+    typeof process === 'undefined' ||
+    process.env?.NEXT_RUNTIME === 'edge' ||
+    typeof EdgeRuntime === 'string' ||
+    typeof globalThis.WebSocketPair !== 'undefined' ||
+    !process.versions ||
+    !process.versions.node
+  
+  if (isEdge) {
+    throw new Error(
+      "D1 Database binding 'DB' is missing. " +
+      "Please configure the D1 database binding 'DB' to your D1 database in your Cloudflare Pages dashboard " +
+      "under Settings -> Functions -> D1 Database Bindings, and redeploy."
+    )
+  }
+
   // Local dev (next dev or wrangler pages dev without D1 binding)
   if (!localPrismaInstance) {
     localPrismaInstance = new PrismaClient()

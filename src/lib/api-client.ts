@@ -21,10 +21,26 @@ export class ApiClient {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ path, args }),
     })
-    const json = await res.json()
     if (!res.ok) {
-      throw new Error(json.error || 'Query failed')
+      let errorMsg = 'Query failed'
+      try {
+        const json = await res.json()
+        errorMsg = json.error || errorMsg
+      } catch {
+        try {
+          const text = await res.text()
+          if (text.includes('Worker threw exception') || text.includes('1101')) {
+            errorMsg = 'Worker threw exception (Error 1101). D1 database binding "DB" is likely missing in Pages settings.'
+          } else {
+            errorMsg = `HTTP Error ${res.status}: ${res.statusText || text.substring(0, 100)}`
+          }
+        } catch {
+          errorMsg = `HTTP Error ${res.status}`
+        }
+      }
+      throw new Error(errorMsg)
     }
+    const json = await res.json()
     return this.normalizeValue(json.value)
   }
 
@@ -34,10 +50,26 @@ export class ApiClient {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ path, args }),
     })
-    const json = await res.json()
     if (!res.ok) {
-      throw new Error(json.error || 'Mutation failed')
+      let errorMsg = 'Mutation failed'
+      try {
+        const json = await res.json()
+        errorMsg = json.error || errorMsg
+      } catch {
+        try {
+          const text = await res.text()
+          if (text.includes('Worker threw exception') || text.includes('1101')) {
+            errorMsg = 'Worker threw exception (Error 1101). D1 database binding "DB" is likely missing in Pages settings.'
+          } else {
+            errorMsg = `HTTP Error ${res.status}: ${res.statusText || text.substring(0, 100)}`
+          }
+        } catch {
+          errorMsg = `HTTP Error ${res.status}`
+        }
+      }
+      throw new Error(errorMsg)
     }
+    const json = await res.json()
     return this.normalizeValue(json.value)
   }
 }

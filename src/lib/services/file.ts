@@ -157,7 +157,7 @@ export class FileService extends BaseService {
         size: size || null,
         storageId: storageId || null,
         r2Key: r2Key || null,
-        storageSource: storageSource || (storageId ? 'convex' : r2Key ? 'r2' : null),
+        storageSource: storageSource || (storageId ? 'legacy' : r2Key ? 'r2' : null),
         updatedAt: new Date(),
       },
     })
