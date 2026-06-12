@@ -9,11 +9,11 @@ This project is built on a fully local and serverless architecture powered by Cl
 - **Styling**: TailwindCSS & shadcn/ui
 
 ## Code Architecture
-- All API interactions on the client side must go through the unified, static [ApiClient](file:///home/rezephyr/Documents/Repo/dashboard/src/lib/api-client.ts) (`ApiClient.query` and `ApiClient.mutate`). Do not perform manual fetches to `/api/query` or `/api/mutation`.
-- Client-side queries/mutations can also use the `useQuery` / `useMutation` React hooks in [useApi.ts](file:///home/rezephyr/Documents/Repo/dashboard/src/hooks/useApi.ts).
-- The backend routes requests through a single unified OOP API Router ([api-router.ts](file:///home/rezephyr/Documents/Repo/dashboard/src/lib/api-router.ts)).
-- Domain logic is encapsulated in object-oriented service classes extending `BaseService` under [src/lib/services/](file:///home/rezephyr/Documents/Repo/dashboard/src/lib/services/).
-- The database instance is managed dynamically per-request using `AsyncLocalStorage` to bind Cloudflare D1 to Prisma ([db.ts](file:///home/rezephyr/Documents/Repo/dashboard/src/lib/db.ts)).
+- All API interactions on the client side must go through the unified, static [ApiClient](src/lib/api-client.ts) (`ApiClient.query` and `ApiClient.mutate`). Do not perform manual fetches to `/api/query` or `/api/mutation`.
+- Client-side queries/mutations can also use the `useQuery` / `useMutation` React hooks in [useApi.ts](src/hooks/useApi.ts).
+- The backend routes requests through a single unified OOP API Router ([api-router.ts](src/lib/api-router.ts)).
+- Domain logic is encapsulated in object-oriented service classes extending `BaseService` under [src/lib/services/](src/lib/services/).
+- The database instance is managed dynamically per-request using `AsyncLocalStorage` to bind Cloudflare D1 to Prisma ([db.ts](src/lib/db.ts)).
 
 ## Development Commands
 - Build project for Cloudflare Pages: `npm run pages:build`

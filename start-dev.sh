@@ -1,3 +1,3 @@
 #!/bin/bash
-cd /home/rezephyr/Documents/Repo/dashboard
+cd "$(dirname "$0")"
 exec node ./node_modules/.bin/next dev -p 3000
