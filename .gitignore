@@ -59,3 +59,5 @@ server.log
 .wrangler
 .dev.vars*
 !.dev.vars.example
+wrangler.toml
+
