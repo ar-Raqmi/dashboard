@@ -849,7 +849,11 @@ export async function handleMutation(path: string, args: any, env?: any) {
 
     case 'notes:update': {
       const user = await getAuthedUser(db, args.sessionToken)
-      const { id, ...updates } = args
+      const id = args.id || args.noteId
+      const updates = { ...args }
+      delete updates.id
+      delete updates.noteId
+      delete updates.sessionToken
       const note = await db.note.findUnique({ where: { id } })
       if (!note || note.userId !== user.id) {
         throw new Error('Note not found or unauthorized')
@@ -870,7 +874,7 @@ export async function handleMutation(path: string, args: any, env?: any) {
 
     case 'notes:remove': {
       const user = await getAuthedUser(db, args.sessionToken)
-      const { id } = args
+      const id = args.id || args.noteId
       const note = await db.note.findUnique({ where: { id } })
       if (!note || note.userId !== user.id) {
         throw new Error('Note not found or unauthorized')
@@ -881,7 +885,7 @@ export async function handleMutation(path: string, args: any, env?: any) {
 
     case 'notes:togglePinned': {
       const user = await getAuthedUser(db, args.sessionToken)
-      const { id } = args
+      const id = args.id || args.noteId
       const note = await db.note.findUnique({ where: { id } })
       if (!note || note.userId !== user.id) {
         throw new Error('Note not found or unauthorized')
