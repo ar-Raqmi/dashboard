@@ -5,7 +5,7 @@
 *Your personal digital sanctuary.*
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
-![Convex](https://img.shields.io/badge/Convex-Cloud_Database-4F46E5?logo=convex)
+![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-F38020?logo=cloudflare)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
 
 <br />
@@ -17,9 +17,9 @@
 ### ✨ Features
 - **Customizable Widgets** — Drag, resize, and toggle dashboard modules
 - **Productivity Hub** — Tasks, Calendar, Markdown Notes, and Goal Tracking
-- **File Manager** — Secure, hierarchical cloud storage
-- **Spiritual Tools** — Daily Quran/Hadith, Hijri calendar, and World Clocks
-- **Modern Tech** — Real-time sync via Convex and Next.js 16
+- **File Manager** — Secure, hierarchical cloud storage powered by Cloudflare R2
+- **Spiritual Tools** — Daily Quran/Hadith, Hijri calendar, World Clocks
+- **Modern Architecture** — Clean, object-oriented service architecture and Next.js 16 Edge runtime
 
 ### 🚀 Quick Start
 ```bash
@@ -34,7 +34,12 @@ npm run dev
 ```
 
 ### 🛠️ The Stack
-**Next.js 16** • **Cloudflare Edge / Pages** • **Prisma + SQLite/D1** • **Tailwind 4** • **Zustand**
+**Next.js 16** • **Cloudflare Edge / Pages** • **Prisma + SQLite/D1** • **Cloudflare R2** • **Tailwind 4** • **Zustand**
+
+### 📂 Architecture
+The backend is structured around a clean, modular Object-Oriented service design:
+- **`src/lib/services/`**: Modular domain-specific services (e.g., `AuthService`, `TaskService`, `GoalService`, `FileService`, etc.) that handle business logic.
+- **`src/lib/api-router.ts`**: The query and mutation routing layer that acts as a thin dispatcher mapping requests to the appropriate service class instance.
 
 ---
 
@@ -45,3 +50,4 @@ npm run dev
 *🖋️ the pen hasn't lifted*
 
 </div>
+

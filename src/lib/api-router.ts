@@ -1,567 +1,103 @@
 import { getDb, d1Storage } from './db'
-import { encryptText, decryptText } from './crypto'
-import { TOTP } from 'otpauth'
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
-
-// Helper: Verify session token and return user
-async function getAuthedUser(db: any, sessionToken: string) {
-  if (!sessionToken) {
-    throw new Error('Unauthorized: Session token missing')
-  }
-  const session = await db.session.findUnique({
-    where: { token: sessionToken },
-    include: { user: true },
-  })
-  if (!session || new Date(session.expiresAt).getTime() < Date.now()) {
-    throw new Error('Unauthorized: Invalid or expired session')
-  }
-  return session.user
-}
-
-const getS3Client = (env?: any) => {
-  const accessKeyId = env?.R2_ACCESS_KEY_ID || process.env.R2_ACCESS_KEY_ID || process.env.NEXT_PUBLIC_R2_ACCESS_KEY_ID
-  const secretAccessKey = env?.R2_SECRET_ACCESS_KEY || process.env.R2_SECRET_ACCESS_KEY || process.env.NEXT_PUBLIC_R2_SECRET_ACCESS_KEY
-  const endpoint = env?.R2_ENDPOINT || process.env.R2_ENDPOINT || process.env.NEXT_PUBLIC_R2_ENDPOINT || 'https://1253834dc9cac8e48edc6a7fec740ac9.r2.cloudflarestorage.com'
-
-  if (!accessKeyId || !secretAccessKey || !endpoint) {
-    return null
-  }
-
-  return new S3Client({
-    region: 'auto',
-    endpoint,
-    credentials: {
-      accessKeyId,
-      secretAccessKey,
-    },
-  })
-}
-
-async function getFilesToDelete(db: any, userId: string, id: string): Promise<any[]> {
-  const file = await db.fileItem.findUnique({
-    where: { id },
-    include: { children: true }
-  })
-  if (!file || file.userId !== userId) return []
-
-  let results = [file]
-  if (file.type === 'folder') {
-    for (const child of file.children) {
-      const childResults = await getFilesToDelete(db, userId, child.id)
-      results = results.concat(childResults)
-    }
-  }
-  return results
-}
+import {
+  AuthService,
+  TaskService,
+  GoalService,
+  NoteService,
+  EventService,
+  FileService,
+  ClockService,
+  DashboardService,
+  SettingService,
+  TwoFactorService,
+  ContentService,
+} from './services'
 
 // Queries Router
 export async function handleQuery(path: string, args: any, env?: any) {
   return d1Storage.run(env?.DB, async () => {
     const db = getDb(env)
 
-  switch (path) {
-    case 'auth:validateSession': {
-      const { sessionToken } = args
-      try {
-        const user = await getAuthedUser(db, sessionToken)
-        return {
-          userId: user.id,
-          username: user.username,
-        }
-      } catch (err) {
-        return null
-      }
+    const authService = new AuthService(db, env)
+    const taskService = new TaskService(db, env)
+    const goalService = new GoalService(db, env)
+    const noteService = new NoteService(db, env)
+    const eventService = new EventService(db, env)
+    const fileService = new FileService(db, env)
+    const clockService = new ClockService(db, env)
+    const dashboardService = new DashboardService(db, env)
+    const settingService = new SettingService(db, env)
+    const twoFactorService = new TwoFactorService(db, env)
+    const contentService = new ContentService(db, env)
+
+    switch (path) {
+      // Auth
+      case 'auth:validateSession':
+        return authService.validateSession(args)
+      case 'auth:getUserByUsername':
+        return authService.getUserByUsername(args)
+
+      // Tasks
+      case 'tasks:list':
+        return taskService.list(args)
+
+      // Goals
+      case 'goals:list':
+        return goalService.list(args)
+
+      // Notes
+      case 'notes:list':
+        return noteService.list(args)
+
+      // Events
+      case 'events:list':
+        return eventService.list(args)
+
+      // Files
+      case 'files:list':
+        return fileService.list(args)
+      case 'files:getPath':
+        return fileService.getPath(args)
+      case 'files:listAll':
+        return fileService.listAll(args)
+      case 'files:getFileUrl':
+        return fileService.getFileUrl(args)
+
+      // Clocks
+      case 'clocks:list':
+        return clockService.list(args)
+
+      // Dashboard
+      case 'dashboard:listWidgets':
+        return dashboardService.listWidgets(args)
+      case 'dashboard:getLayout':
+        return dashboardService.getLayout(args)
+
+      // Settings
+      case 'settings:get':
+        return settingService.get(args)
+
+      // 2FA
+      case 'twoFactor:list':
+        return twoFactorService.list(args)
+
+      // Content
+      case 'content:getDailyVerseAction':
+        return contentService.getDailyVerseAction()
+      case 'content:getDailyHadithAction':
+        return contentService.getDailyHadithAction()
+
+      // R2 Storage
+      case 'r2:getUploadUrl':
+        return fileService.getUploadUrl(args)
+      case 'r2:removeFile':
+        return fileService.removeFile(args)
+      case 'r2:removeFiles':
+        return fileService.removeFiles(args)
+
+      default:
+        throw new Error(`Unknown query path: ${path}`)
     }
-
-    case 'auth:getUserByUsername': {
-      const { username } = args
-      const user = await db.user.findUnique({
-        where: { username },
-      })
-      if (!user) return null
-      return {
-        _id: user.id,
-        username: user.username,
-        passwordHash: user.passwordHash,
-        salt: user.salt,
-      }
-    }
-
-    case 'tasks:list': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const tasks = await db.task.findMany({
-        where: { userId: user.id },
-        orderBy: { createdAt: 'desc' },
-      })
-      return tasks.map((t: any) => ({
-        id: t.id,
-        title: t.title,
-        dueDate: t.dueDate,
-        priority: t.priority,
-        status: t.status,
-        createdAt: t.createdAt.toISOString(),
-      }))
-    }
-
-    case 'goals:list': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const goals = await db.goal.findMany({
-        where: { userId: user.id },
-        include: { milestones: true },
-        orderBy: { order: 'asc' },
-      })
-      return goals.map((g: any) => ({
-        id: g.id,
-        title: g.title,
-        progress: g.progress,
-        order: g.order ?? 0,
-        createdAt: g.createdAt.toISOString(),
-        milestones: g.milestones
-          .sort((a: any, b: any) => a.order - b.order)
-          .map((m: any) => ({
-            id: m.id,
-            label: m.label,
-            completed: m.completed,
-          })),
-      }))
-    }
-
-    case 'notes:list': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const notes = await db.note.findMany({
-        where: { userId: user.id },
-        orderBy: { updatedAt: 'desc' },
-      })
-      return notes.map((n: any) => ({
-        id: n.id,
-        title: n.title,
-        content: n.content,
-        color: n.color,
-        pinned: n.pinned,
-        createdAt: n.createdAt.toISOString(),
-        updatedAt: n.updatedAt.toISOString(),
-      }))
-    }
-
-    case 'events:list': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const events = await db.calendarEvent.findMany({
-        where: { userId: user.id },
-      })
-      return events.map((e: any) => ({
-        id: e.id,
-        title: e.title,
-        date: e.date,
-        color: e.color || undefined,
-      }))
-    }
-
-    case 'files:list': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { parentId, starred, category } = args
-
-      const whereClause: any = { userId: user.id }
-      if (starred !== undefined) {
-        whereClause.starred = starred
-      } else if (category !== undefined) {
-        whereClause.category = category
-      } else {
-        whereClause.parentId = parentId || null
-      }
-
-      const files = await db.fileItem.findMany({
-        where: whereClause,
-        orderBy: { updatedAt: 'desc' },
-      })
-
-      return files.map((f: any) => ({
-        id: f.id,
-        name: f.name,
-        type: f.type,
-        category: f.category || undefined,
-        parentId: f.parentId || null,
-        size: f.size || 0,
-        storageId: f.storageId || undefined,
-        r2Key: f.r2Key || undefined,
-        storageSource: f.storageSource || undefined,
-        starred: f.starred || false,
-        lastAccessed: f.lastAccessed || undefined,
-        createdAt: f.createdAt.toISOString(),
-        updatedAt: f.updatedAt.toISOString(),
-      }))
-    }
-
-    case 'files:getPath': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { folderId } = args
-      if (!folderId) return []
-
-      const path = []
-      let currentId = folderId
-      while (currentId) {
-        const folder = await db.fileItem.findUnique({
-          where: { id: currentId },
-        })
-        if (!folder || folder.userId !== user.id) break
-        path.unshift({
-          id: folder.id,
-          name: folder.name,
-        })
-        currentId = folder.parentId
-      }
-      return path
-    }
-
-    case 'files:listAll': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const files = await db.fileItem.findMany({
-        where: { userId: user.id },
-        orderBy: { updatedAt: 'desc' },
-      })
-      return files.map((f: any) => ({
-        id: f.id,
-        name: f.name,
-        type: f.type,
-        category: f.category || undefined,
-        parentId: f.parentId || null,
-        size: f.size || 0,
-        storageId: f.storageId || undefined,
-        r2Key: f.r2Key || undefined,
-        storageSource: f.storageSource || undefined,
-        starred: f.starred || false,
-        lastAccessed: f.lastAccessed || undefined,
-        createdAt: f.createdAt.toISOString(),
-        updatedAt: f.updatedAt.toISOString(),
-      }))
-    }
-
-    case 'clocks:list': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const clocks = await db.clock.findMany({
-        where: { userId: user.id },
-      })
-      return clocks.map((c: any) => ({
-        id: c.id,
-        label: c.label,
-        timezone: c.timezone,
-      }))
-    }
-
-    case 'dashboard:listWidgets': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      let widgets = await db.dashboardWidget.findMany({
-        where: { userId: user.id },
-      })
-
-      if (widgets.length === 0) {
-        // Seed default widgets
-        const defaultWidgets = [
-          { type: 'tasks', label: 'Daily Tasks', icon: 'check_circle', visible: true },
-          { type: 'calendar', label: 'Calendar', icon: 'calendar_month', visible: true },
-          { type: 'notes', label: 'Quick Notes', icon: 'sticky_note_2', visible: true },
-          { type: 'verse', label: 'Daily Verse', icon: 'auto_stories', visible: true },
-          { type: 'goals', label: 'Goals', icon: 'flag', visible: true },
-          { type: 'clock', label: 'World Clock', icon: 'schedule', visible: true },
-          { type: 'files', label: 'Files', icon: 'folder', visible: true },
-          { type: 'clipboard', label: 'Clipboard', icon: 'content_paste', visible: true },
-          { type: 'twoFactor', label: '2FA Authenticator', icon: 'security', visible: true },
-        ]
-        await db.dashboardWidget.createMany({
-          data: defaultWidgets.map((w) => ({ ...w, userId: user.id })),
-        })
-        widgets = await db.dashboardWidget.findMany({
-          where: { userId: user.id },
-        })
-      }
-
-      return widgets.map((w: any) => ({
-        type: w.type,
-        label: w.label,
-        icon: w.icon,
-        visible: w.visible,
-      }))
-    }
-
-    case 'dashboard:getLayout': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { layoutType } = args
-      const entry = await db.dashboardLayout.findFirst({
-        where: { userId: user.id, layoutType },
-      })
-      if (!entry) {
-        // Return default empty layouts or predefined default layouts for the dashboard widgets
-        if (layoutType === 'desktop') {
-          const defaultLayouts = [
-            { i: 'tasks', x: 0, y: 0, w: 2, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 6 },
-            { i: 'calendar', x: 2, y: 0, w: 1, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 6 },
-            { i: 'notes', x: 0, y: 2, w: 1, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 6 },
-            { i: 'verse', x: 1, y: 2, w: 1, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 6 },
-            { i: 'goals', x: 2, y: 2, w: 1, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 6 },
-            { i: 'clock', x: 0, y: 4, w: 1, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 6 },
-            { i: 'files', x: 1, y: 4, w: 1, h: 1, minW: 1, maxW: 3, minH: 1, maxH: 6 },
-            { i: 'clipboard', x: 2, y: 4, w: 1, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 6 },
-            { i: 'twoFactor', x: 1, y: 5, w: 1, h: 2, minW: 1, maxW: 3, minH: 1, maxH: 6 },
-          ]
-          return defaultLayouts
-        }
-        if (layoutType === 'mobile') {
-          const defaultMobileLayouts = [
-            { i: 'tasks', x: 0, y: 0, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: 6 },
-            { i: 'calendar', x: 0, y: 2, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: 6 },
-            { i: 'notes', x: 0, y: 4, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: 6 },
-            { i: 'verse', x: 0, y: 6, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: 6 },
-            { i: 'goals', x: 0, y: 8, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: 6 },
-            { i: 'clock', x: 0, y: 10, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: 6 },
-            { i: 'files', x: 0, y: 12, w: 1, h: 1, minW: 1, maxW: 1, minH: 1, maxH: 6 },
-            { i: 'clipboard', x: 0, y: 13, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: 6 },
-            { i: 'twoFactor', x: 0, y: 15, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: 6 },
-          ]
-          return defaultMobileLayouts
-        }
-        return []
-      }
-      let parsed = JSON.parse(entry.layouts)
-      if (typeof parsed === 'string') {
-        parsed = JSON.parse(parsed)
-      }
-      return Array.isArray(parsed) ? parsed : []
-    }
-
-    case 'settings:get': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      let settings = await db.userSettings.findUnique({
-        where: { userId: user.id },
-      })
-
-      if (!settings) {
-        settings = await db.userSettings.create({
-          data: {
-            userId: user.id,
-            profileName: user.username,
-            profilePicture: '',
-            appTitle: 'ar-Raqmi Dashboard',
-            appLogo: '/logo.png',
-            iconBackgroundColor: '#A5D6A7',
-            hijriVisible: true,
-            hijriOffset: 0,
-            showSeconds: true,
-            clipboardText: '',
-            backgroundType: 'default',
-            backgroundColor: '#A5D6A7',
-            backgroundGradient: 'citrus-dawn',
-            backgroundImage: '',
-            backgroundOpacity: 30,
-          },
-        })
-      }
-
-      return {
-        profileName: settings.profileName,
-        profilePicture: settings.profilePicture || undefined,
-        appTitle: settings.appTitle,
-        appLogo: settings.appLogo || undefined,
-        iconBackgroundColor: settings.iconBackgroundColor,
-        hijriVisible: settings.hijriVisible,
-        hijriOffset: settings.hijriOffset,
-        showSeconds: settings.showSeconds,
-        clipboardText: settings.clipboardText,
-        background: {
-          type: settings.backgroundType,
-          color: settings.backgroundColor,
-          gradient: settings.backgroundGradient,
-          image: settings.backgroundImage,
-          opacity: settings.backgroundOpacity,
-        },
-      }
-    }
-
-    case 'twoFactor:list': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const secrets = await db.twoFactorSecret.findMany({
-        where: { userId: user.id },
-        orderBy: { createdAt: 'desc' },
-      })
-
-      const list = []
-      for (const s of secrets) {
-        const decrypted = await decryptText(s.secret)
-        let token = '------'
-        let remainingSeconds = 30
-        try {
-          // Clean secret from spaces or format issues
-          const cleanSecret = decrypted.replace(/\s+/g, '').toUpperCase()
-          const totp = new TOTP({ secret: cleanSecret })
-          token = totp.generate()
-          // Calculate seconds remaining in 30-sec window
-          remainingSeconds = 30 - (Math.floor(Date.now() / 1000) % 30)
-        } catch (err) {
-          console.error('Failed to generate TOTP for', s.accountName, err)
-        }
-
-        list.push({
-          id: s.id,
-          accountName: s.accountName,
-          category: s.category || 'Other',
-          icon: s.icon || undefined,
-          token,
-          remainingSeconds,
-        })
-      }
-      return list
-    }
-
-    case 'content:getDailyVerseAction': {
-      const ayahId = Math.floor(Math.random() * 6236) + 1
-      try {
-        const response = await fetch(`https://api.alquran.cloud/v1/ayah/${ayahId}/editions/quran-uthmani,en.sahih`)
-        const data = await response.json()
-        return {
-          arabic: data.data[0].text,
-          translation: data.data[1].text,
-          reference: `${data.data[0].surah.englishName} ${data.data[0].numberInSurah}`,
-        }
-      } catch (err) {
-        return null
-      }
-    }
-
-    case 'content:getDailyHadithAction': {
-      const hadithId = Math.floor(Math.random() * 7000) + 1
-      try {
-        const response = await fetch(`https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-bukhari/${hadithId}.json`)
-        const data = await response.json()
-        const hadith = data.hadiths[0]
-        return {
-          arabic: 'Sahih al-Bukhari',
-          translation: hadith.text,
-          narrator: 'Narrated in Sahih Bukhari',
-          source: `Hadith ${hadithId}`,
-          grade: 'Sahih',
-        }
-      } catch (err) {
-        console.error('Hadith fetch error:', err)
-        return null
-      }
-    }
-
-    case 'files:getFileUrl': {
-      await getAuthedUser(db, args.sessionToken)
-      const { storageId, r2Key } = args
-
-      if (storageId) {
-        return `/api/storage/${storageId}`
-      }
-
-      if (r2Key) {
-        // Try to generate a signed URL (R2 bucket is private)
-        const s3 = getS3Client(env)
-        if (s3) {
-          try {
-            const { GetObjectCommand } = require('@aws-sdk/client-s3')
-            const command = new GetObjectCommand({
-              Bucket: env?.R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'ar-raqmi-files',
-              Key: r2Key,
-            })
-            const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 })
-            return signedUrl
-          } catch (err) {
-            console.error('Failed to generate signed GET URL:', err)
-          }
-        }
-
-        // Fallback: route through our proxy (lets the server use its own R2 credentials)
-        return `/api/storage/proxy?key=${encodeURIComponent(r2Key)}&token=${encodeURIComponent(args.sessionToken)}`
-      }
-
-      return null
-    }
-
-
-    case 'r2:getUploadUrl': {
-      await getAuthedUser(db, args.sessionToken)
-      const { key, contentType } = args
-      const s3 = getS3Client(env)
-      if (s3) {
-        try {
-          const command = new PutObjectCommand({
-            Bucket: env?.R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'ar-raqmi-files',
-            Key: key,
-            ContentType: contentType
-          })
-          const url = await getSignedUrl(s3, command, { expiresIn: 3600 })
-          return url
-        } catch (err) {
-          console.error('Failed to generate R2 signed url:', err)
-        }
-      }
-      // Fallback: Local upload URL
-      return `/api/storage/local-upload?key=${encodeURIComponent(key)}`
-    }
-
-    case 'r2:removeFile': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const id = args.id || args.fileId
-      if (!id) throw new Error('Missing file id')
-      const file = await db.fileItem.findUnique({ where: { id } })
-      if (!file || file.userId !== user.id) {
-        throw new Error('File not found or unauthorized')
-      }
-      const filesToDelete = await getFilesToDelete(db, user.id, id)
-      const s3 = getS3Client(env)
-      for (const f of filesToDelete) {
-        if (f.r2Key) {
-          if (s3) {
-            try {
-              await s3.send(new DeleteObjectCommand({
-                Bucket: env?.R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'ar-raqmi-files',
-                Key: f.r2Key
-              }))
-            } catch (err) {
-              console.error(`Failed to delete ${f.r2Key} from R2:`, err)
-            }
-          } else {
-            // Local filesystem not available in edge runtime — skip
-            console.warn(`Skipping local file delete for ${f.r2Key} (edge runtime)`)
-          }
-        }
-      }
-      await db.fileItem.delete({ where: { id } })
-      return { success: true }
-    }
-
-    case 'r2:removeFiles': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { ids } = args
-      if (!ids || !Array.isArray(ids)) throw new Error('Missing ids array')
-      const s3 = getS3Client(env)
-      for (const id of ids) {
-        const filesToDelete = await getFilesToDelete(db, user.id, id)
-        for (const f of filesToDelete) {
-          if (f.r2Key) {
-            if (s3) {
-              try {
-                await s3.send(new DeleteObjectCommand({
-                  Bucket: env?.R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'ar-raqmi-files',
-                  Key: f.r2Key
-                }))
-              } catch (err) {
-                console.error(`Failed to delete ${f.r2Key} from R2:`, err)
-              }
-            } else {
-              // Local filesystem not available in edge runtime — skip
-              console.warn(`Skipping local file delete for ${f.r2Key} (edge runtime)`)
-            }
-          }
-        }
-        await db.fileItem.delete({ where: { id } })
-      }
-      return { success: true }
-    }
-
-    default:
-      throw new Error(`Unknown query path: ${path}`)
-  }
   })
 }
 
@@ -570,709 +106,113 @@ export async function handleMutation(path: string, args: any, env?: any) {
   return d1Storage.run(env?.DB, async () => {
     const db = getDb(env)
 
-  switch (path) {
-    case 'sessions:create': {
-      const { userId, token, expiresAt } = args
-      return await db.session.create({
-        data: {
-          userId,
-          token,
-          expiresAt: new Date(expiresAt),
-        },
-      })
+    const authService = new AuthService(db, env)
+    const taskService = new TaskService(db, env)
+    const goalService = new GoalService(db, env)
+    const noteService = new NoteService(db, env)
+    const eventService = new EventService(db, env)
+    const fileService = new FileService(db, env)
+    const clockService = new ClockService(db, env)
+    const dashboardService = new DashboardService(db, env)
+    const settingService = new SettingService(db, env)
+    const twoFactorService = new TwoFactorService(db, env)
+
+    switch (path) {
+      // Sessions
+      case 'sessions:create':
+        return authService.createSession(args)
+      case 'sessions:remove':
+        return authService.removeSession(args)
+
+      // Auth
+      case 'auth:updateUser':
+        return authService.updateUser(args)
+
+      // Tasks
+      case 'tasks:create':
+        return taskService.create(args)
+      case 'tasks:update':
+        return taskService.update(args)
+      case 'tasks:remove':
+        return taskService.remove(args)
+      case 'tasks:deleteCompleted':
+        return taskService.deleteCompleted(args)
+      case 'tasks:deleteOldCompleted':
+        return taskService.deleteOldCompleted(args)
+      case 'tasks:toggleStatus':
+        return taskService.toggleStatus(args)
+
+      // Goals
+      case 'goals:create':
+        return goalService.create(args)
+      case 'goals:update':
+        return goalService.update(args)
+      case 'goals:remove':
+        return goalService.remove(args)
+      case 'goals:toggleMilestone':
+        return goalService.toggleMilestone(args)
+      case 'goals:reorder':
+        return goalService.reorder(args)
+
+      // Notes
+      case 'notes:create':
+        return noteService.create(args)
+      case 'notes:update':
+        return noteService.update(args)
+      case 'notes:remove':
+        return noteService.remove(args)
+      case 'notes:togglePinned':
+        return noteService.togglePinned(args)
+
+      // Events
+      case 'events:create':
+        return eventService.create(args)
+      case 'events:remove':
+        return eventService.remove(args)
+
+      // Files
+      case 'files:create':
+      case 'files:createFile':
+        return fileService.create(args)
+      case 'files:rename':
+        return fileService.rename(args)
+      case 'files:remove':
+        return fileService.remove(args)
+      case 'files:move':
+        return fileService.move(args)
+      case 'files:moveFiles':
+        return fileService.moveFiles(args)
+      case 'files:toggleStar':
+        return fileService.toggleStar(args)
+
+      // Clocks
+      case 'clocks:add':
+        return clockService.add(args)
+      case 'clocks:remove':
+        return clockService.remove(args)
+      case 'clocks:update':
+        return clockService.update(args)
+
+      // Dashboard
+      case 'dashboard:toggleWidgetVisibility':
+        return dashboardService.toggleWidgetVisibility(args)
+      case 'dashboard:setLayout':
+        return dashboardService.setLayout(args)
+
+      // Settings
+      case 'settings:update':
+        return settingService.update(args)
+
+      // 2FA
+      case 'twoFactor:create':
+        return twoFactorService.create(args)
+      case 'twoFactor:update':
+        return twoFactorService.update(args)
+      case 'twoFactor:remove':
+        return twoFactorService.remove(args)
+
+      default:
+        throw new Error(`Unknown mutation path: ${path}`)
     }
-
-    case 'sessions:remove': {
-      const { token } = args
-      try {
-        await db.session.delete({
-          where: { token },
-        })
-      } catch (err) {
-        // Already removed
-      }
-      return { success: true }
-    }
-
-    case 'auth:updateUser': {
-      const { sessionToken, newUsername, newPasswordHash, newSalt } = args
-      const user = await getAuthedUser(db, sessionToken)
-
-      const updates: any = {}
-      if (newUsername) {
-        const existing = await db.user.findUnique({
-          where: { username: newUsername },
-        })
-        if (existing && existing.id !== user.id) {
-          return { success: false, error: 'Username already taken' }
-        }
-        updates.username = newUsername
-      }
-      if (newPasswordHash) {
-        updates.passwordHash = newPasswordHash
-        updates.salt = newSalt
-      }
-
-      await db.user.update({
-        where: { id: user.id },
-        data: updates,
-      })
-      return { success: true }
-    }
-
-    case 'tasks:create': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { title, dueDate, priority, status } = args
-      const t = await db.task.create({
-        data: {
-          userId: user.id,
-          title,
-          dueDate: dueDate || null,
-          priority,
-          status,
-        },
-      })
-      return t.id
-    }
-
-    case 'tasks:update': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { taskId, ...updates } = args
-      const task = await db.task.findUnique({ where: { id: taskId } })
-      if (!task || task.userId !== user.id) {
-        throw new Error('Task not found or unauthorized')
-      }
-
-      const cleanUpdates: any = {}
-      if (updates.title !== undefined) cleanUpdates.title = updates.title
-      if (updates.dueDate !== undefined) cleanUpdates.dueDate = updates.dueDate
-      if (updates.priority !== undefined) cleanUpdates.priority = updates.priority
-      if (updates.status !== undefined) cleanUpdates.status = updates.status
-
-      await db.task.update({
-        where: { id: taskId },
-        data: cleanUpdates,
-      })
-      return { success: true }
-    }
-
-    case 'tasks:remove': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { taskId } = args
-      const task = await db.task.findUnique({ where: { id: taskId } })
-      if (!task || task.userId !== user.id) {
-        throw new Error('Task not found or unauthorized')
-      }
-      await db.task.delete({ where: { id: taskId } })
-      return { success: true }
-    }
-
-    case 'tasks:deleteCompleted': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      await db.task.deleteMany({
-        where: { userId: user.id, status: 'completed' },
-      })
-      return { success: true }
-    }
-
-    case 'tasks:deleteOldCompleted': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { today } = args
-      await db.task.deleteMany({
-        where: {
-          userId: user.id,
-          status: 'completed',
-          dueDate: { lt: today },
-        },
-      })
-      return { success: true }
-    }
-
-    case 'tasks:toggleStatus': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { taskId } = args
-      const task = await db.task.findUnique({ where: { id: taskId } })
-      if (!task || task.userId !== user.id) {
-        throw new Error('Task not found or unauthorized')
-      }
-      await db.task.update({
-        where: { id: taskId },
-        data: {
-          status: task.status === 'pending' ? 'completed' : 'pending',
-        },
-      })
-      return { success: true }
-    }
-
-    case 'goals:create': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { title, progress, order, milestones } = args
-      const goal = await db.goal.create({
-        data: {
-          userId: user.id,
-          title,
-          progress,
-          order: order ?? 0,
-        },
-      })
-
-      if (milestones && milestones.length > 0) {
-        await db.milestone.createMany({
-          data: milestones.map((m: any, idx: number) => ({
-            goalId: goal.id,
-            label: m.label,
-            completed: m.completed,
-            order: idx,
-          })),
-        })
-      }
-
-      return goal.id
-    }
-
-    case 'goals:update': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { goalId, title, progress, order, milestones } = args
-      const goal = await db.goal.findUnique({ where: { id: goalId } })
-      if (!goal || goal.userId !== user.id) {
-        throw new Error('Goal not found or unauthorized')
-      }
-
-      const updates: any = {}
-      if (title !== undefined) updates.title = title
-      if (order !== undefined) updates.order = order
-
-      if (milestones !== undefined) {
-        // Delete existing milestones
-        await db.milestone.deleteMany({ where: { goalId } })
-        // Insert updated milestones
-        if (milestones.length > 0) {
-          await db.milestone.createMany({
-            data: milestones.map((m: any, idx: number) => ({
-              goalId,
-              label: m.label,
-              completed: m.completed,
-              order: idx,
-            })),
-          })
-        }
-
-        // Recalculate progress if not explicitly provided
-        if (progress === undefined) {
-          const completedCount = milestones.filter((m: any) => m.completed).length
-          const totalCount = milestones.length
-          updates.progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
-        }
-      }
-
-      if (progress !== undefined) {
-        updates.progress = progress
-      }
-
-      await db.goal.update({
-        where: { id: goalId },
-        data: updates,
-      })
-      return { success: true }
-    }
-
-    case 'goals:remove': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { goalId } = args
-      const goal = await db.goal.findUnique({ where: { id: goalId } })
-      if (!goal || goal.userId !== user.id) {
-        throw new Error('Goal not found or unauthorized')
-      }
-      await db.goal.delete({ where: { id: goalId } })
-      return { success: true }
-    }
-
-    case 'goals:toggleMilestone': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { goalId, milestoneId } = args
-      const goal = await db.goal.findUnique({ where: { id: goalId } })
-      if (!goal || goal.userId !== user.id) {
-        throw new Error('Goal not found or unauthorized')
-      }
-
-      const milestone = await db.milestone.findUnique({ where: { id: milestoneId } })
-      if (!milestone || milestone.goalId !== goalId) {
-        throw new Error('Milestone not found')
-      }
-
-      const newCompleted = !milestone.completed
-      await db.milestone.update({
-        where: { id: milestoneId },
-        data: { completed: newCompleted },
-      })
-
-      // Recalculate progress
-      const allMilestones = await db.milestone.findMany({ where: { goalId } })
-      const completed = allMilestones.filter((m: any) => m.id === milestoneId ? newCompleted : m.completed).length
-      const total = allMilestones.length
-      const progress = total > 0 ? Math.round((completed / total) * 100) : 0
-
-      await db.goal.update({
-        where: { id: goalId },
-        data: { progress },
-      })
-      return { success: true }
-    }
-
-    case 'goals:reorder': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { goalIds } = args
-      for (let i = 0; i < goalIds.length; i++) {
-        const goal = await db.goal.findUnique({ where: { id: goalIds[i] } })
-        if (goal && goal.userId === user.id) {
-          await db.goal.update({
-            where: { id: goalIds[i] },
-            data: { order: i },
-          })
-        }
-      }
-      return { success: true }
-    }
-
-    case 'notes:create': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { title, content, color, pinned } = args
-      const n = await db.note.create({
-        data: {
-          userId: user.id,
-          title,
-          content,
-          color,
-          pinned,
-          updatedAt: new Date(),
-        },
-      })
-      return n.id
-    }
-
-    case 'notes:update': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const id = args.id || args.noteId
-      const updates = { ...args }
-      delete updates.id
-      delete updates.noteId
-      delete updates.sessionToken
-      const note = await db.note.findUnique({ where: { id } })
-      if (!note || note.userId !== user.id) {
-        throw new Error('Note not found or unauthorized')
-      }
-
-      const cleanUpdates: any = {}
-      if (updates.title !== undefined) cleanUpdates.title = updates.title
-      if (updates.content !== undefined) cleanUpdates.content = updates.content
-      if (updates.color !== undefined) cleanUpdates.color = updates.color
-      if (updates.pinned !== undefined) cleanUpdates.pinned = updates.pinned
-
-      await db.note.update({
-        where: { id },
-        data: cleanUpdates,
-      })
-      return { success: true }
-    }
-
-    case 'notes:remove': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const id = args.id || args.noteId
-      const note = await db.note.findUnique({ where: { id } })
-      if (!note || note.userId !== user.id) {
-        throw new Error('Note not found or unauthorized')
-      }
-      await db.note.delete({ where: { id } })
-      return { success: true }
-    }
-
-    case 'notes:togglePinned': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const id = args.id || args.noteId
-      const note = await db.note.findUnique({ where: { id } })
-      if (!note || note.userId !== user.id) {
-        throw new Error('Note not found or unauthorized')
-      }
-      await db.note.update({
-        where: { id },
-        data: { pinned: !note.pinned },
-      })
-      return { success: true }
-    }
-
-    case 'events:create': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { title, date, color } = args
-      const e = await db.calendarEvent.create({
-        data: {
-          userId: user.id,
-          title,
-          date,
-          color: color || null,
-        },
-      })
-      return e.id
-    }
-
-    case 'events:remove': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { eventId } = args
-      const event = await db.calendarEvent.findUnique({ where: { id: eventId } })
-      if (!event || event.userId !== user.id) {
-        throw new Error('Event not found or unauthorized')
-      }
-      await db.calendarEvent.delete({ where: { id: eventId } })
-      return { success: true }
-    }
-
-    case 'files:create':
-    case 'files:createFile': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { name, type, category, parentId, size, storageId, r2Key, storageSource } = args
-      const f = await db.fileItem.create({
-        data: {
-          userId: user.id,
-          name,
-          type,
-          category: category || null,
-          parentId: parentId || null,
-          size: size || null,
-          storageId: storageId || null,
-          r2Key: r2Key || null,
-          storageSource: storageSource || (storageId ? 'convex' : r2Key ? 'r2' : null),
-          updatedAt: new Date(),
-        },
-      })
-      return f.id
-    }
-
-    case 'files:rename': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const id = args.id || args.fileId
-      const { name } = args
-      if (!id) throw new Error('Missing file id')
-      const file = await db.fileItem.findUnique({ where: { id } })
-      if (!file || file.userId !== user.id) {
-        throw new Error('File not found or unauthorized')
-      }
-      await db.fileItem.update({
-        where: { id },
-        data: { name },
-      })
-      return { success: true }
-    }
-
-    case 'files:remove': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const id = args.id || args.fileId
-      if (!id) throw new Error('Missing file id')
-      const file = await db.fileItem.findUnique({ where: { id } })
-      if (!file || file.userId !== user.id) {
-        throw new Error('File not found or unauthorized')
-      }
-      const filesToDelete = await getFilesToDelete(db, user.id, id)
-      const s3 = getS3Client(env)
-      for (const f of filesToDelete) {
-        if (f.r2Key) {
-          if (s3) {
-            try {
-              await s3.send(new DeleteObjectCommand({
-                Bucket: env?.R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'ar-raqmi-files',
-                Key: f.r2Key
-              }))
-            } catch (err) {
-              console.error(`Failed to delete ${f.r2Key} from R2:`, err)
-            }
-          } else {
-            try {
-              const proc = (globalThis as any).process
-              if (proc && proc.cwd) {
-                const getModule = (name: string) => typeof require !== 'undefined' ? require(name) : null;
-                const fs = getModule('fs');
-                const pathModule = getModule('path');
-                if (fs && pathModule) {
-                  const filePath = pathModule.join(proc.cwd(), 'public', 'uploads', f.r2Key)
-                  if (fs.existsSync(filePath)) {
-                    fs.unlinkSync(filePath)
-                  }
-                }
-              }
-            } catch (err) {
-              console.error(`Failed to delete local file ${f.r2Key}:`, err)
-            }
-          }
-        }
-      }
-      await db.fileItem.delete({ where: { id } })
-      return { success: true }
-    }
-
-    case 'files:move': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const fileId = args.fileId || args.id
-      const newParentId = args.newParentId !== undefined ? args.newParentId : args.targetFolderId
-      if (!fileId) throw new Error('Missing fileId')
-      const file = await db.fileItem.findUnique({ where: { id: fileId } })
-      if (!file || file.userId !== user.id) {
-        throw new Error('File not found or unauthorized')
-      }
-      
-      // Prevent cyclic moves for folders
-      if (newParentId) {
-        let current: any = newParentId
-        let isCyclic = false
-        while (current) {
-          if (current === fileId) {
-            isCyclic = true
-            break
-          }
-          const parent = await db.fileItem.findUnique({ where: { id: current } })
-          current = parent?.parentId
-        }
-        if (isCyclic) throw new Error('Cannot move folder inside itself or its children')
-      }
-
-      await db.fileItem.update({
-        where: { id: fileId },
-        data: { parentId: newParentId || null },
-      })
-      return { success: true }
-    }
-
-    case 'files:moveFiles': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { ids } = args
-      const newParentId = args.newParentId !== undefined ? args.newParentId : args.targetFolderId
-      
-      for (const id of ids) {
-        const file = await db.fileItem.findUnique({ where: { id } })
-        if (!file || file.userId !== user.id) continue
-        
-        // Prevent cyclic moves for folders
-        if (newParentId) {
-          let current: any = newParentId
-          let isCyclic = false
-          while (current) {
-            if (current === id) {
-              isCyclic = true
-              break
-            }
-            const parent = await db.fileItem.findUnique({ where: { id: current } })
-            current = parent?.parentId
-          }
-          if (isCyclic) continue
-        }
-
-        await db.fileItem.update({
-          where: { id },
-          data: { parentId: newParentId || null },
-        })
-      }
-      return { success: true }
-    }
-
-    case 'files:toggleStar': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { id } = args
-      const file = await db.fileItem.findUnique({ where: { id } })
-      if (!file || file.userId !== user.id) {
-        throw new Error('File not found or unauthorized')
-      }
-      const updated = await db.fileItem.update({
-        where: { id },
-        data: { starred: !file.starred },
-      })
-      return { success: true, starred: updated.starred }
-    }
-
-    case 'clocks:add': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { label, timezone } = args
-      const c = await db.clock.create({
-        data: {
-          userId: user.id,
-          label,
-          timezone,
-        },
-      })
-      return c.id
-    }
-
-    case 'clocks:remove': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { id } = args
-      const clock = await db.clock.findUnique({ where: { id } })
-      if (!clock || clock.userId !== user.id) {
-        throw new Error('Clock not found or unauthorized')
-      }
-      await db.clock.delete({ where: { id } })
-      return { success: true }
-    }
-
-    case 'clocks:update': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { id, label, timezone } = args
-      const clock = await db.clock.findUnique({ where: { id } })
-      if (!clock || clock.userId !== user.id) {
-        throw new Error('Clock not found or unauthorized')
-      }
-      await db.clock.update({
-        where: { id },
-        data: { label, timezone },
-      })
-      return { success: true }
-    }
-
-    case 'dashboard:toggleWidgetVisibility': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { type } = args
-      const widget = await db.dashboardWidget.findFirst({
-        where: { userId: user.id, type },
-      })
-      if (widget) {
-        await db.dashboardWidget.update({
-          where: { id: widget.id },
-          data: { visible: !widget.visible },
-        })
-      }
-      return { success: true }
-    }
-
-    case 'dashboard:setLayout': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { layoutType, layouts } = args
-      const existing = await db.dashboardLayout.findFirst({
-        where: { userId: user.id, layoutType },
-      })
-      if (existing) {
-        await db.dashboardLayout.update({
-          where: { id: existing.id },
-          data: { layouts: JSON.stringify(layouts) },
-        })
-      } else {
-        await db.dashboardLayout.create({
-          data: {
-            userId: user.id,
-            layoutType,
-            layouts: JSON.stringify(layouts),
-          },
-        })
-      }
-      return { success: true }
-    }
-
-    case 'settings:update': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const {
-        profileName,
-        profilePicture,
-        appTitle,
-        appLogo,
-        iconBackgroundColor,
-        hijriVisible,
-        hijriOffset,
-        showSeconds,
-        clipboardText,
-        background,
-      } = args
-
-      const data: any = {}
-      if (profileName !== undefined) data.profileName = profileName
-      if (profilePicture !== undefined) data.profilePicture = profilePicture
-      if (appTitle !== undefined) data.appTitle = appTitle
-      if (appLogo !== undefined) data.appLogo = appLogo
-      if (iconBackgroundColor !== undefined) data.iconBackgroundColor = iconBackgroundColor
-      if (hijriVisible !== undefined) data.hijriVisible = hijriVisible
-      if (hijriOffset !== undefined) data.hijriOffset = hijriOffset
-      if (showSeconds !== undefined) data.showSeconds = showSeconds
-      if (clipboardText !== undefined) data.clipboardText = clipboardText
-
-      if (background !== undefined) {
-        if (background.type !== undefined) data.backgroundType = background.type
-        if (background.color !== undefined) data.backgroundColor = background.color
-        if (background.gradient !== undefined) data.backgroundGradient = background.gradient
-        if (background.image !== undefined) data.backgroundImage = background.image
-        if (background.opacity !== undefined) data.backgroundOpacity = background.opacity
-      }
-
-      await db.userSettings.update({
-        where: { userId: user.id },
-        data,
-      })
-      return { success: true }
-    }
-
-    case 'twoFactor:create': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { accountName, secret, category, icon } = args
-      
-      // Clean and validate the secret key format
-      const cleanSecret = secret.replace(/\s+/g, '').toUpperCase()
-      // Test generation to throw if it's invalid base32
-      try {
-        new TOTP({ secret: cleanSecret })
-      } catch (err) {
-        return { success: false, error: 'Invalid secret key. Must be a valid Base32 string.' }
-      }
-
-      const encrypted = await encryptText(cleanSecret)
-      await db.twoFactorSecret.create({
-        data: {
-          userId: user.id,
-          accountName,
-          secret: encrypted,
-          category: category || 'Other',
-          icon: icon || undefined,
-          updatedAt: new Date(),
-        },
-      })
-      return { success: true }
-    }
-
-    case 'twoFactor:update': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { id, accountName, category, icon, secret } = args
-      if (!id) throw new Error('Missing account id')
-      const item = await db.twoFactorSecret.findUnique({ where: { id } })
-      if (!item || item.userId !== user.id) {
-        throw new Error('2FA account not found or unauthorized')
-      }
-
-      const updates: any = {}
-      if (accountName !== undefined) updates.accountName = accountName
-      if (category !== undefined) updates.category = category || 'Other'
-      if (icon !== undefined) updates.icon = icon || null
-
-      if (secret !== undefined && secret.trim() !== '') {
-        const cleanSecret = secret.replace(/\s+/g, '').toUpperCase()
-        try {
-          new TOTP({ secret: cleanSecret })
-        } catch (err) {
-          return { success: false, error: 'Invalid secret key. Must be a valid Base32 string.' }
-        }
-        updates.secret = await encryptText(cleanSecret)
-      }
-
-      await db.twoFactorSecret.update({
-        where: { id },
-        data: updates,
-      })
-      return { success: true }
-    }
-
-    case 'twoFactor:remove': {
-      const user = await getAuthedUser(db, args.sessionToken)
-      const { id } = args
-      const item = await db.twoFactorSecret.findUnique({ where: { id } })
-      if (!item || item.userId !== user.id) {
-        throw new Error('2FA account not found or unauthorized')
-      }
-      await db.twoFactorSecret.delete({ where: { id } })
-      return { success: true }
-    }
-
-    default:
-      throw new Error(`Unknown mutation path: ${path}`)
-  }
   })
 }
