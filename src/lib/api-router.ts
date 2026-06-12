@@ -1,4 +1,4 @@
-import { getDb, d1Storage } from './db'
+import { getDb } from './db'
 import {
   AuthService,
   TaskService,
@@ -15,8 +15,7 @@ import {
 
 // Queries Router
 export async function handleQuery(path: string, args: any, env?: any) {
-  return d1Storage.run(env?.DB, async () => {
-    const db = getDb(env)
+  const db = getDb(env)
 
     const authService = new AuthService(db, env)
     const taskService = new TaskService(db, env)
@@ -98,13 +97,11 @@ export async function handleQuery(path: string, args: any, env?: any) {
       default:
         throw new Error(`Unknown query path: ${path}`)
     }
-  })
 }
 
 // Mutations Router
 export async function handleMutation(path: string, args: any, env?: any) {
-  return d1Storage.run(env?.DB, async () => {
-    const db = getDb(env)
+  const db = getDb(env)
 
     const authService = new AuthService(db, env)
     const taskService = new TaskService(db, env)
@@ -214,5 +211,4 @@ export async function handleMutation(path: string, args: any, env?: any) {
       default:
         throw new Error(`Unknown mutation path: ${path}`)
     }
-  })
 }
