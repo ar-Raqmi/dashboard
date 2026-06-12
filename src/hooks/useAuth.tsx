@@ -14,7 +14,6 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>
   logout: () => Promise<void>
   updateCredentials: (username?: string, password?: string) => Promise<{ success: boolean; error?: string }>
-  isConvexConfigured: boolean
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -23,7 +22,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [sessionToken, setSessionToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isConvexConfigured] = useState(true)
 
   // Helper to set cookie
   const setSessionCookie = (token: string, days: number) => {
@@ -204,7 +202,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [sessionToken, user])
 
   return (
-    <AuthContext.Provider value={{ user, sessionToken, loading, login, logout, updateCredentials, isConvexConfigured }}>
+    <AuthContext.Provider value={{ user, sessionToken, loading, login, logout, updateCredentials }}>
       {children}
     </AuthContext.Provider>
   )

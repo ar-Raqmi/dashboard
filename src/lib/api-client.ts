@@ -1,14 +1,5 @@
 'use client'
 
-export function getConvexClient() {
-  return null
-}
-
-export function isConvexConfigured(): boolean {
-  return false
-}
-
-export const convexUrl = ''
 
 // Helper to recursively create a path proxy
 function createProxy(parts: string[]): any {

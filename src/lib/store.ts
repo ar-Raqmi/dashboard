@@ -305,9 +305,9 @@ interface AppStore {
 
 // ===== STORE =====
 // Note: This store starts with empty state.
-// When authenticated with Convex, ConvexSync component will:
-// 1. Override all write actions with Convex-aware versions
-// 2. Sync Convex query results to the store state
+// When authenticated, DataSync component will:
+// 1. Override all write actions with database-aware versions
+// 2. Sync API query results to the store state
 export const useAppStore = create<AppStore>()((set, get) => ({
   // Navigation
   activePage: 'dashboard',
