@@ -48,7 +48,7 @@ Create a `.env.local` file for R2 credentials if you want to test R2 locally:
 R2_ACCESS_KEY_ID=your_r2_access_key
 R2_SECRET_ACCESS_KEY=your_r2_secret_key
 R2_ENDPOINT=https://<account_id>.r2.cloudflarestorage.com
-R2_BUCKET_NAME=ar-raqmi-files
+R2_BUCKET_NAME=your-r2-bucket-name
 ```
 
 #### 3. Initialize the Database
@@ -105,7 +105,7 @@ npx wrangler d1 create dashboard-db
 
 Create your R2 Bucket:
 ```bash
-npx wrangler r2 bucket create ar-raqmi-files
+npx wrangler r2 bucket create your-r2-bucket-name
 ```
 
 #### 3. Run Production Migrations
