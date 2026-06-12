@@ -1,10 +1,50 @@
 'use client'
 
+export class ApiClient {
+  private static normalizeValue(val: any): any {
+    if (Array.isArray(val)) {
+      return val.map((item: any) => {
+        if (item && typeof item === 'object' && 'id' in item && !('_id' in item)) {
+          return { ...item, _id: item.id }
+        }
+        return item
+      })
+    } else if (val && typeof val === 'object' && 'id' in val && !('_id' in val)) {
+      return { ...val, _id: val.id }
+    }
+    return val
+  }
+
+  static async query(path: string, args: any) {
+    const res = await fetch('/api/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path, args }),
+    })
+    const json = await res.json()
+    if (!res.ok) {
+      throw new Error(json.error || 'Query failed')
+    }
+    return this.normalizeValue(json.value)
+  }
+
+  static async mutate(path: string, args: any) {
+    const res = await fetch('/api/mutation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path, args }),
+    })
+    const json = await res.json()
+    if (!res.ok) {
+      throw new Error(json.error || 'Mutation failed')
+    }
+    return this.normalizeValue(json.value)
+  }
+}
 
 // Helper to recursively create a path proxy
 function createProxy(parts: string[]): any {
   const fn = () => {}
-  // Set the path property on the function object itself
   Object.defineProperty(fn, 'path', {
     get() {
       return parts.join(':')
@@ -16,7 +56,6 @@ function createProxy(parts: string[]): any {
       if (prop === 'path') {
         return parts.join(':')
       }
-      // Handle symbol checking or built-in properties
       if (typeof prop === 'symbol' || prop === 'then' || prop === 'prototype') {
         return undefined
       }
