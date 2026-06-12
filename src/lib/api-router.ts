@@ -1,4 +1,4 @@
-import { getDb } from './db'
+import { getDb, d1Storage } from './db'
 import { encryptText, decryptText } from './crypto'
 import { TOTP } from 'otpauth'
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
@@ -57,7 +57,8 @@ async function getFilesToDelete(db: any, userId: string, id: string): Promise<an
 
 // Queries Router
 export async function handleQuery(path: string, args: any, env?: any) {
-  const db = getDb(env)
+  return d1Storage.run(env?.DB, async () => {
+    const db = getDb(env)
 
   switch (path) {
     case 'auth:validateSession': {
@@ -561,11 +562,13 @@ export async function handleQuery(path: string, args: any, env?: any) {
     default:
       throw new Error(`Unknown query path: ${path}`)
   }
+  })
 }
 
 // Mutations Router
 export async function handleMutation(path: string, args: any, env?: any) {
-  const db = getDb(env)
+  return d1Storage.run(env?.DB, async () => {
+    const db = getDb(env)
 
   switch (path) {
     case 'sessions:create': {
@@ -1271,4 +1274,5 @@ export async function handleMutation(path: string, args: any, env?: any) {
     default:
       throw new Error(`Unknown mutation path: ${path}`)
   }
+  })
 }
