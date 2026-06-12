@@ -1,6 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { ApiClient } from '@/lib/api-client'
 
 interface AuthUser {
   userId: string
@@ -52,27 +53,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const res = await fetch('/api/query', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            path: 'auth:validateSession',
-            args: { sessionToken: token },
-          }),
-        })
-
-        if (res.ok) {
-          const data = await res.json()
-          if (data.value) {
-            setUser({
-              userId: data.value.userId,
-              username: data.value.username
-            })
-            setSessionToken(token)
-          } else {
-            // Invalid token
-            document.cookie = "ar-raqmi-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
-          }
+        const val = await ApiClient.query('auth:validateSession', { sessionToken: token })
+        if (val) {
+          setUser({
+            userId: val.userId,
+            username: val.username
+          })
+          setSessionToken(token)
+        } else {
+          // Invalid token
+          document.cookie = "ar-raqmi-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
         }
       } catch (err) {
         console.error('Auth check error:', err)
@@ -87,18 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (username: string, password: string) => {
     try {
       // 1. Get user by username
-      const userRes = await fetch('/api/query', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          path: 'auth:getUserByUsername',
-          args: { username },
-        }),
-      })
-
-      if (!userRes.ok) return { success: false, error: 'Auth service unavailable' }
-      const userData = await userRes.json()
-      const userFound = userData.value
+      const userFound = await ApiClient.query('auth:getUserByUsername', { username })
 
       if (!userFound) return { success: false, error: 'Invalid username or password' }
 
@@ -112,20 +91,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const token = crypto.randomUUID()
       const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000 // 7 days
 
-      const sessionRes = await fetch('/api/mutation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          path: 'sessions:create',
-          args: {
-            userId: userFound._id,
-            token,
-            expiresAt,
-          },
-        }),
+      await ApiClient.mutate('sessions:create', {
+        userId: userFound._id,
+        token,
+        expiresAt,
       })
-
-      if (!sessionRes.ok) return { success: false, error: 'Failed to create session' }
 
       // Success
       setSessionCookie(token, 7)
@@ -136,24 +106,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSessionToken(token)
       return { success: true }
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Login error:', err)
-      return { success: false, error: 'An unexpected error occurred' }
+      return { success: false, error: err.message || 'An unexpected error occurred' }
     }
   }, [])
 
   const logout = useCallback(async () => {
     try {
       if (sessionToken) {
-        await fetch('/api/mutation', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            path: 'sessions:remove',
-            args: { token: sessionToken },
-          }),
-        })
+        await ApiClient.mutate('sessions:remove', { token: sessionToken })
       }
+    } catch (err) {
+      console.error('Logout error:', err)
     } finally {
       document.cookie = "ar-raqmi-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
       setUser(null)
@@ -175,29 +140,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         args.newSalt = salt
       }
 
-      const res = await fetch('/api/mutation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          path: 'auth:updateUser',
-          args,
-        }),
-      })
-
-      if (!res.ok) return { success: false, error: 'Failed to update credentials' }
-      const data = await res.json()
+      const val = await ApiClient.mutate('auth:updateUser', args)
       
-      if (data.value && data.value.success) {
+      if (val && val.success) {
         if (newUsername && user) {
           setUser({ ...user, username: newUsername })
         }
         return { success: true }
       }
 
-      return { success: false, error: data.value?.error || 'Update failed' }
-    } catch (err) {
+      return { success: false, error: val?.error || 'Update failed' }
+    } catch (err: any) {
       console.error('Update error:', err)
-      return { success: false, error: 'An error occurred during update' }
+      return { success: false, error: err.message || 'An error occurred during update' }
     }
   }, [sessionToken, user])
 
