@@ -1,21 +1,16 @@
 import { PrismaClient } from '@prisma/client'
 import { PrismaD1 } from '@prisma/adapter-d1'
 
-let prismaInstance: PrismaClient | null = null
-
 export function getDb(env?: any): PrismaClient {
   const d1 = env?.DB
 
   if (d1) {
-    if (!prismaInstance) {
-      const adapter = new PrismaD1(d1)
-      prismaInstance = new PrismaClient({ adapter } as any)
-    }
-    return prismaInstance
+    // Cloudflare Pages / Workers: use D1 binding
+    const adapter = new PrismaD1(d1)
+    return new PrismaClient({ adapter } as any)
   }
 
-  if (!prismaInstance) {
-    prismaInstance = new PrismaClient()
-  }
-  return prismaInstance
+  // Local dev (next dev or wrangler pages dev without D1 binding):
+  // Falls back to standard Prisma using DATABASE_URL from .env.local
+  return new PrismaClient()
 }
