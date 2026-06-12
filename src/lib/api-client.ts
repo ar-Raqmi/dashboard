@@ -24,19 +24,19 @@ export class ApiClient {
     if (!res.ok) {
       let errorMsg = 'Query failed'
       try {
-        const json = await res.json()
-        errorMsg = json.error || errorMsg
-      } catch {
+        const text = await res.text()
         try {
-          const text = await res.text()
+          const json = JSON.parse(text)
+          errorMsg = json.error || errorMsg
+        } catch {
           if (text.includes('Worker threw exception') || text.includes('1101')) {
             errorMsg = 'Worker threw exception (Error 1101). D1 database binding "DB" is likely missing in Pages settings.'
           } else {
-            errorMsg = `HTTP Error ${res.status}: ${res.statusText || text.substring(0, 100)}`
+            errorMsg = `HTTP Error ${res.status}: ${text.substring(0, 200) || res.statusText}`
           }
-        } catch {
-          errorMsg = `HTTP Error ${res.status}`
         }
+      } catch {
+        errorMsg = `HTTP Error ${res.status}: ${res.statusText}`
       }
       throw new Error(errorMsg)
     }
@@ -53,19 +53,19 @@ export class ApiClient {
     if (!res.ok) {
       let errorMsg = 'Mutation failed'
       try {
-        const json = await res.json()
-        errorMsg = json.error || errorMsg
-      } catch {
+        const text = await res.text()
         try {
-          const text = await res.text()
+          const json = JSON.parse(text)
+          errorMsg = json.error || errorMsg
+        } catch {
           if (text.includes('Worker threw exception') || text.includes('1101')) {
             errorMsg = 'Worker threw exception (Error 1101). D1 database binding "DB" is likely missing in Pages settings.'
           } else {
-            errorMsg = `HTTP Error ${res.status}: ${res.statusText || text.substring(0, 100)}`
+            errorMsg = `HTTP Error ${res.status}: ${text.substring(0, 200) || res.statusText}`
           }
-        } catch {
-          errorMsg = `HTTP Error ${res.status}`
         }
+      } catch {
+        errorMsg = `HTTP Error ${res.status}: ${res.statusText}`
       }
       throw new Error(errorMsg)
     }
