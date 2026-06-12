@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { ApiClient } from '@/lib/api-client'
 
 function getPathString(apiEndpoint: any): string {
   if (!apiEndpoint) return ''
@@ -26,25 +27,8 @@ export function useQuery(apiEndpoint: any, args: any) {
 
     const fetchData = async () => {
       try {
-        const res = await fetch('/api/query', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ path, args }),
-        })
-        if (!res.ok) throw new Error('Query failed')
-        const json = await res.json()
+        const val = await ApiClient.query(path, args)
         if (active) {
-          let val = json.value
-          if (Array.isArray(val)) {
-            val = val.map((item: any) => {
-              if (item && typeof item === 'object' && 'id' in item && !('_id' in item)) {
-                return { ...item, _id: item.id }
-              }
-              return item
-            })
-          } else if (val && typeof val === 'object' && 'id' in val && !('_id' in val)) {
-            val = { ...val, _id: val.id }
-          }
           setData(val)
         }
       } catch (err) {
@@ -71,27 +55,7 @@ export function useMutation(apiEndpoint: any) {
   const path = getPathString(apiEndpoint)
 
   return useCallback(async (args: any) => {
-    const res = await fetch('/api/mutation', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path, args }),
-    })
-    const json = await res.json()
-    if (!res.ok) {
-      throw new Error(json.error || 'Mutation failed')
-    }
-    let val = json.value
-    if (Array.isArray(val)) {
-      val = val.map((item: any) => {
-        if (item && typeof item === 'object' && 'id' in item && !('_id' in item)) {
-          return { ...item, _id: item.id }
-        }
-        return item
-      })
-    } else if (val && typeof val === 'object' && 'id' in val && !('_id' in val)) {
-      val = { ...val, _id: val.id }
-    }
-    return val
+    return ApiClient.mutate(path, args)
   }, [path])
 }
 
@@ -99,26 +63,6 @@ export function useAction(apiEndpoint: any) {
   const path = getPathString(apiEndpoint)
 
   return useCallback(async (args: any) => {
-    const res = await fetch('/api/query', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path, args }),
-    })
-    const json = await res.json()
-    if (!res.ok) {
-      throw new Error(json.error || 'Action failed')
-    }
-    let val = json.value
-    if (Array.isArray(val)) {
-      val = val.map((item: any) => {
-        if (item && typeof item === 'object' && 'id' in item && !('_id' in item)) {
-          return { ...item, _id: item.id }
-        }
-        return item
-      })
-    } else if (val && typeof val === 'object' && 'id' in val && !('_id' in val)) {
-      val = { ...val, _id: val.id }
-    }
-    return val
+    return ApiClient.query(path, args)
   }, [path])
 }
