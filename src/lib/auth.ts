@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs'
 import { SignJWT, jwtVerify } from 'jose'
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'ar-raqmi-secret-key-change-in-production'
+  process.env.JWT_SECRET || 'dashboard-secret-key-change-in-production'
 )
 
 const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000 // 7 days

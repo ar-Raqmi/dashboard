@@ -14,7 +14,7 @@ export function PWAProvider({ children }: { children: React.ReactNode }) {
         const deferredPrompt = e
         
         // Show a "Install" toast or banner
-        toast.info('Install ar-Raqmi', {
+        toast.info('Install Dashboard', {
           description: 'Add this app to your home screen for a better experience.',
           duration: 10000,
           action: {
@@ -42,7 +42,7 @@ export function PWAProvider({ children }: { children: React.ReactNode }) {
         // Show iOS guidance toast after a short delay
         setTimeout(() => {
           toast.info('Install on iOS', {
-            description: 'To install ar-Raqmi, tap the Share icon and then "Add to Home Screen".',
+            description: 'To install the Dashboard, tap the Share icon and then "Add to Home Screen".',
             duration: 10000,
           })
         }, 5000)
@@ -97,7 +97,7 @@ export function PWAProvider({ children }: { children: React.ReactNode }) {
 
   const showUpdateToast = (registration: ServiceWorkerRegistration) => {
     toast.info('Update Available', {
-      description: 'A new version of ar-Raqmi is available. Update now to see the latest changes.',
+      description: 'A new version of the Dashboard is available. Update now to see the latest changes.',
       duration: Infinity,
       action: {
         label: 'Update',

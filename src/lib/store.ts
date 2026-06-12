@@ -619,7 +619,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   setProfileName: (name) => set({ profileName: name }),
   profilePicture: '',
   setProfilePicture: (url) => set({ profilePicture: url }),
-  appTitle: 'ar-Raqmi Dashboard',
+  appTitle: 'Dashboard',
   setAppTitle: (title) => set({ appTitle: title }),
   appLogo: '/logo.png',
   setAppLogo: (url) => set({ appLogo: url }),

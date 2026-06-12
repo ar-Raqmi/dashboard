@@ -1,4 +1,4 @@
-# ar-Raqmi Dashboard - Agent Context
+# Dashboard - Agent Context
 
 ## Task 2-d: Full-Page View Components
 

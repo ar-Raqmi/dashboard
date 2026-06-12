@@ -1,6 +1,6 @@
 <div align="center">
 
-# ar-Raqmi Dashboard
+# Dashboard
 
 *Your personal digital sanctuary.*
 
@@ -28,7 +28,7 @@
 
 #### 1. Clone the project and install dependencies
 ```bash
-git clone https://github.com/ar-Raqmi/dashboard.git
+git clone https://github.com/your-username/dashboard.git
 cd dashboard
 npm install
 ```
@@ -72,7 +72,7 @@ For security and privacy, configurations like `wrangler.toml` and credentials ar
 #### 1. Create a `wrangler.toml`
 Create a local `wrangler.toml` in your project root using the template below:
 ```toml
-name = "ar-raqmi"
+name = "personal-dashboard"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "out"

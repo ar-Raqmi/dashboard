@@ -13,7 +13,7 @@ export class SettingService extends BaseService {
           userId: user.id,
           profileName: user.username,
           profilePicture: '',
-          appTitle: 'ar-Raqmi Dashboard',
+          appTitle: 'Dashboard',
           appLogo: '/logo.png',
           iconBackgroundColor: '#A5D6A7',
           hijriVisible: true,

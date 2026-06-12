@@ -1,4 +1,4 @@
-const ENCRYPTION_KEY = process.env.JWT_SECRET || 'ar-raqmi-secret-key-change-in-production'
+const ENCRYPTION_KEY = process.env.JWT_SECRET || 'dashboard-secret-key-change-in-production'
 
 // Helper to encrypt a string using AES-GCM
 export async function encryptText(text: string): Promise<string> {

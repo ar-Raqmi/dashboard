@@ -797,7 +797,7 @@ export default function SettingsPage() {
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Credits</span>
-            <span className="text-primary">ar-Raqmi Team</span>
+            <span className="text-primary">Dashboard Team</span>
           </div>
         </div>
       </motion.section>
