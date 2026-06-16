@@ -18,6 +18,13 @@ export function getDb(env?: any): PrismaClient {
     return globalForPrisma.prismaD1
   }
 
+  // If we are in the Edge runtime but have no D1 binding, throw a clear configuration error
+  if (process.env.NEXT_RUNTIME === 'edge') {
+    throw new Error(
+      "D1 Database binding 'DB' is missing in Pages settings. Please bind your D1 database to the 'DB' variable in the Cloudflare Pages project settings (for both Production and Preview environments)."
+    )
+  }
+
   // Local dev (next dev or wrangler pages dev without D1 binding):
   // Falls back to standard Prisma using DATABASE_URL from .env.local
   if (!globalForPrisma.prismaLocal) {

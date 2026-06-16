@@ -2,7 +2,7 @@
 
 import React, { useCallback, useMemo, useRef, useMemo as useMemoReact } from 'react'
 import { ResponsiveGridLayout, useContainerWidth } from 'react-grid-layout'
-import { CheckCircle, CalendarDays, StickyNote, BookOpen, Flag, Folder, FileText, Image as ImageIcon, Music, Film, Pencil, Check, Plus, Settings2, Trash2, ChevronUp, ChevronDown, MoonStar, ClipboardList, Copy, CheckCheck, Star, Clock, Loader2, ExternalLink, ShieldCheck } from 'lucide-react'
+import { CheckCircle, CalendarDays, StickyNote, BookOpen, Flag, Folder, FileText, Image as ImageIcon, Music, Film, Pencil, Check, Plus, Settings2, Trash2, ChevronUp, ChevronDown, MoonStar, ClipboardList, Copy, CheckCheck, Star, Clock, Loader2, ExternalLink, ShieldCheck, Clock3 } from 'lucide-react'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import { useAppStore, MAX_GRID_W, MAX_GRID_H } from '@/lib/store'
@@ -33,6 +33,7 @@ const widgetIcons: Record<WidgetType, React.ReactNode> = {
   files: <Folder className="w-4 h-4" />,
   clipboard: <ClipboardList className="w-4 h-4" />,
   twoFactor: <ShieldCheck className="w-4 h-4" />,
+  prayerTimes: <Clock3 className="w-4 h-4" />,
 }
 
 // Widget title mapping
@@ -46,6 +47,7 @@ const widgetTitles: Record<WidgetType, string> = {
   files: 'Files',
   clipboard: 'Clipboard',
   twoFactor: '2FA Authenticator',
+  prayerTimes: 'Prayer Times',
 }
 
 // Widget navigation mapping
@@ -59,6 +61,7 @@ const widgetPageMap: Record<WidgetType, ActivePage> = {
   files: 'files',
   clipboard: 'dashboard',
   twoFactor: 'twoFactor',
+  prayerTimes: 'dashboard',
 }
 
 // Helper to format file size
@@ -1198,6 +1201,189 @@ function ClockContent({ w, h }: { w: number; h: number }) {
   )
 }
 
+// ==========================================
+// Prayer Times Widget
+// ==========================================
+
+const PRAYER_NAMES = [
+  { key: 'fajr', label: 'Fajr' },
+  { key: 'dhuhr', label: 'Dhuhr' },
+  { key: 'asr', label: 'Asr' },
+  { key: 'maghrib', label: 'Maghrib' },
+  { key: 'isha', label: 'Isha' },
+] as const
+
+/** Convert "HH:MM" 24h to "h:MM AM/PM" */
+function formatTo12h(time24: string): string {
+  const [hStr, mStr] = time24.split(':')
+  let h = parseInt(hStr, 10)
+  const m = mStr ?? '00'
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  h = h % 12 || 12
+  return `${h}:${m} ${ampm}`
+}
+
+/** Convert "HH:MM" to minutes since midnight */
+function timeToMinutes(time24: string): number {
+  const [h, m] = time24.split(':').map(Number)
+  return h * 60 + m
+}
+
+function PrayerTimesContent({ w, h }: { w: number; h: number }) {
+  const hijriProvider = useAppStore((s) => s.hijriProvider)
+  const hijriCalendar = useAppStore((s) => s.hijriCalendar)
+
+  const [prayerTimes, setPrayerTimes] = React.useState<import('@/lib/services/prayer').PrayerTimes | null>(null)
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
+  const [now, setNow] = React.useState(() => new Date())
+
+  // Tick every 30s for countdown
+  React.useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 30_000)
+    return () => clearInterval(id)
+  }, [])
+
+  // Fetch prayer times
+  React.useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setLoading(true)
+      setError(null)
+      try {
+        const { PrayerTimeFactory } = await import('@/lib/services/prayer')
+
+        // Determine provider: if hijriProvider is 'jakim', use jakim with zone; else default to jakim SGR01
+        let providerKey = 'jakim'
+        let zone = 'SGR01'
+
+        if (hijriProvider === 'jakim') {
+          providerKey = 'jakim'
+          zone = hijriCalendar || 'SGR01'
+        } else if (hijriProvider === 'aladhan') {
+          providerKey = 'aladhan'
+        }
+
+        const provider = PrayerTimeFactory.getProvider(providerKey)
+        const times = await provider.getPrayerTimes(new Date(), zone)
+
+        if (!cancelled) {
+          if (times) {
+            setPrayerTimes(times)
+          } else {
+            setError('Unable to fetch prayer times')
+          }
+          setLoading(false)
+        }
+      } catch {
+        if (!cancelled) {
+          setError('Failed to load prayer times')
+          setLoading(false)
+        }
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [hijriProvider, hijriCalendar])
+
+  // Current time in minutes
+  const nowMinutes = now.getHours() * 60 + now.getMinutes()
+
+  // Determine active and next prayer
+  const activeIndex = React.useMemo(() => {
+    if (!prayerTimes) return -1
+    const times = PRAYER_NAMES.map((p) => timeToMinutes(prayerTimes[p.key as keyof typeof prayerTimes] as string))
+    let active = -1
+    for (let i = 0; i < times.length; i++) {
+      if (nowMinutes >= times[i]) active = i
+    }
+    return active
+  }, [prayerTimes, nowMinutes])
+
+  const nextIndex = React.useMemo(() => {
+    if (!prayerTimes) return -1
+    const times = PRAYER_NAMES.map((p) => timeToMinutes(prayerTimes[p.key as keyof typeof prayerTimes] as string))
+    for (let i = 0; i < times.length; i++) {
+      if (nowMinutes < times[i]) return i
+    }
+    return -1 // all prayers passed
+  }, [prayerTimes, nowMinutes])
+
+  // Countdown string to next prayer
+  const countdown = React.useMemo(() => {
+    if (!prayerTimes || nextIndex === -1) return null
+    const nextTime = timeToMinutes(prayerTimes[PRAYER_NAMES[nextIndex].key as keyof typeof prayerTimes] as string)
+    let diff = nextTime - nowMinutes
+    if (diff < 0) diff += 24 * 60
+    const hrs = Math.floor(diff / 60)
+    const mins = diff % 60
+    if (hrs > 0) return `${hrs}h ${mins}m`
+    return `${mins}m`
+  }, [prayerTimes, nextIndex, nowMinutes])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (error || !prayerTimes) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p className="text-xs text-muted-foreground">{error || 'No data'}</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-1 h-full">
+      {PRAYER_NAMES.map((prayer, idx) => {
+        const time24 = prayerTimes[prayer.key as keyof typeof prayerTimes] as string
+        const isActive = idx === activeIndex
+        const isNext = idx === nextIndex
+
+        return (
+          <div
+            key={prayer.key}
+            className={cn(
+              'flex items-center justify-between px-2 py-1.5 rounded-xl transition-colors',
+              isNext && 'bg-primary/10 ring-1 ring-primary/20',
+              isActive && !isNext && 'bg-muted/50',
+            )}
+          >
+            <div className="flex items-center gap-2">
+              <div
+                className={cn(
+                  'size-2 rounded-full',
+                  isNext ? 'bg-primary' : isActive ? 'bg-primary/50' : 'bg-muted-foreground/30',
+                )}
+              />
+              <span className={cn('text-sm font-medium', isNext && 'text-primary')}>
+                {prayer.label}
+              </span>
+            </div>
+            <span className={cn('text-sm tabular-nums', isNext ? 'text-primary font-semibold' : 'text-muted-foreground')}>
+              {formatTo12h(time24)}
+            </span>
+          </div>
+        )
+      })}
+
+      {/* Countdown to next prayer — only if h >= 2 */}
+      {h >= 2 && nextIndex !== -1 && countdown && (
+        <div className="mt-auto pt-1 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+          <Clock3 className="w-3 h-3" />
+          <span>
+            {PRAYER_NAMES[nextIndex].label} in <span className="font-semibold text-foreground">{countdown}</span>
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // Widget component mapping — components receive size props
 interface WidgetContentProps { w: number; h: number }
 const widgetComponents: Record<WidgetType, React.ComponentType<WidgetContentProps>> = {
@@ -1210,6 +1396,7 @@ const widgetComponents: Record<WidgetType, React.ComponentType<WidgetContentProp
   files: FilesContent as React.ComponentType<WidgetContentProps>,
   clipboard: ClipboardContent as unknown as React.ComponentType<WidgetContentProps>,
   twoFactor: TwoFactorContent as unknown as React.ComponentType<WidgetContentProps>,
+  prayerTimes: PrayerTimesContent as React.ComponentType<WidgetContentProps>,
 }
 
 export function DashboardGrid() {
