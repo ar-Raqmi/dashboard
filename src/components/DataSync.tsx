@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useQuery, useMutation } from '@/hooks/useApi'
+import { useQuery, useMutation, triggerGlobalSync } from '@/hooks/useApi'
 import { api } from '@/lib/api-client'
 import { useAuth } from '@/hooks/useAuth'
 import { useAppStore } from '@/lib/store'
@@ -450,50 +450,50 @@ export function DataSync({ children }: { children: React.ReactNode }) {
       // Settings actions
       setProfileName: (name) => {
         store.setState({ profileName: name })
-        updateSettingsMut({ sessionToken, profileName: name }).catch(console.error)
+        updateSettingsMut({ sessionToken, profileName: name }).then(() => triggerGlobalSync()).catch(console.error)
       },
       setProfilePicture: (url) => {
         store.setState({ profilePicture: url })
-        updateSettingsMut({ sessionToken, profilePicture: url }).catch(console.error)
+        updateSettingsMut({ sessionToken, profilePicture: url }).then(() => triggerGlobalSync()).catch(console.error)
       },
       setAppTitle: (title) => {
         store.setState({ appTitle: title })
-        updateSettingsMut({ sessionToken, appTitle: title }).catch(console.error)
+        updateSettingsMut({ sessionToken, appTitle: title }).then(() => triggerGlobalSync()).catch(console.error)
       },
       setAppLogo: (url) => {
         store.setState({ appLogo: url })
-        updateSettingsMut({ sessionToken, appLogo: url }).catch(console.error)
+        updateSettingsMut({ sessionToken, appLogo: url }).then(() => triggerGlobalSync()).catch(console.error)
       },
       setIconBackgroundColor: (color) => {
         store.setState({ iconBackgroundColor: color })
-        updateSettingsMut({ sessionToken, iconBackgroundColor: color }).catch(console.error)
+        updateSettingsMut({ sessionToken, iconBackgroundColor: color }).then(() => triggerGlobalSync()).catch(console.error)
       },
       setHijriVisible: (visible) => {
         store.setState({ hijriVisible: visible })
-        updateSettingsMut({ sessionToken, hijriVisible: visible }).catch(console.error)
+        updateSettingsMut({ sessionToken, hijriVisible: visible }).then(() => triggerGlobalSync()).catch(console.error)
       },
       setHijriOffset: (offset) => {
         store.setState({ hijriOffset: Math.max(-2, Math.min(2, offset)) })
-        updateSettingsMut({ sessionToken, hijriOffset: offset }).catch(console.error)
+        updateSettingsMut({ sessionToken, hijriOffset: offset }).then(() => triggerGlobalSync()).catch(console.error)
       },
       setHijriProvider: (provider) => {
         store.setState({ hijriProvider: provider })
-        updateSettingsMut({ sessionToken, hijriProvider: provider }).catch(console.error)
+        updateSettingsMut({ sessionToken, hijriProvider: provider }).then(() => triggerGlobalSync()).catch(console.error)
       },
       setHijriCalendar: (calendar) => {
         store.setState({ hijriCalendar: calendar })
-        updateSettingsMut({ sessionToken, hijriCalendar: calendar }).catch(console.error)
+        updateSettingsMut({ sessionToken, hijriCalendar: calendar }).then(() => triggerGlobalSync()).catch(console.error)
       },
       setHijriDate: (hijriDate) => {
         store.setState({ hijriDate })
       },
       setShowSeconds: (show) => {
         store.setState({ showSeconds: show })
-        updateSettingsMut({ sessionToken, showSeconds: show }).catch(console.error)
+        updateSettingsMut({ sessionToken, showSeconds: show }).then(() => triggerGlobalSync()).catch(console.error)
       },
       setClipboardText: (text) => {
         store.setState({ clipboardText: text })
-        updateSettingsMut({ sessionToken, clipboardText: text }).catch(console.error)
+        updateSettingsMut({ sessionToken, clipboardText: text }).then(() => triggerGlobalSync()).catch(console.error)
       },
       setBackground: (updates) => {
         store.setState((state) => ({
@@ -506,7 +506,7 @@ export function DataSync({ children }: { children: React.ReactNode }) {
           ...(updates.gradient !== undefined ? { backgroundGradient: updates.gradient } : {}),
           ...(updates.image !== undefined ? { backgroundImage: updates.image } : {}),
           ...(updates.opacity !== undefined ? { backgroundOpacity: updates.opacity } : {}),
-        }).catch(console.error)
+        }).then(() => triggerGlobalSync()).catch(console.error)
       },
     })
 

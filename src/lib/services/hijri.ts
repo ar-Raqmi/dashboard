@@ -114,19 +114,20 @@ export class JakimHijriProvider extends BaseHijriProvider {
 
   async getHijriDate(date: Date, zone = 'SGR01'): Promise<HijriDate | null> {
     try {
-      const url = `https://api.waktusolat.app/solat/daily?zone=${zone}`
+      const url = `https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=today&zone=${zone}`
       const response = await fetch(url)
       if (!response.ok) {
-        throw new Error(`JAKIM Community API returned status ${response.status}`)
+        throw new Error(`JAKIM official API returned status ${response.status}`)
       }
 
       const res = await response.json()
-      if (!res.hijri) {
-        throw new Error('Invalid response format from JAKIM API')
+      if (!res.prayerTime || res.prayerTime.length === 0 || !res.prayerTime[0].hijri) {
+        throw new Error('Invalid response format from JAKIM official API')
       }
 
-      // String format is "YYYY-MM-DD" e.g. "1447-06-27"
-      const parts = res.hijri.split('-')
+      // String format is "YYYY-MM-DD" e.g. "1447-12-30"
+      const hijriStr = res.prayerTime[0].hijri
+      const parts = hijriStr.split('-')
       if (parts.length === 3) {
         const year = parseInt(parts[0], 10)
         const monthIndex = parseInt(parts[1], 10) - 1
@@ -139,7 +140,7 @@ export class JakimHijriProvider extends BaseHijriProvider {
           year,
         }
       }
-      throw new Error('Unexpected date formatting in JAKIM API response')
+      throw new Error('Unexpected date formatting in official JAKIM API response')
     } catch (err) {
       console.warn('JAKIM API request failed. Falling back to local calculation.', err)
       return this.getMathCalculatedDate(date, 0)

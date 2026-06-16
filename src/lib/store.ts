@@ -74,7 +74,7 @@ export interface HadithData {
   grade: string
 }
 
-export type WidgetType = 'tasks' | 'calendar' | 'notes' | 'verse' | 'goals' | 'clock' | 'files' | 'clipboard' | 'twoFactor'
+export type WidgetType = 'tasks' | 'calendar' | 'notes' | 'verse' | 'goals' | 'clock' | 'files' | 'clipboard' | 'twoFactor' | 'prayerTimes'
 
 export interface DashboardWidget {
   type: WidgetType
@@ -113,6 +113,7 @@ const defaultWidgets: DashboardWidget[] = [
   { type: 'files', label: 'Files', icon: 'folder', visible: true },
   { type: 'clipboard', label: 'Clipboard', icon: 'content_paste', visible: true },
   { type: 'twoFactor', label: '2FA Authenticator', icon: 'security', visible: true },
+  { type: 'prayerTimes', label: 'Prayer Times', icon: 'mosque', visible: true },
 ]
 
 // Max dimensions for grid widgets
@@ -134,6 +135,7 @@ const defaultLayouts: Layout[] = [
   { i: 'files', x: 1, y: 4, w: 1, h: 1, minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H },
   { i: 'clipboard', x: 2, y: 4, w: 1, h: 2, minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H },
   { i: 'twoFactor', x: 1, y: 5, w: 1, h: 2, minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H },
+  { i: 'prayerTimes', x: 2, y: 6, w: 1, h: 2, minW: 1, maxW: MAX_W, minH: 1, maxH: MAX_H },
 ]
 
 // Mobile layouts: 1-column stack (preserves h, forces w:1, x:0)
@@ -147,6 +149,7 @@ const defaultMobileLayouts: Layout[] = [
   { i: 'files', x: 0, y: 12, w: 1, h: 1, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
   { i: 'clipboard', x: 0, y: 13, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
   { i: 'twoFactor', x: 0, y: 15, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
+  { i: 'prayerTimes', x: 0, y: 17, w: 1, h: 2, minW: 1, maxW: 1, minH: 1, maxH: MAX_H },
 ]
 
 // Helper: get date string based on GMT+8
