@@ -17,47 +17,36 @@ export function DataSync({ children }: { children: React.ReactNode }) {
   const initialized = useRef(false)
   const [isInitialSyncComplete, setIsInitialSyncComplete] = useState(false)
 
-  // Subscribe to all API queries
-  const tasks = useQuery(api.tasks.list, sessionToken ? { sessionToken } : 'skip')
-  const goals = useQuery(api.goals.list, sessionToken ? { sessionToken } : 'skip')
-  const notes = useQuery(api.notes.list, sessionToken ? { sessionToken } : 'skip')
-  const events = useQuery(api.events.list, sessionToken ? { sessionToken } : 'skip')
-  const files = useQuery(api.files.listAll, sessionToken ? { sessionToken } : 'skip')
-  const clocks = useQuery(api.clocks.list, sessionToken ? { sessionToken } : 'skip')
-  const widgets = useQuery(api.dashboard.listWidgets, sessionToken ? { sessionToken } : 'skip')
-  const desktopLayouts = useQuery(api.dashboard.getLayout, sessionToken ? { sessionToken, layoutType: 'desktop' } : 'skip')
-  const mobileLayouts = useQuery(api.dashboard.getLayout, sessionToken ? { sessionToken, layoutType: 'mobile' } : 'skip')
-  const notesDesktopLayouts = useQuery(api.dashboard.getLayout, sessionToken ? { sessionToken, layoutType: 'notesDesktop' } : 'skip')
-  const notesMobileLayouts = useQuery(api.dashboard.getLayout, sessionToken ? { sessionToken, layoutType: 'notesMobile' } : 'skip')
-  const pinnedDesktopLayouts = useQuery(api.dashboard.getLayout, sessionToken ? { sessionToken, layoutType: 'pinnedDesktop' } : 'skip')
-  const pinnedMobileLayouts = useQuery(api.dashboard.getLayout, sessionToken ? { sessionToken, layoutType: 'pinnedMobile' } : 'skip')
-  const goalDesktopLayouts = useQuery(api.dashboard.getLayout, sessionToken ? { sessionToken, layoutType: 'goalsDesktop' } : 'skip')
-  const goalMobileLayouts = useQuery(api.dashboard.getLayout, sessionToken ? { sessionToken, layoutType: 'goalsMobile' } : 'skip')
-  const settings = useQuery(api.settings.get, sessionToken ? { sessionToken } : 'skip')
+  // Subscribe to all API queries via a single aggregated query endpoint
+  const dashboardData = useQuery(api.dashboard.getData, sessionToken ? { sessionToken } : 'skip')
+
+  const tasks = dashboardData?.tasks
+  const goals = dashboardData?.goals
+  const notes = dashboardData?.notes
+  const events = dashboardData?.events
+  const files = dashboardData?.files
+  const clocks = dashboardData?.clocks
+  const widgets = dashboardData?.widgets
+  const desktopLayouts = dashboardData?.desktopLayouts
+  const mobileLayouts = dashboardData?.mobileLayouts
+  const notesDesktopLayouts = dashboardData?.notesDesktopLayouts
+  const notesMobileLayouts = dashboardData?.notesMobileLayouts
+  const pinnedDesktopLayouts = dashboardData?.pinnedDesktopLayouts
+  const pinnedMobileLayouts = dashboardData?.pinnedMobileLayouts
+  const goalDesktopLayouts = dashboardData?.goalDesktopLayouts
+  const goalMobileLayouts = dashboardData?.goalMobileLayouts
+  const settings = dashboardData?.settings
 
   // Check if initial sync is complete
   useEffect(() => {
     if (isInitialSyncComplete) return
 
-    const isDataLoaded =
-      tasks !== undefined &&
-      goals !== undefined &&
-      notes !== undefined &&
-      events !== undefined &&
-      files !== undefined &&
-      clocks !== undefined &&
-      widgets !== undefined &&
-      desktopLayouts !== undefined &&
-      mobileLayouts !== undefined &&
-      settings !== undefined
+    const isDataLoaded = dashboardData !== undefined
 
     if (isDataLoaded) {
       requestAnimationFrame(() => setIsInitialSyncComplete(true))
     }
-  }, [
-    tasks, goals, notes, events, files, clocks, widgets,
-    desktopLayouts, mobileLayouts, settings, isInitialSyncComplete
-  ])
+  }, [dashboardData, isInitialSyncComplete])
 
   // API mutations for write operations
   const createTask = useMutation(api.tasks.create)

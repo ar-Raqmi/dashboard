@@ -12,10 +12,27 @@ function getPathString(apiEndpoint: any): string {
   return String(apiEndpoint)
 }
 
-export function useQuery(apiEndpoint: any, args: any) {
+// Simple global event hub for manual sync trigger
+const syncListeners = new Set<() => void>()
+export function triggerGlobalSync() {
+  syncListeners.forEach(listener => listener())
+}
+
+export function useQuery(apiEndpoint: any, args: any, options?: { pollInterval?: number }) {
   const [data, setData] = useState<any>(undefined)
+  const [syncKey, setSyncKey] = useState(0)
   const argsKey = JSON.stringify(args)
   const path = getPathString(apiEndpoint)
+
+  useEffect(() => {
+    const handleSync = () => {
+      setSyncKey(prev => prev + 1)
+    }
+    syncListeners.add(handleSync)
+    return () => {
+      syncListeners.delete(handleSync)
+    }
+  }, [])
 
   useEffect(() => {
     if (args === 'skip' || !path) {
@@ -39,14 +56,18 @@ export function useQuery(apiEndpoint: any, args: any) {
 
     fetchData()
 
-    // 10-second polling for live-updating dashboard feel
-    const interval = setInterval(fetchData, 10000)
+    if (options?.pollInterval && options.pollInterval > 0) {
+      const interval = setInterval(fetchData, options.pollInterval)
+      return () => {
+        active = false
+        clearInterval(interval)
+      }
+    }
 
     return () => {
       active = false
-      clearInterval(interval)
     }
-  }, [path, argsKey])
+  }, [path, argsKey, syncKey, options?.pollInterval])
 
   return data
 }
