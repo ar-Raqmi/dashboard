@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Settings, User, AppWindow, Globe, Info, Upload, Save, ImageIcon, Palette, Paintbrush, Droplets, Image as ImageLucide, Mountain, Square, Lock, KeyRound, LogOut, ShieldCheck } from 'lucide-react'
+import { Settings, User, AppWindow, Globe, Info, Upload, Save, ImageIcon, Palette, Paintbrush, Droplets, Image as ImageLucide, Mountain, Square, Lock, KeyRound, LogOut, ShieldCheck, MoonStar } from 'lucide-react'
 import { useAppStore, type BackgroundType } from '@/lib/store'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/use-toast'
@@ -79,6 +79,10 @@ export default function SettingsPage() {
     iconBackgroundColor, setIconBackgroundColor,
     clocks, updateClock,
     background, setBackground,
+    hijriVisible, setHijriVisible,
+    hijriOffset, setHijriOffset,
+    hijriProvider, setHijriProvider,
+    hijriCalendar, setHijriCalendar,
   } = useAppStore()
 
   const { user, updateCredentials, logout } = useAuth()
@@ -86,7 +90,9 @@ export default function SettingsPage() {
 
   const [localName, setLocalName] = useState(profileName)
   const [localAppTitle, setLocalAppTitle] = useState(appTitle)
-  const [localTimezone, setLocalTimezone] = useState(clocks.length > 0 ? clocks[0].timezone : 'Asia/Kuala_Lumpur')
+  const [localTimezone, setLocalTimezone] = useState(() => {
+    return clocks && clocks.length > 0 ? clocks[0].timezone : 'Asia/Kuala_Lumpur'
+  })
   const [saved, setSaved] = useState(false)
 
   // Account Security state
@@ -102,6 +108,21 @@ export default function SettingsPage() {
       setNewUsername(user.username)
     }
   }, [user?.username])
+
+  // Sync state values with store once loaded
+  useEffect(() => {
+    setLocalName(profileName)
+  }, [profileName])
+
+  useEffect(() => {
+    setLocalAppTitle(appTitle)
+  }, [appTitle])
+
+  useEffect(() => {
+    if (clocks && clocks.length > 0) {
+      setLocalTimezone(clocks[0].timezone)
+    }
+  }, [clocks])
 
   const avatarInputRef = useRef<HTMLInputElement>(null)
   const logoInputRef = useRef<HTMLInputElement>(null)
@@ -773,9 +794,115 @@ export default function SettingsPage() {
         </p>
       </motion.section>
 
-      {/* About Section */}
+      {/* Hijri Calendar Section */}
       <motion.section
         custom={5}
+        variants={sectionVariants}
+        initial="hidden"
+        animate="visible"
+        className="rounded-3xl bg-card border border-border p-6 flex flex-col gap-4"
+      >
+        <div className="flex items-center gap-2">
+          <MoonStar className="size-5 text-primary" />
+          <h2 className="text-lg font-semibold text-foreground">Hijri Calendar API</h2>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium text-foreground">Show Hijri Calendar</label>
+          <input
+            type="checkbox"
+            checked={hijriVisible}
+            onChange={(e) => setHijriVisible(e.target.checked)}
+            className="w-4 h-4 text-primary accent-primary bg-background border-border rounded focus:ring-primary focus:ring-2"
+          />
+        </div>
+
+        {hijriVisible && (
+          <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm text-on-surface-variant">Hijri API Provider</label>
+              <Select value={hijriProvider} onValueChange={setHijriProvider}>
+                <SelectTrigger className="rounded-2xl bg-input border-border w-full">
+                  <SelectValue placeholder="Select provider" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border rounded-2xl">
+                  <SelectItem value="calculated">Calculated (Standard Math Offset)</SelectItem>
+                  <SelectItem value="aladhan">Aladhan API (Saudi / Global Methods)</SelectItem>
+                  <SelectItem value="jakim">JAKIM API (Malaysia e-Solat)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Choose the provider: calculated uses local offset mathematical formula, Aladhan connects to global API methods, JAKIM fetches directly from Malaysia's JAKIM.
+              </p>
+            </div>
+
+            {hijriProvider === 'calculated' && (
+              <div className="flex flex-col gap-2">
+                <label className="text-sm text-on-surface-variant">Day Offset ({hijriOffset > 0 ? `+${hijriOffset}` : hijriOffset} days)</label>
+                <Slider
+                  value={[hijriOffset]}
+                  onValueChange={([val]) => setHijriOffset(val)}
+                  min={-2}
+                  max={2}
+                  step={1}
+                  className="w-full"
+                />
+              </div>
+            )}
+
+            {hijriProvider === 'aladhan' && (
+              <div className="flex flex-col gap-2">
+                <label className="text-sm text-on-surface-variant">Calculation Method (Calendar Type)</label>
+                <Select value={hijriCalendar} onValueChange={setHijriCalendar}>
+                  <SelectTrigger className="rounded-2xl bg-input border-border w-full">
+                    <SelectValue placeholder="Select method" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border rounded-2xl">
+                    <SelectItem value="UmmAlQura">Saudi Arabia (Umm Al-Qura)</SelectItem>
+                    <SelectItem value="IslamicFinder">Islamic Finder (Calculated)</SelectItem>
+                    <SelectItem value="Makkah">Makkah Al-Mukarramah</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {hijriProvider === 'jakim' && (
+              <div className="flex flex-col gap-2">
+                <label className="text-sm text-on-surface-variant">JAKIM Zone</label>
+                <Select value={hijriCalendar} onValueChange={setHijriCalendar}>
+                  <SelectTrigger className="rounded-2xl bg-input border-border w-full">
+                    <SelectValue placeholder="Select Zone" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border rounded-2xl max-h-64">
+                    <SelectItem value="SGR01">Selangor (Gombak, Petaling, Sepang, Hulu Langat, Hulu Selangor, Shah Alam)</SelectItem>
+                    <SelectItem value="SGR02">Selangor (Sabak Bernam, Kuala Selangor)</SelectItem>
+                    <SelectItem value="SGR03">Selangor (Klang, Kuala Langat)</SelectItem>
+                    <SelectItem value="WLY01">Wilayah Persekutuan Kuala Lumpur & Putrajaya</SelectItem>
+                    <SelectItem value="WLY02">Wilayah Persekutuan Labuan</SelectItem>
+                    <SelectItem value="JHR01">Johor (Pulau Aur, Pulau Pemanggil)</SelectItem>
+                    <SelectItem value="JHR02">Johor (Kota Tinggi, Mersing, Johor Bahru)</SelectItem>
+                    <SelectItem value="JHR03">Johor (Kluang, Pontian)</SelectItem>
+                    <SelectItem value="JHR04">Johor (Batu Pahat, Muar, Segamat, Gemas Johor, Ledang)</SelectItem>
+                    <SelectItem value="KDH01">Kedah (Kota Setar, Pokok Sena, Kubang Pasu, Padang Terap, Sik, Yan, Kuala Muda, Pendang)</SelectItem>
+                    <SelectItem value="KDH02">Kedah (Baling, Kulim, Bandar Bahru)</SelectItem>
+                    <SelectItem value="KDH03">Kedah (Langkawi)</SelectItem>
+                    <SelectItem value="PNG01">Pulau Pinang</SelectItem>
+                    <SelectItem value="PLS01">Perlis</SelectItem>
+                    <SelectItem value="SBH01">Sabah (Zon 1 - Sandakan, Beluran, dll)</SelectItem>
+                    <SelectItem value="SBH02">Sabah (Zon 2 - Kota Kinabalu, Penampang, dll)</SelectItem>
+                    <SelectItem value="SWK01">Sarawak (Zon 1 - Limbang, Sundar, Trusan)</SelectItem>
+                    <SelectItem value="SWK02">Sarawak (Zon 2 - Miri, Niah, Marudi)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+        )}
+      </motion.section>
+
+      {/* About Section */}
+      <motion.section
+        custom={6}
         variants={sectionVariants}
         initial="hidden"
         animate="visible"
@@ -804,7 +931,7 @@ export default function SettingsPage() {
 
       {/* Save Button */}
       <motion.div
-        custom={6}
+        custom={7}
         variants={sectionVariants}
         initial="hidden"
         animate="visible"

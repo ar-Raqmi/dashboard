@@ -156,6 +156,8 @@ model UserSettings {
   iconBackgroundColor String
   hijriVisible        Boolean
   hijriOffset         Int
+  hijriProvider       String  @default("calculated")
+  hijriCalendar       String  @default("UmmAlQura")
   showSeconds         Boolean
   clipboardText       String
   backgroundType      String

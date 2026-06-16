@@ -189,6 +189,9 @@ export function DataSync({ children }: { children: React.ReactNode }) {
         iconBackgroundColor: settings.iconBackgroundColor,
         hijriVisible: settings.hijriVisible,
         hijriOffset: settings.hijriOffset,
+        hijriProvider: settings.hijriProvider ?? 'calculated',
+        hijriCalendar: settings.hijriCalendar ?? 'UmmAlQura',
+        hijriDate: settings.hijriDate ?? undefined,
         showSeconds: settings.showSeconds,
         clipboardText: settings.clipboardText,
         background: settings.background,
@@ -393,13 +396,13 @@ export function DataSync({ children }: { children: React.ReactNode }) {
       },
       removeClock: (id) => {
         store.setState((state) => ({ clocks: state.clocks.filter((c) => c.id !== id) }))
-        removeClockMut({ sessionToken, clockId: id as any }).catch(console.error)
+        removeClockMut({ sessionToken, id: id as any }).catch(console.error)
       },
       updateClock: (id, updates) => {
         store.setState((state) => ({
           clocks: state.clocks.map((c) => (c.id === id ? { ...c, ...updates } : c)),
         }))
-        updateClockMut({ sessionToken, clockId: id as any, ...updates }).catch(console.error)
+        updateClockMut({ sessionToken, id: id as any, ...updates }).catch(console.error)
       },
 
       // Dashboard actions
@@ -472,6 +475,17 @@ export function DataSync({ children }: { children: React.ReactNode }) {
       setHijriOffset: (offset) => {
         store.setState({ hijriOffset: Math.max(-2, Math.min(2, offset)) })
         updateSettingsMut({ sessionToken, hijriOffset: offset }).catch(console.error)
+      },
+      setHijriProvider: (provider) => {
+        store.setState({ hijriProvider: provider })
+        updateSettingsMut({ sessionToken, hijriProvider: provider }).catch(console.error)
+      },
+      setHijriCalendar: (calendar) => {
+        store.setState({ hijriCalendar: calendar })
+        updateSettingsMut({ sessionToken, hijriCalendar: calendar }).catch(console.error)
+      },
+      setHijriDate: (hijriDate) => {
+        store.setState({ hijriDate })
       },
       setShowSeconds: (show) => {
         store.setState({ showSeconds: show })
