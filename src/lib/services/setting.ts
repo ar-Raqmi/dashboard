@@ -1,4 +1,5 @@
 import { BaseService } from './base'
+import { HijriCalendarFactory } from './hijri'
 
 export class SettingService extends BaseService {
   async get(args: { sessionToken: string }) {
@@ -18,6 +19,8 @@ export class SettingService extends BaseService {
           iconBackgroundColor: '#A5D6A7',
           hijriVisible: true,
           hijriOffset: 0,
+          hijriProvider: 'calculated',
+          hijriCalendar: 'UmmAlQura',
           showSeconds: true,
           clipboardText: '',
           backgroundType: 'default',
@@ -29,6 +32,15 @@ export class SettingService extends BaseService {
       })
     }
 
+    // Resolve the Hijri Date using factory and strategy design patterns
+    const providerKey = settings.hijriProvider || 'calculated'
+    const calendarType = settings.hijriCalendar || 'UmmAlQura'
+    const provider = HijriCalendarFactory.getProvider(providerKey)
+    
+    const today = new Date()
+    const hijriArg = providerKey === 'calculated' ? String(settings.hijriOffset || 0) : calendarType
+    const hijriDate = await provider.getHijriDate(today, hijriArg)
+
     return {
       profileName: settings.profileName,
       profilePicture: settings.profilePicture || undefined,
@@ -37,6 +49,9 @@ export class SettingService extends BaseService {
       iconBackgroundColor: settings.iconBackgroundColor,
       hijriVisible: settings.hijriVisible,
       hijriOffset: settings.hijriOffset,
+      hijriProvider: settings.hijriProvider,
+      hijriCalendar: settings.hijriCalendar,
+      hijriDate: hijriDate || undefined,
       showSeconds: settings.showSeconds,
       clipboardText: settings.clipboardText,
       background: {
@@ -58,6 +73,8 @@ export class SettingService extends BaseService {
     iconBackgroundColor?: string
     hijriVisible?: boolean
     hijriOffset?: number
+    hijriProvider?: string
+    hijriCalendar?: string
     showSeconds?: boolean
     clipboardText?: string
     background?: {
@@ -77,6 +94,8 @@ export class SettingService extends BaseService {
       iconBackgroundColor,
       hijriVisible,
       hijriOffset,
+      hijriProvider,
+      hijriCalendar,
       showSeconds,
       clipboardText,
       background,
@@ -90,6 +109,8 @@ export class SettingService extends BaseService {
     if (iconBackgroundColor !== undefined) data.iconBackgroundColor = iconBackgroundColor
     if (hijriVisible !== undefined) data.hijriVisible = hijriVisible
     if (hijriOffset !== undefined) data.hijriOffset = hijriOffset
+    if (hijriProvider !== undefined) data.hijriProvider = hijriProvider
+    if (hijriCalendar !== undefined) data.hijriCalendar = hijriCalendar
     if (showSeconds !== undefined) data.showSeconds = showSeconds
     if (clipboardText !== undefined) data.clipboardText = clipboardText
 

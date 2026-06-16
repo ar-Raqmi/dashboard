@@ -259,6 +259,17 @@ interface AppStore {
   setHijriVisible: (visible: boolean) => void
   hijriOffset: number // -2 to +2 days
   setHijriOffset: (offset: number) => void
+  hijriProvider: string
+  setHijriProvider: (provider: string) => void
+  hijriCalendar: string
+  setHijriCalendar: (calendar: string) => void
+  hijriDate?: {
+    day: number
+    month: string
+    monthAr: string
+    year: number
+  }
+  setHijriDate: (date?: { day: number; month: string; monthAr: string; year: number }) => void
   showSeconds: boolean
   setShowSeconds: (show: boolean) => void
   iconBackgroundColor: string
@@ -609,6 +620,12 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   setHijriVisible: (visible) => set({ hijriVisible: visible }),
   hijriOffset: 0,
   setHijriOffset: (offset) => set({ hijriOffset: Math.max(-2, Math.min(2, offset)) }),
+  hijriProvider: 'calculated',
+  setHijriProvider: (provider) => set({ hijriProvider: provider }),
+  hijriCalendar: 'UmmAlQura',
+  setHijriCalendar: (calendar) => set({ hijriCalendar: calendar }),
+  hijriDate: undefined,
+  setHijriDate: (hijriDate) => set({ hijriDate }),
   showSeconds: true,
   setShowSeconds: (show) => set({ showSeconds: show }),
   iconBackgroundColor: '#A5D6A7',

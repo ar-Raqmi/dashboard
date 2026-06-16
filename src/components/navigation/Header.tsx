@@ -96,8 +96,21 @@ export default function Header() {
   // Suppress unused variable warning - tick drives re-renders for date change
   void tick
 
-  // Compute dates (client-only)
-  const hijri = mounted && hijriVisible ? getHijriDate(hijriOffset) : null
+  // Compute dates (client-only fallback or resolved store date)
+  const storeHijriDate = useAppStore((s) => s.hijriDate)
+  const hijriProvider = useAppStore((s) => s.hijriProvider)
+
+  const hijri = mounted && hijriVisible
+    ? (storeHijriDate && hijriProvider !== 'calculated'
+        ? {
+            day: storeHijriDate.day,
+            month: storeHijriDate.month,
+            year: storeHijriDate.year,
+            monthAr: storeHijriDate.monthAr,
+          }
+        : getHijriDate(hijriOffset))
+    : null
+
   const gregorian = mounted
     ? new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
     : ''
@@ -267,11 +280,22 @@ function MobileDateDisplay() {
   const [showHijri, setShowHijri] = useState(true)
   const hijriVisible = useAppStore((s) => s.hijriVisible)
   const hijriOffset = useAppStore((s) => s.hijriOffset)
+  const storeHijriDate = useAppStore((s) => s.hijriDate)
+  const hijriProvider = useAppStore((s) => s.hijriProvider)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => setMounted(true), [])
 
-  const hijri = mounted && hijriVisible ? getHijriDate(hijriOffset) : null
+  const hijri = mounted && hijriVisible
+    ? (storeHijriDate && hijriProvider !== 'calculated'
+        ? {
+            day: storeHijriDate.day,
+            month: storeHijriDate.month,
+            year: storeHijriDate.year,
+            monthAr: storeHijriDate.monthAr,
+          }
+        : getHijriDate(hijriOffset))
+    : null
   const gregorian = mounted
     ? new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
     : ''
