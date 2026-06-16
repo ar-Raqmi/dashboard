@@ -318,9 +318,9 @@ export class FileService extends BaseService {
     return { success: true, starred: updated.starred }
   }
 
-  async getFileUrl(args: { sessionToken: string; storageId?: string; r2Key?: string }) {
+  async getFileUrl(args: { sessionToken: string; storageId?: string; r2Key?: string; filename?: string }) {
     await this.getAuthedUser(args.sessionToken)
-    const { storageId, r2Key } = args
+    const { storageId, r2Key, filename } = args
 
     if (storageId) {
       return `/api/storage/${storageId}`
@@ -330,9 +330,15 @@ export class FileService extends BaseService {
       const s3 = this.getS3Client()
       if (s3) {
         try {
+          const cleanFilename = filename ? filename.replace(/["\\]/g, '') : undefined
+          const contentDisposition = cleanFilename
+            ? `attachment; filename="${cleanFilename}"`
+            : undefined
+
           const command = new GetObjectCommand({
             Bucket: this.env?.R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'dashboard-files',
             Key: r2Key,
+            ResponseContentDisposition: contentDisposition,
           })
           const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 })
           return signedUrl

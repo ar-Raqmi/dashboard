@@ -71,6 +71,44 @@ export async function handleQuery(path: string, args: any, env?: any) {
         return dashboardService.listWidgets(args)
       case 'dashboard:getLayout':
         return dashboardService.getLayout(args)
+      case 'dashboard:getData': {
+        const [tasks, goals, notes, events, files, clocks, widgets, desktopLayouts, mobileLayouts, notesDesktopLayouts, notesMobileLayouts, pinnedDesktopLayouts, pinnedMobileLayouts, goalDesktopLayouts, goalMobileLayouts, settings] = await Promise.all([
+          taskService.list(args),
+          goalService.list(args),
+          noteService.list(args),
+          eventService.list(args),
+          fileService.listAll(args),
+          clockService.list(args),
+          dashboardService.listWidgets(args),
+          dashboardService.getLayout({ ...args, layoutType: 'desktop' }),
+          dashboardService.getLayout({ ...args, layoutType: 'mobile' }),
+          dashboardService.getLayout({ ...args, layoutType: 'notesDesktop' }),
+          dashboardService.getLayout({ ...args, layoutType: 'notesMobile' }),
+          dashboardService.getLayout({ ...args, layoutType: 'pinnedDesktop' }),
+          dashboardService.getLayout({ ...args, layoutType: 'pinnedMobile' }),
+          dashboardService.getLayout({ ...args, layoutType: 'goalsDesktop' }),
+          dashboardService.getLayout({ ...args, layoutType: 'goalsMobile' }),
+          settingService.get(args),
+        ])
+        return {
+          tasks,
+          goals,
+          notes,
+          events,
+          files,
+          clocks,
+          widgets,
+          desktopLayouts,
+          mobileLayouts,
+          notesDesktopLayouts,
+          notesMobileLayouts,
+          pinnedDesktopLayouts,
+          pinnedMobileLayouts,
+          goalDesktopLayouts,
+          goalMobileLayouts,
+          settings,
+        }
+      }
 
       // Settings
       case 'settings:get':

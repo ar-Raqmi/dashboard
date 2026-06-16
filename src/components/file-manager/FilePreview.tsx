@@ -209,7 +209,8 @@ export default function FilePreview() {
       ? { 
           sessionToken: sessionToken!, 
           storageId: previewFile.storageId as any,
-          r2Key: previewFile.r2Key
+          r2Key: previewFile.r2Key,
+          filename: previewFile.name
         } 
       : 'skip'
   )
@@ -347,8 +348,8 @@ export default function FilePreview() {
                             ? `${fileUrl}&download=1`
                             : `${fileUrl}?download=1`
                         } else {
-                          // External URL (e.g. signed R2 URL) — use download proxy  
-                          downloadUrl = `/api/storage/download?url=${encodeURIComponent(fileUrl)}&name=${encodeURIComponent(previewFile.name)}`
+                          // External URL (e.g. signed R2 URL) — use direct URL (with embedded disposition)
+                          downloadUrl = fileUrl
                         }
                         
                         const a = document.createElement('a')

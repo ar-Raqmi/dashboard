@@ -2,10 +2,12 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Search, LayoutGrid, Sun, Moon, MoonStar } from 'lucide-react'
+import { Search, LayoutGrid, Sun, Moon, MoonStar, RefreshCw } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useAppStore } from '@/lib/store'
 import { toHijri } from 'hijri-converter'
+import { triggerGlobalSync } from '@/hooks/useApi'
+import { toast } from 'sonner'
 
 const ISLAMIC_MONTHS_EN = [
   'Muharram', 'Safar', 'Rabi al-Awwal', 'Rabi al-Thani',
@@ -65,6 +67,19 @@ export default function Header() {
   const searchOpen = useAppStore((s) => s.searchOpen)
   const setSearchOpen = useAppStore((s) => s.setSearchOpen)
   const [logoError, setLogoError] = useState(false)
+
+  const [isSyncing, setIsSyncing] = useState(false)
+
+  const handleSync = () => {
+    if (isSyncing) return
+    setIsSyncing(true)
+    triggerGlobalSync()
+    toast.success('Dashboard synchronized successfully!', {
+      duration: 2000,
+      icon: <RefreshCw className="h-4 w-4 animate-spin text-primary" />
+    })
+    setTimeout(() => setIsSyncing(false), 1000)
+  }
 
   const updateTime = useCallback(() => setTick((t) => t + 1), [])
 
@@ -160,6 +175,20 @@ export default function Header() {
 
       {/* Right: Actions + Avatar */}
       <div className="flex items-center gap-2">
+        {/* Sync Button */}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleSync}
+          className="w-9 h-9 rounded-2xl flex items-center justify-center
+            bg-muted border border-border
+            text-muted-foreground hover:text-foreground hover:bg-accent
+            transition-colors"
+          aria-label="Sync data"
+        >
+          <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin text-primary' : ''}`} />
+        </motion.button>
+
         {/* Theme Toggle */}
         <motion.button
           whileHover={{ scale: 1.05 }}

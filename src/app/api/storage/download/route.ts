@@ -13,9 +13,7 @@ export async function GET(request: Request) {
     const response = await fetch(url)
     if (!response.ok) throw new Error('Failed to fetch file from source')
 
-    const data = await response.arrayBuffer()
-    
-    return new Response(data, {
+    return new Response(response.body, {
       headers: {
         'Content-Type': response.headers.get('Content-Type') || 'application/octet-stream',
         'Content-Disposition': `attachment; filename="${name}"`,
