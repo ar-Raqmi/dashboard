@@ -1,6 +1,10 @@
 // Helper to get encryption key dynamically from environment
 function getEncryptionKey(): string {
-  return process.env.JWT_SECRET || 'dev-secret-key-for-local-testing'
+  const key = process.env.JWT_SECRET
+  if (!key) {
+    throw new Error('Critical Security Error: JWT_SECRET environment variable is missing!')
+  }
+  return key
 }
 
 // Helper to encrypt a string using AES-GCM
