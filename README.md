@@ -19,7 +19,7 @@
 - **Customizable Widgets** — Drag, resize, and toggle dashboard modules
 - **Productivity Hub** — Tasks, Calendar, Markdown Notes, and Goal Tracking
 - **File Manager** — Secure, hierarchical cloud storage powered by Cloudflare R2
-- **Spiritual Tools** — Daily Quran/Hadith, Hijri calendar, World Clocks
+- **Spiritual Tools** — Daily Quran/Hadith, integrated Hijri calendar, configurable Prayer Times widget (JAKIM Zones for Malaysia or Aladhan API for worldwide City/Country locations), and World Clocks
 - **Modern Architecture** — Clean, object-oriented service architecture and Next.js 16 Edge runtime
 
 ---
@@ -54,7 +54,8 @@ R2_BUCKET_NAME=your-r2-bucket-name
 #### 3. Initialize the Database
 Run the following to set up the local SQLite database schema via Prisma:
 ```bash
-npm run db:push
+DATABASE_URL="file:./db/custom.db" npm run db:push
+DATABASE_URL="file:./db/custom.db" npm run db:seed
 ```
 
 #### 4. Run Development Server
@@ -75,7 +76,7 @@ Create a local `wrangler.toml` in your project root using the template below:
 name = "personal-dashboard"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = "out"
+pages_build_output_dir = ".vercel/output/static"
 
 [[d1_databases]]
 binding = "DB"
@@ -115,10 +116,14 @@ npx wrangler d1 execute dashboard-db --file=migration.sql
 ```
 
 #### 4. Configure Production Secrets
-Set your production environment secrets on your Cloudflare dashboard (under Pages Project > Settings > Environment Variables) or via CLI:
-- `JWT_SECRET`: A secure random string for signing JWT tokens.
+Set your production environment secrets on your Cloudflare dashboard (under Pages Project > Settings > Environment Variables):
+- `JWT_SECRET`: A secure, random 256-bit hex string for signing JWT tokens and encrypting 2FA keys.
 - `R2_ACCESS_KEY_ID`: Your Cloudflare R2 Access Key ID.
 - `R2_SECRET_ACCESS_KEY`: Your Cloudflare R2 Secret Access Key.
+
+> [!IMPORTANT]
+> **Critical 2FA Security Warning:**
+> You **MUST** configure the production `JWT_SECRET` in your Cloudflare dashboard **before** enabling Two-Factor Authentication (2FA) for any user. If `JWT_SECRET` is missing, the application will fallback to a default encryption key. Configuring `JWT_SECRET` later will change the decryption key and cause existing 2FA decryptions to fail, locking users out of their accounts.
 
 #### 5. Build and Deploy
 Run the deploy script to compile the Next.js project and deploy it to Cloudflare Pages:
