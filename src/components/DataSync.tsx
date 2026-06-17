@@ -415,7 +415,7 @@ export function DataSync({ children }: { children: React.ReactNode }) {
             w.type === type ? { ...w, visible: !w.visible } : w
           ),
         }))
-        toggleWidgetVisMut({ sessionToken, widgetType: type }).catch(console.error)
+        toggleWidgetVisMut({ sessionToken, type }).catch(console.error)
       },
       setLayouts: (layouts) => {
         store.setState({ layouts })
