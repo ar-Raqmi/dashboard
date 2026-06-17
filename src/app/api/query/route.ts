@@ -13,6 +13,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ value: result })
   } catch (err: any) {
     console.error(`API Query Error [${request.url}]:`, err)
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    return NextResponse.json(
+      { 
+        error: err.message, 
+        envKeys: Object.keys(env || {}),
+        runtime: process.env.NEXT_RUNTIME || 'unknown'
+      }, 
+      { status: 500 }
+    )
   }
 }
