@@ -1,11 +1,15 @@
-const ENCRYPTION_KEY = process.env.JWT_SECRET || 'ar-raqmi-secret-key-change-in-production'
+// Helper to get encryption key dynamically from environment
+function getEncryptionKey(): string {
+  return process.env.JWT_SECRET || 'dev-secret-key-for-local-testing'
+}
 
 // Helper to encrypt a string using AES-GCM
 export async function encryptText(text: string): Promise<string> {
   const enc = new TextEncoder()
+  const keyStr = getEncryptionKey()
   const keyMaterial = await crypto.subtle.importKey(
     'raw',
-    enc.encode(ENCRYPTION_KEY.padEnd(32, '0').slice(0, 32)),
+    enc.encode(keyStr.padEnd(32, '0').slice(0, 32)),
     { name: 'AES-GCM' },
     false,
     ['encrypt', 'decrypt']
@@ -56,7 +60,8 @@ async function attemptDecryption(encryptedBase64: string, keyStr: string): Promi
 // Helper to decrypt a string using AES-GCM
 export async function decryptText(encryptedBase64: string): Promise<string> {
   try {
-    return await attemptDecryption(encryptedBase64, ENCRYPTION_KEY)
+    const keyStr = getEncryptionKey()
+    return await attemptDecryption(encryptedBase64, keyStr)
   } catch (err) {
     console.warn('Decryption failed, returning plain text', err)
     return encryptedBase64
