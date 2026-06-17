@@ -287,6 +287,11 @@ interface AppStore {
   setAppTitle: (title: string) => void
   appLogo: string
   setAppLogo: (url: string) => void
+  aladhanCity: string
+  setAladhanCity: (city: string) => void
+  aladhanCountry: string
+  setAladhanCountry: (country: string) => void
+
 
   // Search
   searchQuery: string
@@ -643,6 +648,11 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   setAppTitle: (title) => set({ appTitle: title }),
   appLogo: '/logo.png',
   setAppLogo: (url) => set({ appLogo: url }),
+  aladhanCity: 'Kuala Lumpur',
+  setAladhanCity: (city) => set({ aladhanCity: city }),
+  aladhanCountry: 'Malaysia',
+  setAladhanCountry: (country) => set({ aladhanCountry: country }),
+
 
   // Search
   searchQuery: '',

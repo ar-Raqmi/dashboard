@@ -165,5 +165,8 @@ model UserSettings {
   backgroundGradient  String
   backgroundImage     String
   backgroundOpacity   Int
+  aladhanCity         String  @default("Kuala Lumpur")
+  aladhanCountry      String  @default("Malaysia")
   user                User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+

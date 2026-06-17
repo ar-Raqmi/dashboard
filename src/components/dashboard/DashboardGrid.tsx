@@ -1232,6 +1232,8 @@ function timeToMinutes(time24: string): number {
 function PrayerTimesContent({ w, h }: { w: number; h: number }) {
   const hijriProvider = useAppStore((s) => s.hijriProvider)
   const hijriCalendar = useAppStore((s) => s.hijriCalendar)
+  const aladhanCity = useAppStore((s) => s.aladhanCity)
+  const aladhanCountry = useAppStore((s) => s.aladhanCountry)
 
   const [prayerTimes, setPrayerTimes] = React.useState<import('@/lib/services/prayer').PrayerTimes | null>(null)
   const [loading, setLoading] = React.useState(true)
@@ -1255,17 +1257,20 @@ function PrayerTimesContent({ w, h }: { w: number; h: number }) {
 
         // Determine provider: if hijriProvider is 'jakim', use jakim with zone; else default to jakim SGR01
         let providerKey = 'jakim'
-        let zone = 'SGR01'
+        let zoneOrCity = 'SGR01'
+        let country = 'Malaysia'
 
         if (hijriProvider === 'jakim') {
           providerKey = 'jakim'
-          zone = hijriCalendar || 'SGR01'
+          zoneOrCity = hijriCalendar || 'SGR01'
         } else if (hijriProvider === 'aladhan') {
           providerKey = 'aladhan'
+          zoneOrCity = aladhanCity || 'Kuala Lumpur'
+          country = aladhanCountry || 'Malaysia'
         }
 
         const provider = PrayerTimeFactory.getProvider(providerKey)
-        const times = await provider.getPrayerTimes(new Date(), zone)
+        const times = await provider.getPrayerTimes(new Date(), zoneOrCity, country)
 
         if (!cancelled) {
           if (times) {
@@ -1284,7 +1289,8 @@ function PrayerTimesContent({ w, h }: { w: number; h: number }) {
     }
     load()
     return () => { cancelled = true }
-  }, [hijriProvider, hijriCalendar])
+  }, [hijriProvider, hijriCalendar, aladhanCity, aladhanCountry])
+
 
   // Current time in minutes
   const nowMinutes = now.getHours() * 60 + now.getMinutes()

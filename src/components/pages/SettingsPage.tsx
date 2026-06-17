@@ -83,6 +83,8 @@ export default function SettingsPage() {
     hijriOffset, setHijriOffset,
     hijriProvider, setHijriProvider,
     hijriCalendar, setHijriCalendar,
+    aladhanCity, setAladhanCity,
+    aladhanCountry, setAladhanCountry,
   } = useAppStore()
 
   const { user, updateCredentials, logout } = useAuth()
@@ -90,10 +92,13 @@ export default function SettingsPage() {
 
   const [localName, setLocalName] = useState(profileName)
   const [localAppTitle, setLocalAppTitle] = useState(appTitle)
+  const [localAladhanCity, setLocalAladhanCity] = useState(aladhanCity)
+  const [localAladhanCountry, setLocalAladhanCountry] = useState(aladhanCountry)
   const [localTimezone, setLocalTimezone] = useState(() => {
     return clocks && clocks.length > 0 ? clocks[0].timezone : 'Asia/Kuala_Lumpur'
   })
   const [saved, setSaved] = useState(false)
+
 
   // Account Security state
   const [newUsername, setNewUsername] = useState('')
@@ -119,10 +124,19 @@ export default function SettingsPage() {
   }, [appTitle])
 
   useEffect(() => {
+    setLocalAladhanCity(aladhanCity)
+  }, [aladhanCity])
+
+  useEffect(() => {
+    setLocalAladhanCountry(aladhanCountry)
+  }, [aladhanCountry])
+
+  useEffect(() => {
     if (clocks && clocks.length > 0) {
       setLocalTimezone(clocks[0].timezone)
     }
   }, [clocks])
+
 
   const avatarInputRef = useRef<HTMLInputElement>(null)
   const logoInputRef = useRef<HTMLInputElement>(null)
@@ -202,8 +216,11 @@ export default function SettingsPage() {
   const handleSave = () => {
     setProfileName(localName)
     setAppTitle(localAppTitle)
+    setAladhanCity(localAladhanCity)
+    setAladhanCountry(localAladhanCountry)
     if (clocks.length > 0) updateClock(clocks[0].id, { timezone: localTimezone })
     setSaved(true)
+
     setTimeout(() => setSaved(false), 2000)
   }
 
@@ -794,7 +811,7 @@ export default function SettingsPage() {
         </p>
       </motion.section>
 
-      {/* Hijri Calendar Section */}
+      {/* Hijri & Prayer Times Section */}
       <motion.section
         custom={5}
         variants={sectionVariants}
@@ -804,11 +821,11 @@ export default function SettingsPage() {
       >
         <div className="flex items-center gap-2">
           <MoonStar className="size-5 text-primary" />
-          <h2 className="text-lg font-semibold text-foreground">Hijri Calendar API</h2>
+          <h2 className="text-lg font-semibold text-foreground">Prayer Times & Hijri Calendar</h2>
         </div>
 
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-foreground">Show Hijri Calendar</label>
+          <label className="text-sm font-medium text-foreground">Show Hijri Date on Clock</label>
           <input
             type="checkbox"
             checked={hijriVisible}
@@ -817,24 +834,24 @@ export default function SettingsPage() {
           />
         </div>
 
-        {hijriVisible && (
-          <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm text-on-surface-variant">Hijri API Provider</label>
-              <Select value={hijriProvider} onValueChange={setHijriProvider}>
-                <SelectTrigger className="rounded-2xl bg-input border-border w-full">
-                  <SelectValue placeholder="Select provider" />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border rounded-2xl">
-                  <SelectItem value="calculated">Calculated (Standard Math Offset)</SelectItem>
-                  <SelectItem value="aladhan">Aladhan API (Saudi / Global Methods)</SelectItem>
-                  <SelectItem value="jakim">JAKIM API (Malaysia e-Solat)</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Choose the provider: calculated uses local offset mathematical formula, Aladhan connects to global API methods, JAKIM fetches directly from Malaysia's JAKIM.
-              </p>
-            </div>
+        <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="flex flex-col gap-2">
+            <label className="text-sm text-on-surface-variant">Location & Calendar Provider</label>
+            <Select value={hijriProvider} onValueChange={setHijriProvider}>
+              <SelectTrigger className="rounded-2xl bg-input border-border w-full">
+                <SelectValue placeholder="Select provider" />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border rounded-2xl">
+                <SelectItem value="calculated">Calculated (Standard Math Offset)</SelectItem>
+                <SelectItem value="aladhan">Aladhan API (Global Location / Saudi Methods)</SelectItem>
+                <SelectItem value="jakim">JAKIM API (Malaysia e-Solat Zones)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              This provider determines both the Hijri calendar date and the source for your Prayer Times widget.
+            </p>
+          </div>
+
 
             {hijriProvider === 'calculated' && (
               <div className="flex flex-col gap-2">
@@ -851,19 +868,41 @@ export default function SettingsPage() {
             )}
 
             {hijriProvider === 'aladhan' && (
-              <div className="flex flex-col gap-2">
-                <label className="text-sm text-on-surface-variant">Calculation Method (Calendar Type)</label>
-                <Select value={hijriCalendar} onValueChange={setHijriCalendar}>
-                  <SelectTrigger className="rounded-2xl bg-input border-border w-full">
-                    <SelectValue placeholder="Select method" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border rounded-2xl">
-                    <SelectItem value="UmmAlQura">Saudi Arabia (Umm Al-Qura)</SelectItem>
-                    <SelectItem value="IslamicFinder">Islamic Finder (Calculated)</SelectItem>
-                    <SelectItem value="Makkah">Makkah Al-Mukarramah</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <>
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm text-on-surface-variant">Calculation Method (Calendar Type)</label>
+                  <Select value={hijriCalendar} onValueChange={setHijriCalendar}>
+                    <SelectTrigger className="rounded-2xl bg-input border-border w-full">
+                      <SelectValue placeholder="Select method" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border rounded-2xl">
+                      <SelectItem value="UmmAlQura">Saudi Arabia (Umm Al-Qura)</SelectItem>
+                      <SelectItem value="IslamicFinder">Islamic Finder (Calculated)</SelectItem>
+                      <SelectItem value="Makkah">Makkah Al-Mukarramah</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm text-on-surface-variant">City</label>
+                    <Input
+                      value={localAladhanCity}
+                      onChange={(e) => setLocalAladhanCity(e.target.value)}
+                      placeholder="e.g. Kuala Lumpur"
+                      className="rounded-2xl bg-input border-border"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm text-on-surface-variant">Country</label>
+                    <Input
+                      value={localAladhanCountry}
+                      onChange={(e) => setLocalAladhanCountry(e.target.value)}
+                      placeholder="e.g. Malaysia"
+                      className="rounded-2xl bg-input border-border"
+                    />
+                  </div>
+                </div>
+              </>
             )}
 
             {hijriProvider === 'jakim' && (
@@ -897,7 +936,6 @@ export default function SettingsPage() {
               </div>
             )}
           </div>
-        )}
       </motion.section>
 
       {/* About Section */}
