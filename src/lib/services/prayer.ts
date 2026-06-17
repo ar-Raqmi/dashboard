@@ -17,7 +17,7 @@ export interface PrayerTimes {
 export interface PrayerTimeProvider {
   key: string
   name: string
-  getPrayerTimes(date: Date, zone?: string): Promise<PrayerTimes | null>
+  getPrayerTimes(date: Date, zoneOrCity?: string, country?: string): Promise<PrayerTimes | null>
 }
 
 // ==========================================
@@ -28,9 +28,9 @@ export class JakimPrayerProvider implements PrayerTimeProvider {
   key = 'jakim'
   name = 'JAKIM (Malaysia e-Solat)'
 
-  async getPrayerTimes(date: Date, zone = 'SGR01'): Promise<PrayerTimes | null> {
+  async getPrayerTimes(date: Date, zoneOrCity = 'SGR01', _country?: string): Promise<PrayerTimes | null> {
     try {
-      const url = `https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=today&zone=${zone}`
+      const url = `https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=today&zone=${zoneOrCity}`
       const response = await fetch(url)
       if (!response.ok) {
         throw new Error(`JAKIM API returned status ${response.status}`)
@@ -73,13 +73,16 @@ export class AladhanPrayerProvider implements PrayerTimeProvider {
   key = 'aladhan'
   name = 'Aladhan API (Global)'
 
-  async getPrayerTimes(date: Date, _zone?: string): Promise<PrayerTimes | null> {
+  async getPrayerTimes(date: Date, zoneOrCity = 'Kuala Lumpur', country = 'Malaysia'): Promise<PrayerTimes | null> {
     try {
       const day = String(date.getDate()).padStart(2, '0')
       const month = String(date.getMonth() + 1).padStart(2, '0')
       const year = date.getFullYear()
 
-      const url = `https://api.aladhan.com/v1/timingsByCity/${day}-${month}-${year}?city=Kuala+Lumpur&country=Malaysia&method=3`
+      const cityEncoded = encodeURIComponent(zoneOrCity)
+      const countryEncoded = encodeURIComponent(country)
+
+      const url = `https://api.aladhan.com/v1/timingsByCity/${day}-${month}-${year}?city=${cityEncoded}&country=${countryEncoded}&method=3`
       const response = await fetch(url)
       if (!response.ok) {
         throw new Error(`Aladhan API returned status ${response.status}`)
@@ -113,6 +116,7 @@ export class AladhanPrayerProvider implements PrayerTimeProvider {
     return raw.trim().replace(/\s*\(.*\)$/, '').slice(0, 5)
   }
 }
+
 
 // ==========================================
 // Factory

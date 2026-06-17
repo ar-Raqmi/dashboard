@@ -186,6 +186,8 @@ export function DataSync({ children }: { children: React.ReactNode }) {
         profilePicture: settings.profilePicture ?? '',
         appTitle: settings.appTitle,
         appLogo: settings.appLogo ?? '',
+        aladhanCity: settings.aladhanCity ?? 'Kuala Lumpur',
+        aladhanCountry: settings.aladhanCountry ?? 'Malaysia',
         iconBackgroundColor: settings.iconBackgroundColor,
         hijriVisible: settings.hijriVisible,
         hijriOffset: settings.hijriOffset,
@@ -198,6 +200,7 @@ export function DataSync({ children }: { children: React.ReactNode }) {
       })
     }
   }, [settings])
+
 
   // Override Zustand actions with API-aware versions
   // This is the key part: when components call Zustand actions,
@@ -464,6 +467,15 @@ export function DataSync({ children }: { children: React.ReactNode }) {
         store.setState({ appLogo: url })
         updateSettingsMut({ sessionToken, appLogo: url }).then(() => triggerGlobalSync()).catch(console.error)
       },
+      setAladhanCity: (city) => {
+        store.setState({ aladhanCity: city })
+        updateSettingsMut({ sessionToken, aladhanCity: city }).then(() => triggerGlobalSync()).catch(console.error)
+      },
+      setAladhanCountry: (country) => {
+        store.setState({ aladhanCountry: country })
+        updateSettingsMut({ sessionToken, aladhanCountry: country }).then(() => triggerGlobalSync()).catch(console.error)
+      },
+
       setIconBackgroundColor: (color) => {
         store.setState({ iconBackgroundColor: color })
         updateSettingsMut({ sessionToken, iconBackgroundColor: color }).then(() => triggerGlobalSync()).catch(console.error)

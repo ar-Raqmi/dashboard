@@ -16,6 +16,8 @@ export class SettingService extends BaseService {
           profilePicture: '',
           appTitle: 'Dashboard',
           appLogo: '/logo.png',
+          aladhanCity: 'Kuala Lumpur',
+          aladhanCountry: 'Malaysia',
           iconBackgroundColor: '#A5D6A7',
           hijriVisible: true,
           hijriOffset: 0,
@@ -46,6 +48,8 @@ export class SettingService extends BaseService {
       profilePicture: settings.profilePicture || undefined,
       appTitle: settings.appTitle,
       appLogo: settings.appLogo || undefined,
+      aladhanCity: settings.aladhanCity,
+      aladhanCountry: settings.aladhanCountry,
       iconBackgroundColor: settings.iconBackgroundColor,
       hijriVisible: settings.hijriVisible,
       hijriOffset: settings.hijriOffset,
@@ -62,6 +66,7 @@ export class SettingService extends BaseService {
         opacity: settings.backgroundOpacity,
       },
     }
+
   }
 
   async update(args: {
@@ -70,6 +75,8 @@ export class SettingService extends BaseService {
     profilePicture?: string
     appTitle?: string
     appLogo?: string
+    aladhanCity?: string
+    aladhanCountry?: string
     iconBackgroundColor?: string
     hijriVisible?: boolean
     hijriOffset?: number
@@ -91,6 +98,8 @@ export class SettingService extends BaseService {
       profilePicture,
       appTitle,
       appLogo,
+      aladhanCity,
+      aladhanCountry,
       iconBackgroundColor,
       hijriVisible,
       hijriOffset,
@@ -106,6 +115,8 @@ export class SettingService extends BaseService {
     if (profilePicture !== undefined) data.profilePicture = profilePicture
     if (appTitle !== undefined) data.appTitle = appTitle
     if (appLogo !== undefined) data.appLogo = appLogo
+    if (aladhanCity !== undefined) data.aladhanCity = aladhanCity
+    if (aladhanCountry !== undefined) data.aladhanCountry = aladhanCountry
     if (iconBackgroundColor !== undefined) data.iconBackgroundColor = iconBackgroundColor
     if (hijriVisible !== undefined) data.hijriVisible = hijriVisible
     if (hijriOffset !== undefined) data.hijriOffset = hijriOffset
@@ -113,6 +124,7 @@ export class SettingService extends BaseService {
     if (hijriCalendar !== undefined) data.hijriCalendar = hijriCalendar
     if (showSeconds !== undefined) data.showSeconds = showSeconds
     if (clipboardText !== undefined) data.clipboardText = clipboardText
+
 
     if (background !== undefined) {
       if (background.type !== undefined) data.backgroundType = background.type
