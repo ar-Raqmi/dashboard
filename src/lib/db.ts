@@ -7,14 +7,17 @@ const globalForPrisma = globalThis as unknown as {
 }
 
 export function getDb(env?: any): PrismaClient {
+  // If we already have the cached connection, return it immediately to bypass potential context loss
+  if (globalForPrisma.prismaD1) {
+    return globalForPrisma.prismaD1
+  }
+
   const d1 = env?.DB || (process.env as any)?.DB || (globalThis as any)?.DB
 
   if (d1) {
     // Cloudflare Pages / Workers: use D1 binding
-    if (!globalForPrisma.prismaD1) {
-      const adapter = new PrismaD1(d1)
-      globalForPrisma.prismaD1 = new PrismaClient({ adapter } as any)
-    }
+    const adapter = new PrismaD1(d1)
+    globalForPrisma.prismaD1 = new PrismaClient({ adapter } as any)
     return globalForPrisma.prismaD1
   }
 
