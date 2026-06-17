@@ -134,6 +134,62 @@ export class FileService extends BaseService {
     }))
   }
 
+  async getFilesRecursive(args: { sessionToken: string; ids: string[] }): Promise<any[]> {
+    const user = await this.getAuthedUser(args.sessionToken)
+    const { ids } = args
+
+    const collectFiles = async (id: string, basePath: string): Promise<any[]> => {
+      const file = await this.db.fileItem.findUnique({ where: { id }, include: { children: true } })
+      if (!file || file.userId !== user.id) return []
+
+      if (file.type === 'folder') {
+        const results: any[] = []
+        for (const child of (file as any).children) {
+          const childFiles = await collectFiles(child.id, `${basePath}${file.name}/`)
+          results.push(...childFiles)
+        }
+        return results
+      }
+
+      // Resolve URL for the file
+      let url: string | null = null
+      if (file.r2Key) {
+        const s3 = this.getS3Client()
+        if (s3) {
+          try {
+            const command = new GetObjectCommand({
+              Bucket: this.env?.R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'dashboard-files',
+              Key: file.r2Key,
+            })
+            url = await getSignedUrl(s3, command, { expiresIn: 3600 })
+          } catch {
+            url = null
+          }
+        }
+        if (!url) {
+          url = `/api/storage/proxy?key=${encodeURIComponent(file.r2Key)}&token=${encodeURIComponent(args.sessionToken)}`
+        }
+      } else if (file.storageId) {
+        url = `/api/storage/${file.storageId}`
+      }
+
+      return [{
+        id: file.id,
+        name: file.name,
+        type: file.type,
+        relativePath: `${basePath}${file.name}`,
+        url,
+      }]
+    }
+
+    const allFiles: any[] = []
+    for (const id of ids) {
+      const files = await collectFiles(id, '')
+      allFiles.push(...files)
+    }
+    return allFiles
+  }
+
   async search(args: { sessionToken: string; query: string }) {
     const user = await this.getAuthedUser(args.sessionToken)
     const { query } = args
