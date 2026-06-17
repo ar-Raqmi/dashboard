@@ -7,7 +7,7 @@ const globalForPrisma = globalThis as unknown as {
 }
 
 export function getDb(env?: any): PrismaClient {
-  const d1 = env?.DB
+  const d1 = env?.DB || (process.env as any)?.DB || (globalThis as any)?.DB
 
   if (d1) {
     // Cloudflare Pages / Workers: use D1 binding
