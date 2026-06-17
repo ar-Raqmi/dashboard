@@ -37,6 +37,9 @@ function getS3Client(env?: any) {
 export const runtime = 'edge'
 
 export async function GET(request: Request) {
+  let env: any = {}
+  try { env = getRequestContext().env } catch { /* local dev — no CF context */ }
+
   try {
     const { searchParams } = new URL(request.url)
     const key = searchParams.get('key')
@@ -47,8 +50,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Missing key' }, { status: 400 })
     }
 
-    let env: any = {}
-    try { env = getRequestContext().env } catch { /* local dev — no CF context */ }
 
     // Validate session token
     const { getDb } = await import('@/lib/db')
