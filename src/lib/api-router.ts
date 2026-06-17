@@ -61,6 +61,8 @@ export async function handleQuery(path: string, args: any, env?: any) {
         return fileService.listAll(args)
       case 'files:getFileUrl':
         return fileService.getFileUrl(args)
+      case 'files:search':
+        return fileService.search(args)
 
       // Clocks
       case 'clocks:list':

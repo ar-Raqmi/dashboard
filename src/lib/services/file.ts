@@ -134,6 +134,35 @@ export class FileService extends BaseService {
     }))
   }
 
+  async search(args: { sessionToken: string; query: string }) {
+    const user = await this.getAuthedUser(args.sessionToken)
+    const { query } = args
+    const files = await this.db.fileItem.findMany({
+      where: {
+        userId: user.id,
+        name: {
+          contains: query,
+        },
+      },
+      orderBy: { updatedAt: 'desc' },
+    })
+    return files.map((f: any) => ({
+      id: f.id,
+      name: f.name,
+      type: f.type,
+      category: f.category || undefined,
+      parentId: f.parentId || null,
+      size: f.size || 0,
+      storageId: f.storageId || undefined,
+      r2Key: f.r2Key || undefined,
+      storageSource: f.storageSource || undefined,
+      starred: f.starred || false,
+      lastAccessed: f.lastAccessed || undefined,
+      createdAt: f.createdAt.toISOString(),
+      updatedAt: f.updatedAt.toISOString(),
+    }))
+  }
+
   async create(args: {
     sessionToken: string
     name: string
