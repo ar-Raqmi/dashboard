@@ -34,12 +34,12 @@ npm install
 ```
 
 #### 2. Configure Local Environment Variables
-Create a `.env` file in the root directory:
+Create a `.env` file in the root directory. **Note: `JWT_SECRET` is strictly required for both local development and production. If omitted, the app will throw a startup error.**
 ```env
 # Local SQLite database URL path
 DATABASE_URL=file:./db/custom.db
 
-# JWT Secret for local session management
+# JWT Secret for local session management (Required)
 JWT_SECRET=your-local-dev-secret-key-change-in-production
 ```
 
@@ -143,6 +143,10 @@ To enable 2FA:
 2. Toggle **Two-Factor Authentication**.
 3. Scan the generated QR code using any TOTP Authenticator app (e.g., Google Authenticator, Microsoft Authenticator, Authy).
 4. Enter the verification code to finalize. Once enabled, future logins will require your password and the dynamic authenticator code.
+
+> [!WARNING]
+> **Best Practice Warning (Local Dev vs. Production):**
+> It is highly recommended to **never** enable Two-Factor Authentication (2FA) in your local development environment (`localhost`). Local development relies on a volatile local SQLite database file (`db/custom.db`) which is excluded from source control and can easily be deleted, reset, or corrupted. If you enable 2FA locally and lose your local database, you will be permanently locked out of your local accounts. Keep 2FA enabled strictly in the Production environment where database records are securely stored on Cloudflare D1.
 
 ---
 
