@@ -6,7 +6,7 @@ import { api } from '@/lib/api-client'
 import { useAuth } from '@/hooks/useAuth'
 import { 
   Folder, File, Upload, FolderPlus, ArrowLeft, MoreVertical, 
-  Trash2, FileText, ImageIcon, Music, Film, FileEdit, Loader2, 
+  Trash2, FileText, ImageIcon, Music, Film, Loader2, 
   Check, X, Search, Grid, List, Star, Clock, Image, 
   FileStack, ChevronRight, Download, Edit3, Share2, Filter,
   MoreHorizontal, Play, Pause, ExternalLink, Menu, Plus
@@ -24,6 +24,13 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAppStore } from '@/lib/store'
+import {
+  FileCategoryService,
+  formatFileSize as formatSize,
+  formatFileDate as formatDate,
+  resolveFileCategory,
+} from '@/lib/file-utils'
+import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
 import {
@@ -38,32 +45,10 @@ import {
 type ViewMode = 'grid' | 'list'
 type NavCategory = 'all' | 'starred' | 'recent' | 'images' | 'audio' | 'video' | 'docs'
 
-const formatSize = (bytes?: number): string => {
-  if (!bytes) return '--'
-  if (bytes < 1024) return bytes + ' B'
-  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB'
-  return (bytes / 1048576).toFixed(1) + ' MB'
-}
-
-const formatDate = (ts?: number | string): string => {
-  if (!ts) return '--'
-  return new Date(ts).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  })
-}
-
 const getFileIcon = (file: any) => {
-  if (file.type === 'folder') return <Folder className="size-6 text-blue-400 fill-blue-400/20" />
-  switch (file.category) {
-    case 'image': return <Image className="size-6 text-emerald-400" />
-    case 'audio': return <Music className="size-6 text-purple-400" />
-    case 'video': return <Film className="size-6 text-pink-400" />
-    case 'pdf': return <FileText className="size-6 text-red-400" />
-    case 'doc': return <FileEdit className="size-6 text-blue-400" />
-    default: return <File className="size-6 text-slate-400" />
-  }
+  const cfg = FileCategoryService.get(resolveFileCategory(file))
+  const Icon = cfg.icon
+  return <Icon className={cn('size-6', cfg.iconClass)} />
 }
 
 // ===== MAIN COMPONENT =====
@@ -400,7 +385,7 @@ export default function FileManager() {
   const displayFiles = getDisplayFiles()
 
   return (
-    <div className="flex h-full md:h-[calc(100vh-120px)] w-full overflow-hidden bg-background/50 md:backdrop-blur-xl md:rounded-3xl border-none md:border md:border-white/10 relative">
+    <div className="flex h-[calc(100dvh-180px)] md:h-[calc(100vh-120px)] w-full overflow-hidden bg-background/50 md:backdrop-blur-xl md:rounded-3xl border-none md:border md:border-white/10 relative">
       {/* Desktop Sidebar Navigation */}
       <div className="hidden md:flex w-64 border-r border-white/5 p-4 flex-col gap-6 shrink-0">
         <div className="px-2">
@@ -427,7 +412,7 @@ export default function FileManager() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 h-full">
+      <div className="flex-1 flex flex-col min-w-0 h-full min-h-0">
         {/* Top Header */}
         <header className="h-16 border-b border-white/5 px-4 md:px-6 flex items-center justify-between gap-4 shrink-0 bg-background/50 backdrop-blur-md sticky top-0 z-30">
           <div className="flex items-center gap-3">
@@ -528,7 +513,7 @@ export default function FileManager() {
         </header>
 
         {/* Breadcrumbs & Actions */}
-        <div className="h-12 px-4 md:px-6 flex items-center justify-between bg-white/5 border-b border-white/5 overflow-x-auto no-scrollbar shrink-0">
+        <div className="h-12 px-4 md:px-6 flex items-center justify-between bg-white/5 border-b border-white/5 overflow-x-auto scrollbar-none shrink-0">
           <Breadcrumb className="whitespace-nowrap flex-1">
             <BreadcrumbList className="flex-nowrap">
               <BreadcrumbItem>
@@ -599,10 +584,10 @@ export default function FileManager() {
         </AnimatePresence>
 
         {/* Content View */}
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 min-h-0">
           <div 
             ref={containerRef}
-            className="p-4 md:p-6 pb-24 md:pb-6 relative min-h-[calc(100vh-240px)] md:min-h-[calc(100vh-280px)] no-scrollbar select-none"
+            className="p-4 md:p-6 pb-24 md:pb-6 relative min-h-[calc(100vh-240px)] md:min-h-[calc(100vh-280px)] scrollbar-none select-none"
             onPointerDown={handleMarqueePointerDown}
             onPointerMove={handleMarqueePointerMove}
             onPointerUp={handleMarqueePointerUp}
