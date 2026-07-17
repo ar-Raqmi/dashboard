@@ -10,6 +10,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
   DialogFooter,
   DialogClose,
@@ -105,6 +106,7 @@ export default function CalendarPage() {
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [view, setView] = useState<'calendar' | 'past'>('calendar')
   const [pastQuery, setPastQuery] = useState('')
+  const [deleteChoiceEvent, setDeleteChoiceEvent] = useState<CalendarEvent | null>(null)
 
   useEffect(() => {
     // Schedule mount flag outside the synchronous effect body to avoid cascading renders
@@ -291,6 +293,26 @@ export default function CalendarPage() {
     }
   }
 
+  const handleDeleteFromEdit = () => {
+    if (!editingEvent) return
+    setDeleteChoiceEvent(editingEvent)
+    setDialogOpen(false)
+  }
+
+  const confirmDeleteOccurrence = () => {
+    const ev = deleteChoiceEvent
+    if (ev?.isRecurring && ev.recurrenceTemplateId && ev.occurrenceDate) {
+      applyEventOccurrenceOverride(ev.recurrenceTemplateId, ev.occurrenceDate, { cancelled: true })
+    }
+    setDeleteChoiceEvent(null)
+  }
+
+  const confirmDeleteEvent = () => {
+    const ev = deleteChoiceEvent
+    if (ev) deleteEvent(ev.recurrenceTemplateId ?? ev.id)
+    setDeleteChoiceEvent(null)
+  }
+
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6 max-w-5xl mx-auto">
       {/* Header */}
@@ -417,21 +439,82 @@ export default function CalendarPage() {
                 )}
               </div>
             </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="ghost" className="rounded-2xl">Cancel</Button>
-              </DialogClose>
-              <Button
-                onClick={handleSaveEvent}
-                disabled={!eventTitle.trim()}
-                className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                {editingEvent ? 'Save Changes' : 'Add Event'}
-              </Button>
+            <DialogFooter className="gap-2 sm:justify-between">
+              {editingEvent && (
+                <Button
+                  variant="ghost"
+                  onClick={handleDeleteFromEdit}
+                  className="rounded-2xl text-destructive hover:text-destructive hover:bg-destructive/10 mr-auto"
+                >
+                  <Trash2 className="size-4 mr-1" />
+                  Delete
+                </Button>
+              )}
+              <div className="flex gap-2 ml-auto">
+                <DialogClose asChild>
+                  <Button variant="ghost" className="rounded-2xl">Cancel</Button>
+                </DialogClose>
+                <Button
+                  onClick={handleSaveEvent}
+                  disabled={!eventTitle.trim()}
+                  className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  {editingEvent ? 'Save Changes' : 'Add Event'}
+                </Button>
+              </div>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Event delete choice (from edit dialog) */}
+      <Dialog open={!!deleteChoiceEvent} onOpenChange={(open) => !open && setDeleteChoiceEvent(null)}>
+        <DialogContent className="bg-card border-border rounded-3xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="size-5" />
+              {deleteChoiceEvent?.isRecurring ? 'Delete recurring event' : 'Delete event'}
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground pt-2">
+              {deleteChoiceEvent?.isRecurring
+                ? 'This event repeats. Choose what to delete.'
+                : `Delete "${deleteChoiceEvent?.title}"? This action cannot be undone.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col gap-2 sm:gap-2">
+            {deleteChoiceEvent?.isRecurring && (
+              <Button
+                onClick={confirmDeleteOccurrence}
+                variant="outline"
+                className="rounded-2xl w-full justify-start whitespace-normal h-auto py-3 items-start text-left"
+              >
+                <div className="flex flex-col items-start text-left min-w-0">
+                  <span className="font-medium">Delete this day only</span>
+                  <span className="text-xs text-muted-foreground font-normal break-words">
+                    Skip {deleteChoiceEvent.occurrenceDate} &mdash; the series continues
+                  </span>
+                </div>
+              </Button>
+            )}
+            <Button
+              onClick={confirmDeleteEvent}
+              className={`rounded-2xl w-full justify-start whitespace-normal h-auto py-3 items-start text-left ${deleteChoiceEvent?.isRecurring ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : 'bg-destructive text-destructive-foreground hover:bg-destructive/90'}`}
+            >
+              <div className="flex flex-col items-start text-left min-w-0">
+                <span className="font-medium">
+                  {deleteChoiceEvent?.isRecurring ? 'Delete the entire series' : 'Delete event'}
+                </span>
+                <span className="text-xs opacity-80 font-normal break-words">
+                  {deleteChoiceEvent?.isRecurring ? 'Remove every occurrence permanently' : 'This cannot be undone'}
+                </span>
+              </div>
+            </Button>
+            <DialogClose asChild>
+              <Button variant="ghost" className="rounded-2xl w-full">Cancel</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* View toggle */}
       <div className="flex gap-2">
