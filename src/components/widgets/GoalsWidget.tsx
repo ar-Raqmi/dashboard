@@ -9,7 +9,9 @@ export default function GoalsWidget() {
   const { goals, setActivePage } = useAppStore()
 
   const sortedGoals = useMemo(() => {
-    return [...goals].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    return [...goals]
+      .filter((g) => g.progress < 100) // completed goals live in the page's Completed section
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
   }, [goals])
 
   return (
