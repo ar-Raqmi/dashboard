@@ -13,6 +13,9 @@ export class EventService extends BaseService {
       title: e.title,
       date: e.date,
       color: e.color || undefined,
+      startTime: e.startTime ?? null,
+      endTime: e.endTime ?? null,
+      allDay: e.allDay ?? (e.startTime ? false : true),
       rrule: e.rrule,
       dtstart: e.dtstart,
       recurrenceUntil: e.recurrenceUntil,
@@ -42,17 +45,23 @@ export class EventService extends BaseService {
     title: string
     date: string
     color?: string
+    startTime?: string | null
+    endTime?: string | null
+    allDay?: boolean
     rrule?: string | null
     dtstart?: string | null
   }) {
     const user = await this.getAuthedUser(args.sessionToken)
-    const { title, date, color, rrule, dtstart } = args
+    const { title, date, color, startTime, endTime, allDay, rrule, dtstart } = args
     const e = await this.db.calendarEvent.create({
       data: {
         userId: user.id,
         title,
         date,
         color: color || null,
+        startTime: startTime ?? null,
+        endTime: endTime ?? null,
+        allDay: allDay ?? true,
         rrule: rrule ?? null,
         dtstart: dtstart ?? null,
       },
@@ -66,6 +75,9 @@ export class EventService extends BaseService {
     title?: string
     date?: string
     color?: string
+    startTime?: string | null
+    endTime?: string | null
+    allDay?: boolean
     rrule?: string | null
     dtstart?: string | null
     clearRecurrence?: boolean
@@ -81,6 +93,9 @@ export class EventService extends BaseService {
     if (updates.title !== undefined) cleanUpdates.title = updates.title
     if (updates.date !== undefined) cleanUpdates.date = updates.date
     if (updates.color !== undefined) cleanUpdates.color = updates.color
+    if (updates.startTime !== undefined) cleanUpdates.startTime = updates.startTime
+    if (updates.endTime !== undefined) cleanUpdates.endTime = updates.endTime
+    if (updates.allDay !== undefined) cleanUpdates.allDay = updates.allDay
 
     if (clearRecurrence) {
       cleanUpdates.rrule = null
