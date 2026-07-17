@@ -243,7 +243,13 @@ interface AppStore {
   // Calendar
   events: CalendarEvent[]
   addEvent: (event: Omit<CalendarEvent, 'id'>) => void
+  updateEvent: (id: string, updates: Partial<CalendarEvent>) => void
   deleteEvent: (id: string) => void
+  applyEventOccurrenceOverride: (
+    templateId: string,
+    occurrenceDate: string,
+    override: { cancelled?: boolean; newDate?: string; title?: string }
+  ) => void
 
   // Clipboard
   clipboardText: string
@@ -584,8 +590,26 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   events: [],
   addEvent: (event) =>
     set((state) => ({ events: [...state.events, { ...event, id: genId() }] })),
+  updateEvent: (id, updates) =>
+    set((state) => ({
+      events: state.events.map((e) => (e.id === id ? { ...e, ...updates } : e)),
+    })),
   deleteEvent: (id) =>
     set((state) => ({ events: state.events.filter((e) => e.id !== id) })),
+  applyEventOccurrenceOverride: (templateId, occurrenceDate, override) =>
+    set((state) => ({
+      events: state.events.flatMap((e) => {
+        if (e.recurrenceTemplateId === templateId && e.occurrenceDate === occurrenceDate) {
+          if (override.cancelled) return []
+          return [{
+            ...e,
+            ...(override.newDate ? { date: override.newDate } : {}),
+            ...(override.title ? { title: override.title } : {}),
+          }]
+        }
+        return [e]
+      }),
+    })),
 
   // Clipboard
   clipboardText: '',

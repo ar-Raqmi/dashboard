@@ -208,8 +208,12 @@ export async function handleMutation(path: string, args: any, env?: any) {
       // Events
       case 'events:create':
         return eventService.create(args)
+      case 'events:update':
+        return eventService.update(args)
       case 'events:remove':
         return eventService.remove(args)
+      case 'events:setOccurrenceException':
+        return eventService.setOccurrenceException(args)
 
       // Files
       case 'files:create':
