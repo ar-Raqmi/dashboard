@@ -74,6 +74,14 @@ export interface FileItem {
   content?: string // for text files or mock URLs
   storageId?: string
   r2Key?: string
+  storageSource?: string
+  starred?: boolean
+  lastAccessed?: number
+  mimeType?: string
+  width?: number
+  height?: number
+  duration?: number
+  thumbnailR2Key?: string
 }
 
 export interface VerseData {
