@@ -382,12 +382,19 @@ export function DataSync({ children }: { children: React.ReactNode }) {
           .catch(console.error)
       },
       updateEvent: (id, updates) => {
+        const target = store.getState().events.find((e) => e.id === id || e.recurrenceTemplateId === id)
+        const wasRecurring = !!(target?.isRecurring || target?.rrule)
         store.setState((state) => ({
-          events: state.events.map((e) => (e.id === id ? { ...e, ...updates } : e)),
+          events: state.events.map((e) =>
+            (e.id === id || e.recurrenceTemplateId === id) ? { ...e, ...updates } : e,
+          ),
         }))
         const { recurrenceTemplateId, occurrenceDate, isRecurring, id: _id, ...rest } = updates as any
         void recurrenceTemplateId; void occurrenceDate; void isRecurring
-        updateEventMut({ sessionToken, eventId: id as any, ...rest }).catch(console.error)
+        const recurrenceChanged = rest.rrule !== undefined || rest.dtstart !== undefined
+        updateEventMut({ sessionToken, eventId: id as any, ...rest })
+          .then(() => { if (wasRecurring || recurrenceChanged) triggerGlobalSync() })
+          .catch(console.error)
       },
       deleteEvent: (id) => {
         store.setState((state) => ({ events: state.events.filter((e) => e.id !== id) }))
