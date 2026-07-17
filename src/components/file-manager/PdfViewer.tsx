@@ -18,6 +18,7 @@ export function PdfViewer({ url, filename }: PdfViewerProps) {
   const [failed, setFailed] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const docRef = useRef<any>(null)
+  const renderTaskRef = useRef<any>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -52,26 +53,41 @@ export function PdfViewer({ url, filename }: PdfViewerProps) {
     const canvas = canvasRef.current
     if (!doc || !canvas || loading) return
     let cancelled = false
-    let renderTask: any
-    doc.getPage(page)
-      .then(async (pdfPage: any) => {
+
+    const render = async () => {
+      // Serialize: wait for any in-flight render to settle (incl. its async
+      // cancel) before touching the canvas again, otherwise pdf.js throws
+      // "cannot use the same canvas during multiple render() operations".
+      if (renderTaskRef.current) {
+        try { renderTaskRef.current.cancel() } catch {}
+        try { await renderTaskRef.current.promise } catch {}
+        renderTaskRef.current = null
+      }
+      if (cancelled) return
+
+      try {
+        const pdfPage = await doc.getPage(page)
         if (cancelled) return
         const viewport = pdfPage.getViewport({ scale })
         const ctx = canvas.getContext('2d')
-        if (!ctx) return
-        canvas.width = viewport.width
-        canvas.height = viewport.height
-        renderTask = pdfPage.render({ canvasContext: ctx, viewport, canvas })
-        try {
-          await renderTask.promise
-        } catch {
-          /* render cancelled */
-        }
-      })
-      .catch(() => {})
+        if (!ctx || cancelled) return
+        canvas.width = Math.floor(viewport.width)
+        canvas.height = Math.floor(viewport.height)
+        const task = pdfPage.render({ canvasContext: ctx, viewport })
+        renderTaskRef.current = task
+        await task.promise
+      } catch {
+        /* render cancelled or failed */
+      }
+    }
+
+    render()
+
     return () => {
       cancelled = true
-      renderTask?.cancel?.()
+      if (renderTaskRef.current) {
+        try { renderTaskRef.current.cancel() } catch {}
+      }
     }
   }, [page, scale, loading])
 
