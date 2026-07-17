@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { Plus, Trash2, CalendarDays, Clock } from 'lucide-react'
+import { Plus, Trash2, CalendarDays, Clock, History } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -53,6 +53,27 @@ function parseEventDate(dateStr: string): Date {
     if (y && m && d) return new Date(y, m - 1, d, 12, 0, 0)
   }
   return new Date(dateStr)
+}
+
+// Shared compact event row used by the sidebar mini-sections (DRY)
+type MiniEvent = { id: string; title: string; date: string; color?: string }
+
+function MiniEventRow({ event, onSelect }: { event: MiniEvent; onSelect: (date: string) => void }) {
+  return (
+    <div
+      className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-accent/50 cursor-pointer transition-colors"
+      onClick={() => onSelect(event.date)}
+    >
+      <div
+        className="size-2 rounded-full shrink-0"
+        style={{ backgroundColor: event.color || EVENT_COLORS[0].value }}
+      />
+      <span className="text-xs text-foreground truncate flex-1 min-w-0">{event.title}</span>
+      <span className="text-[0.65rem] text-muted-foreground shrink-0">
+        {format(parseLocalDateString(event.date), 'MMM d')}
+      </span>
+    </div>
+  )
 }
 
 export default function CalendarPage() {
@@ -113,6 +134,23 @@ export default function CalendarPage() {
         return eventDate > todayDate
       })
       .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(0, 8)
+  }, [events, selectedDateStr, todayStr, mounted])
+
+  // Past events (strictly BEFORE today, excluding selected date) — client-only
+  const pastEvents = useMemo(() => {
+    if (!mounted) return []
+    const todayDate = new Date()
+    todayDate.setHours(0, 0, 0, 0)
+    return events
+      .filter((e) => {
+        if (e.date === selectedDateStr) return false
+        if (e.date === todayStr) return false
+        const eventDate = parseEventDate(e.date)
+        eventDate.setHours(0, 0, 0, 0)
+        return eventDate < todayDate
+      })
+      .sort((a, b) => b.date.localeCompare(a.date)) // most recent past first
       .slice(0, 8)
   }, [events, selectedDateStr, todayStr, mounted])
 
@@ -399,20 +437,25 @@ export default function CalendarPage() {
                   </div>
                   <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto">
                     {upcomingEvents.map((event) => (
-                      <div
-                        key={event.id}
-                        className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-accent/50 cursor-pointer transition-colors"
-                        onClick={() => setSelectedDate(parseLocalDateString(event.date))}
-                      >
-                        <div
-                          className="size-2 rounded-full shrink-0"
-                          style={{ backgroundColor: event.color || EVENT_COLORS[0].value }}
-                        />
-                        <span className="text-xs text-foreground truncate flex-1 min-w-0">{event.title}</span>
-                        <span className="text-[0.65rem] text-muted-foreground shrink-0">
-                          {format(parseLocalDateString(event.date), 'MMM d')}
-                        </span>
-                      </div>
+                      <MiniEventRow key={event.id} event={event} onSelect={(date) => setSelectedDate(parseLocalDateString(date))} />
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Divider + Past Events */}
+            {pastEvents.length > 0 && (
+              <>
+                <div className="border-t border-border/50 mt-1" />
+                <div className="mt-1">
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <History className="size-3.5 text-muted-foreground" />
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Past</span>
+                  </div>
+                  <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto">
+                    {pastEvents.map((event) => (
+                      <MiniEventRow key={event.id} event={event} onSelect={(date) => setSelectedDate(parseLocalDateString(date))} />
                     ))}
                   </div>
                 </div>
