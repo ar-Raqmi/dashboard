@@ -12,6 +12,14 @@ export interface Task {
   priority: Priority
   status: TaskStatus
   createdAt: string
+  // recurrence
+  rrule?: string | null
+  dtstart?: string | null
+  recurrenceUntil?: string | null
+  recurrenceCount?: number | null
+  isRecurring?: boolean
+  recurrenceTemplateId?: string
+  occurrenceDate?: string
 }
 
 export interface Goal {
@@ -38,6 +46,14 @@ export interface CalendarEvent {
   title: string
   date: string // ISO date string
   color?: string
+  // recurrence
+  rrule?: string | null
+  dtstart?: string | null
+  recurrenceUntil?: string | null
+  recurrenceCount?: number | null
+  isRecurring?: boolean
+  recurrenceTemplateId?: string
+  occurrenceDate?: string
 }
 
 export type FileItemType = 'file' | 'folder'
