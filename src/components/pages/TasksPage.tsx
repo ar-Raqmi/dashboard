@@ -2,11 +2,10 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, CheckCircle2, Trash2, ListTodo, CalendarDays, AlertTriangle, Clock } from 'lucide-react'
+import { Plus, CheckCircle2, Trash2, ListTodo, CalendarDays, AlertTriangle, Clock, Pencil, CalendarClock } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import type { Priority, TaskStatus, Task } from '@/lib/store'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -14,21 +13,12 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
   DialogClose,
   DialogDescription,
 } from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Calendar } from '@/components/ui/calendar'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { format } from 'date-fns'
+import { TaskFormDialog } from '@/components/tasks/TaskFormDialog'
 
 type FilterType = 'all' | 'pending' | 'completed'
 
@@ -78,10 +68,12 @@ function categorizeTasks(tasks: Task[]) {
 }
 
 // ===== Task Card for full page =====
-function TaskCard({ task, onToggle, initiateDelete, isHighlighted }: {
+function TaskCard({ task, onToggle, initiateDelete, onEdit, onPostpone, isHighlighted }: {
   task: Task
   onToggle: (id: string) => void
   initiateDelete: (id: string) => void
+  onEdit: (task: Task) => void
+  onPostpone: (task: Task) => void
   isHighlighted?: boolean
 }) {
   const cardRef = useRef<HTMLDivElement>(null)
@@ -177,17 +169,44 @@ function TaskCard({ task, onToggle, initiateDelete, isHighlighted }: {
         </div>
       </div>
 
-      <Button
-        variant="ghost"
-        size="icon"
-        className="size-8 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
-        onClick={(e) => {
-          e.stopPropagation()
-          initiateDelete(task.id)
-        }}
-      >
-        <Trash2 className="size-4" />
-      </Button>
+      <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-8 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary/10"
+          title="Postpone 1 day"
+          onClick={(e) => {
+            e.stopPropagation()
+            onPostpone(task)
+          }}
+        >
+          <CalendarClock className="size-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-8 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary/10"
+          title="Edit task"
+          onClick={(e) => {
+            e.stopPropagation()
+            onEdit(task)
+          }}
+        >
+          <Pencil className="size-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-8 rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10"
+          title="Delete task"
+          onClick={(e) => {
+            e.stopPropagation()
+            initiateDelete(task.id)
+          }}
+        >
+          <Trash2 className="size-4" />
+        </Button>
+      </div>
     </motion.div>
   )
 }
@@ -219,14 +238,16 @@ function SectionHeader({ label, icon, count, variant }: {
 }
 
 export default function TasksPage() {
-  const { tasks, addTask, toggleTaskStatus, deleteTask, deleteCompletedTasks, highlightedTaskId, setHighlightedTask } = useAppStore()
+  const { tasks, addTask, updateTask, toggleTaskStatus, deleteTask, deleteCompletedTasks, highlightedTaskId, setHighlightedTask } = useAppStore()
   const [filter, setFilter] = useState<FilterType>('all')
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [title, setTitle] = useState('')
-  const [dueDate, setDueDate] = useState<Date | undefined>(new Date())
-  const [priority, setPriority] = useState<Priority>('medium')
-  const [calendarOpen, setCalendarOpen] = useState(false)
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [deleteTaskId, setDeleteTaskId] = useState<string | null>(null)
+
+  const todayStr = useMemo(() => {
+    const t = new Date()
+    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`
+  }, [])
 
   // Clear highlight after 3 seconds
   useEffect(() => {
@@ -249,18 +270,36 @@ export default function TasksPage() {
     [filteredTasks]
   )
 
-  const handleAddTask = () => {
-    if (!title.trim()) return
-    addTask({
-      title: title.trim(),
-      dueDate: dueDate ? `${dueDate.getFullYear()}-${String(dueDate.getMonth() + 1).padStart(2, '0')}-${String(dueDate.getDate()).padStart(2, '0')}` : null,
-      priority,
-      status: 'pending',
-    })
-    setTitle('')
-    setDueDate(new Date())
-    setPriority('medium')
-    setDialogOpen(false)
+  const openCreate = () => {
+    setEditingTask(null)
+    setDialogOpen(true)
+  }
+
+  const openEdit = (task: Task) => {
+    setEditingTask(task)
+    setDialogOpen(true)
+  }
+
+  const handleFormSubmit = (data: { title: string; dueDate: string | null; priority: Priority }) => {
+    if (editingTask) {
+      updateTask(editingTask.id, data)
+    } else {
+      addTask({ ...data, status: 'pending' })
+    }
+    setEditingTask(null)
+  }
+
+  const handleQuickPostpone = (task: Task) => {
+    const base = task.dueDate ? new Date(task.dueDate + 'T12:00:00') : new Date()
+    const next = new Date(base)
+    next.setDate(base.getDate() + 1)
+    const nextStr = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`
+    updateTask(task.id, { dueDate: nextStr })
+  }
+
+  const handleDialogChange = (open: boolean) => {
+    setDialogOpen(open)
+    if (!open) setEditingTask(null)
   }
 
   const confirmDelete = () => {
@@ -296,79 +335,25 @@ export default function TasksPage() {
           )}
         </div>
 
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90">
-              <Plus className="size-4 mr-1" />
-              Add Task
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="bg-card border-border rounded-3xl">
-            <DialogHeader>
-              <DialogTitle className="text-foreground">Add New Task</DialogTitle>
-            </DialogHeader>
-            <div className="flex flex-col gap-4 py-2">
-              <div className="flex flex-col gap-2">
-                <label className="text-sm text-on-surface-variant">Title</label>
-                <Input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Enter task title..."
-                  className="rounded-2xl bg-input border-border"
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-sm text-on-surface-variant">Due Date</label>
-                <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="rounded-2xl bg-input border-border justify-start text-left font-normal"
-                    >
-                      <CalendarDays className="mr-2 size-4" />
-                      {dueDate ? format(dueDate, 'PPP') : 'Pick a date'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-card border-border rounded-2xl">
-                    <Calendar
-                      mode="single"
-                      selected={dueDate}
-                      onSelect={(date) => {
-                        setDueDate(date)
-                        setCalendarOpen(false)
-                      }}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-sm text-on-surface-variant">Priority</label>
-                <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
-                  <SelectTrigger className="rounded-2xl bg-input border-border w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border rounded-2xl">
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="ghost" className="rounded-2xl">Cancel</Button>
-              </DialogClose>
-              <Button
-                onClick={handleAddTask}
-                className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                Add Task
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button
+          onClick={openCreate}
+          className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
+        >
+          <Plus className="size-4 mr-1" />
+          Add Task
+        </Button>
       </motion.div>
+
+      {/* Create / Edit Task Dialog (shared component) */}
+      <TaskFormDialog
+        key={dialogOpen ? (editingTask?.id ?? 'create') : 'closed'}
+        open={dialogOpen}
+        onOpenChange={handleDialogChange}
+        mode={editingTask ? 'edit' : 'create'}
+        task={editingTask}
+        defaultDueDate={todayStr}
+        onSubmit={handleFormSubmit}
+      />
 
       {/* Delete Confirmation */}
       <Dialog open={!!deleteTaskId} onOpenChange={(open) => !open && setDeleteTaskId(null)}>
@@ -468,6 +453,8 @@ export default function TasksPage() {
                         task={task}
                         onToggle={toggleTaskStatus}
                         initiateDelete={setDeleteTaskId}
+                        onEdit={openEdit}
+                        onPostpone={handleQuickPostpone}
                         isHighlighted={highlightedTaskId === task.id}
                       />
                     ))}
@@ -496,6 +483,8 @@ export default function TasksPage() {
                         task={task}
                         onToggle={toggleTaskStatus}
                         initiateDelete={setDeleteTaskId}
+                        onEdit={openEdit}
+                        onPostpone={handleQuickPostpone}
                         isHighlighted={highlightedTaskId === task.id}
                       />
                     ))}
@@ -524,6 +513,8 @@ export default function TasksPage() {
                           task={task}
                           onToggle={toggleTaskStatus}
                           initiateDelete={setDeleteTaskId}
+                          onEdit={openEdit}
+                          onPostpone={handleQuickPostpone}
                           isHighlighted={highlightedTaskId === task.id}
                         />
                     ))}

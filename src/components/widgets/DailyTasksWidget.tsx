@@ -2,9 +2,11 @@
 
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { CheckCircle2, Circle, Plus, Calendar } from 'lucide-react'
+import { CheckCircle2, Circle, Plus, Calendar, Pencil } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
+import type { Task } from '@/lib/store'
 import { Input } from '@/components/ui/input'
+import { TaskFormDialog } from '@/components/tasks/TaskFormDialog'
 
 const priorityColors: Record<string, string> = {
   high: 'bg-[oklch(0.8_0.08_350)]',
@@ -13,8 +15,9 @@ const priorityColors: Record<string, string> = {
 }
 
 export default function DailyTasksWidget() {
-  const { tasks, addTask, toggleTaskStatus, setActivePage } = useAppStore()
+  const { tasks, addTask, updateTask, toggleTaskStatus, setActivePage } = useAppStore()
   const [quickAdd, setQuickAdd] = useState('')
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
 
   const todayDate = new Date()
   const today = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, '0')}-${String(todayDate.getDate()).padStart(2, '0')}`
@@ -34,6 +37,12 @@ export default function DailyTasksWidget() {
       status: 'pending',
     })
     setQuickAdd('')
+  }
+
+  const openEdit = (task: Task) => setEditingTask(task)
+  const handleFormSubmit = (data: { title: string; dueDate: string | null; priority: 'high' | 'medium' | 'low' }) => {
+    if (editingTask) updateTask(editingTask.id, data)
+    setEditingTask(null)
   }
 
   return (
@@ -94,6 +103,19 @@ export default function DailyTasksWidget() {
                 className={`w-2 h-2 rounded-full shrink-0 ${priorityColors[task.priority]}`}
               />
 
+              {/* Edit (hover) */}
+              <button
+                type="button"
+                aria-label="Edit task"
+                className="shrink-0 w-4 h-4 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 text-[oklch(0.6_0.01_155)] hover:text-[oklch(0.72_0.19_142)] transition-opacity"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  openEdit(task)
+                }}
+              >
+                <Pencil className="w-2.5 h-2.5" />
+              </button>
+
               {/* Due Date */}
               {task.dueDate && (
                 <span className="flex items-center gap-1 text-[10px] text-[oklch(0.5_0.01_155)] shrink-0">
@@ -120,6 +142,16 @@ export default function DailyTasksWidget() {
           View All
         </button>
       )}
+
+      {/* Edit dialog (shared component) */}
+      <TaskFormDialog
+        key={editingTask?.id ?? 'closed'}
+        open={!!editingTask}
+        onOpenChange={(open) => { if (!open) setEditingTask(null) }}
+        mode="edit"
+        task={editingTask}
+        onSubmit={handleFormSubmit}
+      />
     </div>
   )
 }
