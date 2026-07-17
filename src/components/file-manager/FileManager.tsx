@@ -25,12 +25,11 @@ import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/co
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAppStore } from '@/lib/store'
 import {
-  FileCategoryService,
   formatFileSize as formatSize,
   formatFileDate as formatDate,
-  resolveFileCategory,
 } from '@/lib/file-utils'
-import { extractMediaMeta } from '@/lib/media-utils'
+import { FileThumbnail } from '@/components/file-manager/FileThumbnail'
+import { extractMediaMeta, generateImageThumbnail, generateVideoThumbnail } from '@/lib/media-utils'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
@@ -45,12 +44,6 @@ import {
 // ===== TYPES & HELPERS =====
 type ViewMode = 'grid' | 'list'
 type NavCategory = 'all' | 'starred' | 'recent' | 'images' | 'audio' | 'video' | 'docs'
-
-const getFileIcon = (file: any) => {
-  const cfg = FileCategoryService.get(resolveFileCategory(file))
-  const Icon = cfg.icon
-  return <Icon className={cn('size-6', cfg.iconClass)} />
-}
 
 // ===== MAIN COMPONENT =====
 export default function FileManager() {
@@ -978,7 +971,7 @@ function FileGridItem({
           }}
         >
           <div className="aspect-[4/3] rounded-xl bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center mb-2 md:mb-3 relative overflow-hidden">
-            {getFileIcon(file)}
+            <FileThumbnail file={file} variant="grid" className="absolute inset-0" />
             
             {/* Selection Checkbox */}
             <div 
@@ -1122,8 +1115,8 @@ function FileListItem({
               <button onClick={(e) => { e.stopPropagation(); onToggleStar(e); }} className="p-1 rounded-lg hover:bg-white/10 transition-colors">
                 <Star className={`size-4 ${file.starred ? 'text-amber-500 fill-amber-500' : 'text-muted-foreground'}`} />
               </button>
-              <div className="size-8 rounded-lg bg-white/5 flex items-center justify-center">
-                {getFileIcon(file)}
+              <div className="size-8 md:size-10 rounded-lg bg-white/5 flex items-center justify-center overflow-hidden shrink-0">
+                <FileThumbnail file={file} variant="list" className="w-full h-full" />
               </div>
               <span className="truncate max-w-[150px] md:max-w-[300px] text-xs md:text-sm">{file.name}</span>
             </div>
@@ -1241,6 +1234,31 @@ function UploadModal({ open, onClose, folderId }: { open: boolean, onClose: () =
         // Extract dimensions / duration (images, audio, video)
         const meta = await extractMediaMeta(file)
 
+        // Generate a client-side thumbnail for images & videos, upload to R2
+        let thumbnailR2Key: string | undefined
+        try {
+          const thumbBlob =
+            category === 'image' ? await generateImageThumbnail(file)
+            : category === 'video' ? await generateVideoThumbnail(file)
+            : null
+          if (thumbBlob) {
+            thumbnailR2Key = `thumbs/${r2Key}.jpg`
+            const thumbUrl = await getR2UploadUrl({
+              sessionToken,
+              key: thumbnailR2Key,
+              contentType: 'image/jpeg',
+            })
+            const thumbRes = await fetch(thumbUrl, {
+              method: 'PUT',
+              body: thumbBlob,
+              headers: { 'Content-Type': 'image/jpeg' },
+            })
+            if (!thumbRes.ok) thumbnailR2Key = undefined
+          }
+        } catch (err) {
+          console.error('Thumbnail generation failed:', err)
+        }
+
         await saveFile({
           sessionToken,
           name: file.name,
@@ -1254,6 +1272,7 @@ function UploadModal({ open, onClose, folderId }: { open: boolean, onClose: () =
           width: meta.width,
           height: meta.height,
           duration: meta.duration,
+          thumbnailR2Key,
         })
         
         setUploadProgress(prev => ({ ...prev, [file.name]: 100 }))
