@@ -17,8 +17,10 @@ import {
 } from '@/components/ui/dialog'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Switch } from '@/components/ui/switch'
 import { format } from 'date-fns'
 import { RecurrencePicker } from '@/components/recurrence/RecurrencePicker'
+import { DayTimeline } from '@/components/calendar/DayTimeline'
 import { configToRRuleString, rruleStringToConfig, describeRecurrence, type RecurrenceConfig } from '@/lib/recurrence'
 import type { CalendarEvent } from '@/lib/store'
 
@@ -88,6 +90,9 @@ export default function CalendarPage() {
   const [eventTitle, setEventTitle] = useState('')
   const [eventDate, setEventDate] = useState<Date>(selectedDate)
   const [eventColor, setEventColor] = useState(EVENT_COLORS[0].value)
+  const [eventStartTime, setEventStartTime] = useState<string>('')
+  const [eventEndTime, setEventEndTime] = useState<string>('')
+  const [eventAllDay, setEventAllDay] = useState<boolean>(true)
   const [eventRecurrence, setEventRecurrence] = useState<RecurrenceConfig | null>(null)
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [view, setView] = useState<'calendar' | 'past'>('calendar')
@@ -196,11 +201,16 @@ export default function CalendarPage() {
       dtstart = dateStr
     }
 
+    const timePayload = eventAllDay
+      ? { startTime: null, endTime: null, allDay: true }
+      : { startTime: eventStartTime || null, endTime: eventEndTime || null, allDay: false }
+
     if (editingEvent) {
       const targetId = editingEvent.recurrenceTemplateId ?? editingEvent.id
       const updates: Partial<CalendarEvent> = {
         title: eventTitle.trim(),
         color: eventColor,
+        ...timePayload,
         rrule,
         dtstart: rrule ? dtstart : null,
       }
@@ -208,7 +218,6 @@ export default function CalendarPage() {
         updates.date = dateStr
       }
       if (!rrule) {
-        // clearing recurrence on the series
         ;(updates as any).rrule = null
         ;(updates as any).dtstart = null
       }
@@ -218,6 +227,7 @@ export default function CalendarPage() {
         title: eventTitle.trim(),
         date: dateStr,
         color: eventColor,
+        ...timePayload,
         rrule,
         dtstart,
       })
@@ -229,6 +239,9 @@ export default function CalendarPage() {
   const resetEventForm = () => {
     setEventTitle('')
     setEventColor(EVENT_COLORS[0].value)
+    setEventStartTime('')
+    setEventEndTime('')
+    setEventAllDay(true)
     setEventRecurrence(null)
     setEditingEvent(null)
   }
@@ -242,6 +255,9 @@ export default function CalendarPage() {
     setEventDate(selectedDate)
     setEventTitle('')
     setEventColor(EVENT_COLORS[0].value)
+    setEventStartTime('')
+    setEventEndTime('')
+    setEventAllDay(true)
     setEventRecurrence(null)
     setEditingEvent(null)
     setDialogOpen(true)
@@ -252,6 +268,9 @@ export default function CalendarPage() {
     setEventTitle(event.title)
     setEventColor(event.color || EVENT_COLORS[0].value)
     setEventDate(event.date ? parseLocalDateString(event.date) : selectedDate)
+    setEventStartTime(event.startTime ?? '')
+    setEventEndTime(event.endTime ?? '')
+    setEventAllDay(event.allDay ?? !event.startTime)
     setEventRecurrence(event.rrule ? rruleStringToConfig(event.rrule) : null)
     setDialogOpen(true)
   }
@@ -336,6 +355,31 @@ export default function CalendarPage() {
                 <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/40 rounded-xl px-3 py-2">
                   <Repeat className="size-3.5" />
                   Editing the recurring series
+                </div>
+              )}
+              {!(editingEvent?.isRecurring) && (
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm text-muted-foreground font-medium">All day</label>
+                    <Switch checked={eventAllDay} onCheckedChange={setEventAllDay} />
+                  </div>
+                  {!eventAllDay && (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="time"
+                        value={eventStartTime}
+                        onChange={(e) => setEventStartTime(e.target.value)}
+                        className="flex-1 h-10 rounded-2xl bg-input border border-border px-3 text-sm text-foreground"
+                      />
+                      <span className="text-muted-foreground text-sm">–</span>
+                      <input
+                        type="time"
+                        value={eventEndTime}
+                        onChange={(e) => setEventEndTime(e.target.value)}
+                        className="flex-1 h-10 rounded-2xl bg-input border border-border px-3 text-sm text-foreground"
+                      />
+                    </div>
+                  )}
                 </div>
               )}
               <div className="flex flex-col gap-2">
@@ -490,53 +534,10 @@ export default function CalendarPage() {
               </Button>
             </div>
 
-            {/* Events for selected date */}
-            <ScrollArea className="flex-1 min-h-0 max-h-[40vh] lg:max-h-none">
-              <div className="flex flex-col gap-2 pr-2">
-                {eventsForSelectedDate.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-8 gap-3">
-                    <div className="p-3 rounded-2xl bg-muted">
-                      <CalendarDays className="size-6 text-muted-foreground" />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm font-medium text-muted-foreground">No events</p>
-                      <p className="text-xs text-outline mt-0.5">Tap + to add one</p>
-                    </div>
-                  </div>
-                ) : (
-                  eventsForSelectedDate.map((event) => (
-                    <div
-                      key={event.id}
-                      className="flex items-center gap-3 p-3 rounded-2xl bg-muted/80 group hover:bg-muted transition-colors cursor-pointer"
-                      onClick={() => openEditDialog(event)}
-                    >
-                      <div
-                        className="size-3 rounded-full shrink-0 shadow-sm"
-                        style={{ backgroundColor: event.color || EVENT_COLORS[0].value }}
-                      />
-                      <div className="flex-1 min-w-0 flex items-center gap-2">
-                        <span className="text-sm text-foreground font-medium truncate">{event.title}</span>
-                        {event.isRecurring && (
-                          <Repeat className="size-3 text-primary shrink-0" />
-                        )}
-                      </div>
-                      <button
-                        className="size-7 rounded-xl flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="Edit"
-                        onClick={(e) => { e.stopPropagation(); openEditDialog(event) }}
-                      >
-                        <Pencil className="size-3.5" />
-                      </button>
-                      <button
-                        className="size-7 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                        title={event.isRecurring ? 'Cancel this occurrence' : 'Delete event'}
-                        onClick={(e) => { e.stopPropagation(); handleDeleteEvent(event) }}
-                      >
-                        <Trash2 className="size-3.5" />
-                      </button>
-                    </div>
-                  ))
-                )}
+            {/* Day viewer (timeline for the selected date) */}
+            <ScrollArea className="flex-1 min-h-0 max-h-[55vh] lg:max-h-[60vh]">
+              <div className="pr-2">
+                <DayTimeline events={eventsForSelectedDate} onSelect={openEditDialog} />
               </div>
             </ScrollArea>
 

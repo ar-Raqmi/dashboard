@@ -46,6 +46,9 @@ export interface CalendarEvent {
   title: string
   date: string // ISO date string
   color?: string
+  startTime?: string | null
+  endTime?: string | null
+  allDay?: boolean
   // recurrence
   rrule?: string | null
   dtstart?: string | null

@@ -1,150 +1,118 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { DayPicker } from 'react-day-picker'
-import { format, isToday, isAfter, parseISO, startOfDay } from 'date-fns'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useMemo } from 'react'
+import { CalendarDays, Clock, CalendarClock } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
+import { format, parseISO, isAfter, startOfDay } from 'date-fns'
+
+function fmtTime(e: { allDay?: boolean; startTime?: string | null; endTime?: string | null }): string {
+  if (e.allDay || !e.startTime) return 'All day'
+  const start = parseISO(`2000-01-01T${e.startTime}:00`)
+  const end = e.endTime ? parseISO(`2000-01-01T${e.endTime}:00`) : null
+  return end ? `${format(start, 'h:mm a')} – ${format(end, 'h:mm a')}` : format(start, 'h:mm a')
+}
 
 export default function CalendarWidget() {
   const { events, setActivePage } = useAppStore()
-  const [month, setMonth] = useState<Date>(new Date())
-
-  // Build a set of dates that have events
-  const eventDates = useMemo(() => {
-    const map = new Map<string, typeof events>()
-    events.forEach((ev) => {
-      const key = ev.date
-      if (!map.has(key)) map.set(key, [])
-      map.get(key)!.push(ev)
-    })
-    return map
-  }, [events])
-
-  // Upcoming events (max 3)
   const today = startOfDay(new Date())
-  const upcomingEvents = useMemo(
+  const todayStr = format(today, 'yyyy-MM-dd')
+
+  const todayEvents = useMemo(
     () =>
       events
-        .filter((ev) => isAfter(parseISO(ev.date), today) || ev.date === format(new Date(), 'yyyy-MM-dd'))
-        .sort((a, b) => a.date.localeCompare(b.date))
-        .slice(0, 3),
-    [events, today]
+        .filter((e) => e.date === todayStr)
+        .sort((a, b) => {
+          const ad = a.allDay || !a.startTime ? 1 : 0
+          const bd = b.allDay || !b.startTime ? 1 : 0
+          if (ad !== bd) return ad - bd
+          return (a.startTime ?? '').localeCompare(b.startTime ?? '')
+        }),
+    [events, todayStr],
   )
 
-  // Custom day render via components
-  const DayContent = ({ date }: { date: Date }) => {
-    const dateStr = format(date, 'yyyy-MM-dd')
-    const dayEvents = eventDates.get(dateStr)
-    const todayHighlight = isToday(date)
+  const upcoming = useMemo(
+    () =>
+      events
+        .filter((e) => isAfter(parseISO(e.date), today) && e.date !== todayStr)
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .slice(0, 4),
+    [events, today],
+  )
 
-    return (
-      <div className="flex flex-col items-center justify-center w-full h-full relative">
-        <span
-          className={`text-xs font-medium ${
-            todayHighlight
-              ? 'ring-2 ring-[oklch(0.72_0.19_142)] text-[oklch(0.72_0.19_142)] w-6 h-6 flex items-center justify-center rounded-full'
-              : ''
-          }`}
-        >
-          {date.getDate()}
-        </span>
-        {dayEvents && dayEvents.length > 0 && (
-          <div className="flex gap-0.5 mt-0.5">
-            {dayEvents.slice(0, 3).map((ev) => (
-              <span
-                key={ev.id}
-                className="w-1 h-1 rounded-full"
-                style={{ backgroundColor: ev.color || '#A5D6A7' }}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    )
-  }
+  const hasNothing = todayEvents.length === 0 && upcoming.length === 0
 
   return (
     <div className="flex flex-col h-full">
-      {/* Calendar Navigation */}
-      <div className="flex items-center justify-between mb-2 px-1">
-        <button
-          onClick={() =>
-            setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))
-          }
-          className="w-7 h-7 rounded-xl bg-[oklch(0.17_0.008_155)] hover:bg-[oklch(0.25_0.01_155)] flex items-center justify-center transition-colors"
-        >
-          <ChevronLeft className="w-4 h-4 text-[oklch(0.7_0.01_155)]" />
-        </button>
-        <span className="text-sm font-semibold text-[oklch(0.9_0.005_155)]">
-          {format(month, 'MMMM yyyy')}
-        </span>
-        <button
-          onClick={() =>
-            setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))
-          }
-          className="w-7 h-7 rounded-xl bg-[oklch(0.17_0.008_155)] hover:bg-[oklch(0.25_0.01_155)] flex items-center justify-center transition-colors"
-        >
-          <ChevronRight className="w-4 h-4 text-[oklch(0.7_0.01_155)]" />
-        </button>
-      </div>
-
-      {/* DayPicker */}
-      <div className="flex justify-center [&_table]:w-full [&_th]:text-[10px] [&_th]:text-[oklch(0.5_0.01_155)] [&_th]:font-medium [&_th]:py-1 [&_td]:p-0 [&_td]:text-center [&_.rdp-day]:w-full [&_.rdp-day]:aspect-square">
-        <DayPicker
-          month={month}
-          onMonthChange={setMonth}
-          showOutsideDays={false}
-          components={{
-            DayContent: ({ date }) => <DayContent date={date} />,
-          }}
-          classNames={{
-            months: 'flex flex-col',
-            month: 'flex flex-col w-full',
-            weekday: 'text-[10px] text-[oklch(0.5_0.01_155)] font-medium',
-            day: 'text-center p-0 w-full aspect-square',
-          }}
-          formatters={{
-            formatWeekdayName: (date) =>
-              date.toLocaleDateString('en-US', { weekday: 'narrow' }),
-          }}
-        />
-      </div>
-
-      {/* Upcoming Events */}
-      <div className="mt-3 border-t border-[oklch(0.25_0.01_155)] pt-2">
-        <h4 className="text-[10px] uppercase tracking-wider text-[oklch(0.5_0.01_155)] mb-1.5 font-semibold">
-          Upcoming
-        </h4>
-        <div className="space-y-1.5 max-h-20 overflow-y-auto scrollbar-thin">
-          {upcomingEvents.length === 0 && (
-            <p className="text-xs text-[oklch(0.4_0.01_155)]">No upcoming events</p>
-          )}
-          {upcomingEvents.map((ev) => (
-            <div
-              key={ev.id}
-              className="flex items-center gap-2 text-xs"
-            >
-              <span
-                className="w-2 h-2 rounded-full shrink-0"
-                style={{ backgroundColor: ev.color || '#A5D6A7' }}
-              />
-              <span className="text-[oklch(0.8_0.005_155)] truncate flex-1">
-                {ev.title}
-              </span>
-              <span className="text-[10px] text-[oklch(0.5_0.01_155)] shrink-0">
-                {format(parseISO(ev.date), 'MMM d')}
-              </span>
-            </div>
-          ))}
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-1.5">
+          <CalendarDays className="w-3.5 h-3.5 text-[oklch(0.72_0.19_142)]" />
+          <span className="text-[10px] uppercase tracking-wider text-[oklch(0.5_0.01_155)] font-semibold">
+            Calendar
+          </span>
         </div>
-        <button
-          onClick={() => setActivePage('calendar')}
-          className="mt-1.5 text-[10px] text-[oklch(0.72_0.19_142)] hover:underline w-full text-right"
-        >
-          View All →
-        </button>
+        <span className="text-[10px] text-[oklch(0.5_0.01_155)] font-medium">
+          {format(today, 'EEE, MMM d')}
+        </span>
       </div>
+
+      {hasNothing ? (
+        <div className="flex-1 flex flex-col items-center justify-center gap-2 opacity-70">
+          <CalendarClock className="size-7 text-[oklch(0.35_0.01_155)]" />
+          <p className="text-[10px] uppercase tracking-widest text-[oklch(0.5_0.01_155)]">No events</p>
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto scrollbar-thin pr-1 space-y-3">
+          {/* Today */}
+          <div>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <div className="size-1.5 rounded-full bg-[oklch(0.72_0.19_142)] animate-pulse" />
+              <span className="text-[10px] uppercase tracking-wider text-[oklch(0.72_0.19_142)] font-semibold">Today</span>
+            </div>
+            {todayEvents.length === 0 ? (
+              <p className="text-[10px] text-[oklch(0.45_0.01_155)] px-1">Nothing scheduled today</p>
+            ) : (
+              <div className="flex flex-col gap-1">
+                {todayEvents.map((ev) => (
+                  <div key={ev.id} className="flex items-center gap-2 px-1.5 py-1 rounded-lg hover:bg-[oklch(0.2_0.01_155)] transition-colors">
+                    <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: ev.color || '#A5D6A7' }} />
+                    <span className="text-[11px] text-[oklch(0.9_0.005_155)] font-medium truncate flex-1">{ev.title}</span>
+                    <span className="text-[9px] text-[oklch(0.55_0.01_155)] shrink-0 tabular-nums">{fmtTime(ev)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Upcoming */}
+          {upcoming.length > 0 && (
+            <div>
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <Clock className="w-3 h-3 text-[oklch(0.5_0.01_155)]" />
+                <span className="text-[10px] uppercase tracking-wider text-[oklch(0.5_0.01_155)] font-semibold">Upcoming</span>
+              </div>
+              <div className="flex flex-col gap-1">
+                {upcoming.map((ev) => (
+                  <div key={ev.id} className="flex items-center gap-2 px-1.5 py-1 rounded-lg hover:bg-[oklch(0.2_0.01_155)] transition-colors">
+                    <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: ev.color || '#A5D6A7' }} />
+                    <span className="text-[11px] text-[oklch(0.85_0.005_155)] truncate flex-1">{ev.title}</span>
+                    <span className="text-[9px] text-[oklch(0.5_0.01_155)] shrink-0 tabular-nums">
+                      {format(parseISO(ev.date), 'MMM d')}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <button
+        onClick={() => setActivePage('calendar')}
+        className="mt-2 text-[10px] text-[oklch(0.72_0.19_142)] hover:underline text-center font-medium"
+      >
+        Open Calendar →
+      </button>
     </div>
   )
 }
