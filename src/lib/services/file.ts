@@ -92,6 +92,34 @@ export class FileService extends BaseService {
     return `/api/storage/proxy?key=${encodeURIComponent(r2Key)}&token=${encodeURIComponent(sessionToken)}`
   }
 
+  /**
+   * Attaches display URLs to serialized files:
+   *  - thumbnailUrl: signed URL for a stored thumbnail (preferred)
+   *  - fileUrl: signed URL for the full media (lazy-render fallback for
+   *    image/video/pdf items that have no stored thumbnail yet)
+   */
+  private async attachUrls(files: any[], sessionToken: string): Promise<any[]> {
+    return Promise.all(
+      files.map(async (f) => {
+        const item = { ...f }
+        try {
+          if (f.thumbnailR2Key) {
+            item.thumbnailUrl = await this.resolveSignedUrl(f.thumbnailR2Key, sessionToken)
+          } else if (['image', 'video', 'pdf'].includes(f.category)) {
+            if (f.r2Key) {
+              item.fileUrl = await this.resolveSignedUrl(f.r2Key, sessionToken)
+            } else if (f.storageId) {
+              item.fileUrl = `/api/storage/${f.storageId}`
+            }
+          }
+        } catch {
+          // leave without url; UI falls back to icon
+        }
+        return item
+      }),
+    )
+  }
+
   async list(args: {
     sessionToken: string
     parentId?: string | null
@@ -115,7 +143,7 @@ export class FileService extends BaseService {
       orderBy: { updatedAt: 'desc' },
     })
 
-    return files.map((f: any) => this.serializeFile(f))
+    return this.attachUrls(files.map((f: any) => this.serializeFile(f)), args.sessionToken)
   }
 
   async getPath(args: { sessionToken: string; folderId?: string }) {
@@ -145,7 +173,7 @@ export class FileService extends BaseService {
       where: { userId: user.id },
       orderBy: { updatedAt: 'desc' },
     })
-    return files.map((f: any) => this.serializeFile(f))
+    return this.attachUrls(files.map((f: any) => this.serializeFile(f)), args.sessionToken)
   }
 
   async getFilesRecursive(args: { sessionToken: string; ids: string[] }): Promise<any[]> {
@@ -216,7 +244,7 @@ export class FileService extends BaseService {
       },
       orderBy: { updatedAt: 'desc' },
     })
-    return files.map((f: any) => this.serializeFile(f))
+    return this.attachUrls(files.map((f: any) => this.serializeFile(f)), args.sessionToken)
   }
 
   async create(args: {
