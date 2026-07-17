@@ -188,20 +188,18 @@ function TaskCard({ task, onToggle, onDelete, onEdit, onPostpone, isHighlighted 
         >
           <CalendarClock className="size-4" />
         </Button>
-        {!task.isRecurring && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary/10"
-            title="Edit task"
-            onClick={(e) => {
-              e.stopPropagation()
-              onEdit(task)
-            }}
-          >
-            <Pencil className="size-4" />
-          </Button>
-        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-8 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary/10"
+          title={task.isRecurring ? 'Edit series' : 'Edit task'}
+          onClick={(e) => {
+            e.stopPropagation()
+            onEdit(task)
+          }}
+        >
+          <Pencil className="size-4" />
+        </Button>
         <Button
           variant="ghost"
           size="icon"
@@ -251,6 +249,7 @@ export default function TasksPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [deleteTaskId, setDeleteTaskId] = useState<string | null>(null)
+  const [deleteChoiceTask, setDeleteChoiceTask] = useState<Task | null>(null)
 
   const todayStr = useMemo(() => {
     const t = new Date()
@@ -321,10 +320,24 @@ export default function TasksPage() {
 
   const handleDelete = (task: Task) => {
     if (task.isRecurring && task.recurrenceTemplateId && task.occurrenceDate) {
-      applyTaskOccurrenceOverride(task.recurrenceTemplateId, task.occurrenceDate, { cancelled: true })
+      setDeleteChoiceTask(task)
     } else {
       setDeleteTaskId(task.id)
     }
+  }
+
+  const confirmDeleteThisDay = () => {
+    if (deleteChoiceTask?.recurrenceTemplateId && deleteChoiceTask?.occurrenceDate) {
+      applyTaskOccurrenceOverride(deleteChoiceTask.recurrenceTemplateId, deleteChoiceTask.occurrenceDate, { cancelled: true })
+    }
+    setDeleteChoiceTask(null)
+  }
+
+  const confirmDeleteSeries = () => {
+    if (deleteChoiceTask) {
+      deleteTask(deleteChoiceTask.recurrenceTemplateId ?? deleteChoiceTask.id)
+    }
+    setDeleteChoiceTask(null)
   }
 
   const handleDialogChange = (open: boolean) => {
@@ -381,6 +394,7 @@ export default function TasksPage() {
         onOpenChange={handleDialogChange}
         mode={editingTask ? 'edit' : 'create'}
         task={editingTask}
+        lockDate={editingTask?.isRecurring}
         defaultDueDate={todayStr}
         onSubmit={handleFormSubmit}
       />
@@ -401,6 +415,45 @@ export default function TasksPage() {
                 <DialogClose asChild><Button variant="ghost" className="rounded-2xl">Cancel</Button></DialogClose>
                 <Button onClick={confirmDelete} className="rounded-2xl bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete Task</Button>
             </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Recurring task delete choice */}
+      <Dialog open={!!deleteChoiceTask} onOpenChange={(open) => !open && setDeleteChoiceTask(null)}>
+        <DialogContent className="bg-card border-border rounded-3xl sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Repeat className="size-5 text-primary" />
+              Delete recurring task
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground pt-2">
+              This task repeats. Choose what to delete.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col gap-2 sm:gap-2">
+            <Button
+              onClick={confirmDeleteThisDay}
+              variant="outline"
+              className="rounded-2xl w-full justify-start"
+            >
+              <div className="flex flex-col items-start text-left">
+                <span className="font-medium">Delete this day only</span>
+                <span className="text-xs text-muted-foreground font-normal">Skip {deleteChoiceTask?.occurrenceDate} — the series continues</span>
+              </div>
+            </Button>
+            <Button
+              onClick={confirmDeleteSeries}
+              className="rounded-2xl w-full justify-start bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              <div className="flex flex-col items-start text-left">
+                <span className="font-medium">Delete the entire series</span>
+                <span className="text-xs opacity-80 font-normal">Remove every occurrence permanently</span>
+              </div>
+            </Button>
+            <DialogClose asChild>
+              <Button variant="ghost" className="rounded-2xl w-full">Cancel</Button>
+            </DialogClose>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

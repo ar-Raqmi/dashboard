@@ -204,7 +204,61 @@ export interface ExpandOptions {
 }
 
 /**
- * Turns a flat list of template rows into a flat list of concrete instances:
+ * Groups recurring task templates into a single "series" row per template,
+ * representing its next un-completed occurrence. This avoids bloating the
+ * task list with hundreds of virtual rows (e.g. a daily task → one row).
+ */
+export function groupRecurringForTasks<T extends ExpandableTemplate>(
+  templates: T[],
+  opts: {
+    today: string
+    windowEnd: Date
+    exceptions: Record<string, ExceptionOverride>
+  },
+): T[] {
+  const todayMs = new Date(opts.today + 'T00:00:00').getTime()
+  const out: T[] = []
+
+  for (const tpl of templates) {
+    const rule = RecurrenceRule.fromString(tpl.rrule ?? null, tpl.dtstart ?? null)
+    if (!rule) {
+      out.push({ ...tpl, isRecurring: false })
+      continue
+    }
+
+    const dtstartMs = new Date((tpl.dtstart as string) + 'T00:00:00').getTime()
+    const start = new Date(Math.max(todayMs, dtstartMs))
+    const occs = rule.expand(start, opts.windowEnd)
+
+    let active: string | undefined
+    for (const d of occs) {
+      const ex = opts.exceptions[`${tpl.id}::${d}`]
+      if (ex?.status === 'cancelled' || ex?.status === 'completed') continue
+      active = d
+      break
+    }
+    if (!active) active = occs[0]
+    if (!active) {
+      out.push({ ...tpl, isRecurring: false })
+      continue
+    }
+
+    out.push({
+      ...tpl,
+      id: tpl.id,
+      dueDate: active,
+      status: 'pending',
+      isRecurring: true,
+      recurrenceTemplateId: tpl.id,
+      occurrenceDate: active,
+    } as T)
+  }
+  return out
+}
+
+/**
+ * Turns a flat list of template rows into a flat list of concrete instances
+ * (used by calendar EVENTS, where each date needs its own occurrence):
  * - non-recurring rows pass through unchanged (tagged isRecurring:false)
  * - recurring rows are expanded into virtual instances within the window,
  *   merged with per-occurrence exceptions (cancel / postpone / status / title).

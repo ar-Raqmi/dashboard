@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { Plus, Trash2, CalendarDays, Clock, History, Repeat, Pencil } from 'lucide-react'
+import { Plus, Trash2, CalendarDays, Clock, History, Repeat, Pencil, Search, X } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -90,6 +90,8 @@ export default function CalendarPage() {
   const [eventColor, setEventColor] = useState(EVENT_COLORS[0].value)
   const [eventRecurrence, setEventRecurrence] = useState<RecurrenceConfig | null>(null)
   const [calendarOpen, setCalendarOpen] = useState(false)
+  const [view, setView] = useState<'calendar' | 'past'>('calendar')
+  const [pastQuery, setPastQuery] = useState('')
 
   useEffect(() => {
     // Schedule mount flag outside the synchronous effect body to avoid cascading renders
@@ -142,22 +144,41 @@ export default function CalendarPage() {
       .slice(0, 8)
   }, [events, selectedDateStr, todayStr, mounted])
 
-  // Past events (strictly BEFORE today, excluding selected date) — client-only
-  const pastEvents = useMemo(() => {
+  // All past events (strictly BEFORE today) — client-only, for the Past tab
+  const pastEventsAll = useMemo(() => {
     if (!mounted) return []
     const todayDate = new Date()
     todayDate.setHours(0, 0, 0, 0)
     return events
       .filter((e) => {
-        if (e.date === selectedDateStr) return false
-        if (e.date === todayStr) return false
         const eventDate = parseEventDate(e.date)
         eventDate.setHours(0, 0, 0, 0)
         return eventDate < todayDate
       })
-      .sort((a, b) => b.date.localeCompare(a.date)) // most recent past first
-      .slice(0, 8)
-  }, [events, selectedDateStr, todayStr, mounted])
+      .sort((a, b) => b.date.localeCompare(a.date)) // most recent first
+  }, [events, mounted])
+
+  const filteredPast = useMemo(() => {
+    const q = pastQuery.trim().toLowerCase()
+    if (!q) return pastEventsAll
+    return pastEventsAll.filter((e) => e.title.toLowerCase().includes(q))
+  }, [pastEventsAll, pastQuery])
+
+  const pastGrouped = useMemo(() => {
+    const groups: { key: string; label: string; items: typeof pastEventsAll }[] = []
+    for (const ev of filteredPast) {
+      const d = parseEventDate(ev.date)
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      let g = groups.find((x) => x.key === key)
+      if (!g) {
+        g = { key, label, items: [] }
+        groups.push(g)
+      }
+      g.items.push(ev)
+    }
+    return groups
+  }, [filteredPast])
 
   // All events for selected month (for the mini month summary)
   const selectedMonthEvents = useMemo(() => {
@@ -360,8 +381,30 @@ export default function CalendarPage() {
         </Dialog>
       </div>
 
+      {/* View toggle */}
+      <div className="flex gap-2">
+        <Button
+          variant={view === 'calendar' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setView('calendar')}
+          className={`rounded-2xl ${view === 'calendar' ? 'bg-primary text-primary-foreground' : ''}`}
+        >
+          <CalendarDays className="size-4 mr-1.5" />
+          Calendar
+        </Button>
+        <Button
+          variant={view === 'past' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setView('past')}
+          className={`rounded-2xl ${view === 'past' ? 'bg-primary text-primary-foreground' : ''}`}
+        >
+          <History className="size-4 mr-1.5" />
+          Past Events
+        </Button>
+      </div>
+
       {/* Calendar + Events Layout */}
-      {!mounted ? (
+      {view === 'calendar' && (!mounted ? (
         // Pre-mount skeleton to avoid hydration mismatch from Date-dependent rendering
         <div className="flex flex-col lg:flex-row gap-5">
           <div className="rounded-3xl bg-card border border-border p-5 flex-1 min-h-[320px] flex items-center justify-center">
@@ -542,25 +585,77 @@ export default function CalendarPage() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      ))}
 
-            {/* Divider + Past Events */}
-            {pastEvents.length > 0 && (
-              <>
-                <div className="border-t border-border/50 mt-1" />
-                <div className="mt-1">
-                  <div className="flex items-center gap-2 mb-2.5">
+      {/* Past Events view */}
+      {view === 'past' && (
+        <div className="flex flex-col gap-4">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+            <Input
+              value={pastQuery}
+              onChange={(e) => setPastQuery(e.target.value)}
+              placeholder="Search past events..."
+              className="pl-11 pr-10 rounded-2xl bg-card border-border h-11"
+            />
+            {pastQuery && (
+              <button
+                onClick={() => setPastQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Clear search"
+              >
+                <X className="size-4" />
+              </button>
+            )}
+          </div>
+
+          {filteredPast.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3 bg-muted/20 rounded-3xl border border-dashed border-border">
+              <History className="size-8 text-muted-foreground/40" />
+              <p className="text-muted-foreground font-medium">
+                {pastQuery ? `No past events match "${pastQuery}"` : 'No past events yet'}
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-6">
+              {pastGrouped.map((group) => (
+                <div key={group.key} className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
                     <History className="size-3.5 text-muted-foreground" />
-                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Past</span>
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{group.label}</span>
+                    <span className="text-xs text-muted-foreground/70">({group.items.length})</span>
                   </div>
-                  <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto">
-                    {pastEvents.map((event) => (
-                      <MiniEventRow key={event.id} event={event} onSelect={(date) => setSelectedDate(parseLocalDateString(date))} />
+                  <div className="flex flex-col gap-1.5">
+                    {group.items.map((event) => (
+                      <div
+                        key={event.id}
+                        className="flex items-center gap-3 p-3 rounded-2xl bg-muted/60 hover:bg-muted transition-colors cursor-pointer group"
+                        onClick={() => { setSelectedDate(parseLocalDateString(event.date)); setView('calendar') }}
+                      >
+                        <div
+                          className="size-3 rounded-full shrink-0"
+                          style={{ backgroundColor: event.color || EVENT_COLORS[0].value }}
+                        />
+                        <span className="flex-1 text-sm text-foreground font-medium truncate">{event.title}</span>
+                        {event.isRecurring && <Repeat className="size-3 text-primary shrink-0" />}
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {format(parseLocalDateString(event.date), 'EEE, MMM d')}
+                        </span>
+                        <button
+                          className="size-7 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          onClick={(e) => { e.stopPropagation(); handleDeleteEvent(event) }}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      </div>
                     ))}
                   </div>
                 </div>
-              </>
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

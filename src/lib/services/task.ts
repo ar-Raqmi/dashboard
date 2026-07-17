@@ -1,6 +1,6 @@
 import { BaseService } from './base'
 import { RecurrenceService } from './recurrence'
-import { expandRecurring, getDefaultRecurrenceWindow } from '../recurrence'
+import { groupRecurringForTasks, getDefaultRecurrenceWindow } from '../recurrence'
 
 export class TaskService extends BaseService {
   async list(args: { sessionToken: string }) {
@@ -22,7 +22,8 @@ export class TaskService extends BaseService {
       recurrenceCount: t.recurrenceCount,
     }))
 
-    // Expand recurring templates into virtual instances within the window
+    // Group recurring templates into a single series row each (next occurrence),
+    // so a daily task shows as ONE row instead of hundreds.
     const templateIds = mapped.filter((t: any) => t.rrule).map((t: any) => t.id)
     if (templateIds.length === 0) return mapped.map((t: any) => ({ ...t, isRecurring: false }))
 
@@ -32,14 +33,9 @@ export class TaskService extends BaseService {
       entityType: 'task',
       entityIds: templateIds,
     })
-    const { windowStart, windowEnd } = getDefaultRecurrenceWindow()
-    return expandRecurring(mapped, {
-      dateField: 'dueDate',
-      windowStart,
-      windowEnd,
-      exceptions,
-      defaultStatus: 'pending',
-    })
+    const { windowEnd } = getDefaultRecurrenceWindow()
+    const today = new Date().toISOString().slice(0, 10)
+    return groupRecurringForTasks(mapped, { today, windowEnd, exceptions })
   }
 
   async create(args: {
