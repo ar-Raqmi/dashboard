@@ -3,9 +3,11 @@
 import { CalendarClock } from 'lucide-react'
 import type { CalendarEvent } from '@/lib/store'
 
-const HOUR_PX = 44
+const HOUR_W = 70
 const START_HOUR = 6
 const END_HOUR = 24
+const LABEL_H = 22
+const LANE_H = 42
 
 function parseHM(t?: string | null): number | null {
   if (!t) return null
@@ -26,41 +28,32 @@ interface Block {
   event: CalendarEvent
   start: number
   end: number
-  col: number
-  cols: number
+  lane: number
 }
 
-/** Greedy overlap layout: overlapping timed events sit side-by-side. */
-function layoutBlocks(timed: CalendarEvent[]): Block[] {
+/** Greedy lane assignment: overlapping events stack into separate rows. */
+function layoutLanes(timed: CalendarEvent[]): { blocks: Block[]; lanes: number } {
   const withTimes = timed
     .map((event) => {
       const s = parseHM(event.startTime) ?? START_HOUR * 60
       let e = parseHM(event.endTime) ?? s + 60
       if (e <= s) e = s + 30
-      return { event, start: s, end: e, col: 0, cols: 1 }
+      return { event, start: s, end: e, lane: 0 }
     })
     .sort((a, b) => a.start - b.start)
 
-  const colEnds: number[] = []
+  const laneEnds: number[] = []
   for (const it of withTimes) {
-    let c = colEnds.findIndex((end) => end <= it.start)
-    if (c === -1) {
-      c = colEnds.length
-      colEnds.push(it.end)
+    let lane = laneEnds.findIndex((end) => end <= it.start)
+    if (lane === -1) {
+      lane = laneEnds.length
+      laneEnds.push(it.end)
     } else {
-      colEnds[c] = it.end
+      laneEnds[lane] = it.end
     }
-    it.col = c
+    it.lane = lane
   }
-  for (const it of withTimes) {
-    let maxCol = it.col
-    for (const other of withTimes) {
-      if (other === it) continue
-      if (other.start < it.end && it.start < other.end) maxCol = Math.max(maxCol, other.col)
-    }
-    it.cols = maxCol + 1
-  }
-  return withTimes
+  return { blocks: withTimes, lanes: Math.max(1, laneEnds.length) }
 }
 
 interface DayTimelineProps {
@@ -71,11 +64,11 @@ interface DayTimelineProps {
 export function DayTimeline({ events, onSelect }: DayTimelineProps) {
   const allDay = events.filter((e) => e.allDay || !e.startTime)
   const timed = events.filter((e) => !e.allDay && e.startTime)
-  const blocks = layoutBlocks(timed)
+  const { blocks, lanes } = layoutLanes(timed)
 
   if (events.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-10 gap-3 text-center">
+      <div className="flex flex-col items-center justify-center py-8 gap-2 text-center">
         <div className="p-3 rounded-2xl bg-muted">
           <CalendarClock className="size-6 text-muted-foreground" />
         </div>
@@ -84,6 +77,12 @@ export function DayTimeline({ events, onSelect }: DayTimelineProps) {
       </div>
     )
   }
+
+  const totalWidth = (END_HOUR - START_HOUR) * HOUR_W
+  const innerHeight = LABEL_H + lanes * LANE_H
+
+  const clampStart = (min: number) => Math.max(min, START_HOUR * 60)
+  const clampEnd = (min: number) => Math.min(min, END_HOUR * 60)
 
   return (
     <div className="flex flex-col gap-2">
@@ -97,56 +96,57 @@ export function DayTimeline({ events, onSelect }: DayTimelineProps) {
               className="flex items-center gap-1.5 pl-2 pr-3 py-1 rounded-full bg-muted text-xs font-medium hover:bg-muted/70 transition-colors"
             >
               <span className="size-2 rounded-full" style={{ backgroundColor: e.color || '#A5D6A7' }} />
-              <span className="truncate max-w-[12rem]">{e.title}</span>
+              <span className="truncate max-w-[14rem]">{e.title}</span>
             </button>
           ))}
         </div>
       )}
 
-      {/* Hourly timeline */}
-      {blocks.length > 0 && (
-        <div className="relative overflow-hidden" style={{ height: (END_HOUR - START_HOUR) * HOUR_PX }}>
-          {/* hour grid */}
-          {Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i).map((h) => (
-            <div key={h} className="absolute left-0 right-0 flex items-center" style={{ top: (h - START_HOUR) * HOUR_PX }}>
-              <span className="w-12 shrink-0 text-[0.6rem] text-muted-foreground/70 tabular-nums pr-2 text-right">
-                {h % 12 === 0 ? 12 : h % 12} {h < 12 ? 'AM' : 'PM'}
-              </span>
-              <div className="flex-1 border-t border-border/40" />
-            </div>
-          ))}
-
-          {/* event blocks */}
-          {blocks.map((b) => {
-            const startClamp = Math.max(b.start, START_HOUR * 60)
-            const endClamp = Math.min(b.end, END_HOUR * 60)
-            const top = ((startClamp - START_HOUR * 60) / 60) * HOUR_PX
-            const height = Math.max(((endClamp - startClamp) / 60) * HOUR_PX, 18)
-            const widthPct = 100 / b.cols
-            const leftPct = b.col * widthPct
-            return (
-              <button
-                key={b.event.id}
-                onClick={() => onSelect?.(b.event)}
-                className="absolute rounded-lg p-1.5 text-left overflow-hidden hover:brightness-110 transition-all"
-                style={{
-                  top: top + 2,
-                  height: height - 4,
-                  width: `calc(${widthPct}% - 4px)`,
-                  left: `calc(48px + ${leftPct}% )`,
-                  backgroundColor: (b.event.color || '#A5D6A7') + '33',
-                  borderLeft: `3px solid ${b.event.color || '#A5D6A7'}`,
-                }}
+      {blocks.length === 0 ? (
+        <p className="text-xs text-muted-foreground px-1 py-2">Only all-day events on this date.</p>
+      ) : (
+        <div className="overflow-x-auto scrollbar-thin -mx-1 px-1">
+          <div className="relative" style={{ width: totalWidth, height: innerHeight, minWidth: '100%' }}>
+            {/* hour grid + labels */}
+            {Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i).map((h) => (
+              <div
+                key={h}
+                className="absolute top-0 bottom-0 border-l border-border/40"
+                style={{ left: (h - START_HOUR) * HOUR_W }}
               >
-                <p className="text-[0.7rem] font-semibold text-foreground truncate leading-tight">{b.event.title}</p>
-                {height > 34 && (
-                  <p className="text-[0.6rem] text-muted-foreground tabular-nums leading-tight">
+                <span className="absolute -top-0.5 -translate-x-1/2 text-[0.6rem] text-muted-foreground/70 tabular-nums bg-card px-1">
+                  {h % 12 === 0 ? 12 : h % 12} {h < 12 ? 'AM' : 'PM'}
+                </span>
+              </div>
+            ))}
+
+            {/* event blocks */}
+            {blocks.map((b) => {
+              const left = ((clampStart(b.start) - START_HOUR * 60) / 60) * HOUR_W
+              const width = Math.max(((clampEnd(b.end) - clampStart(b.start)) / 60) * HOUR_W - 4, 30)
+              const top = LABEL_H + b.lane * LANE_H
+              return (
+                <button
+                  key={b.event.id}
+                  onClick={() => onSelect?.(b.event)}
+                  className="absolute rounded-lg p-1.5 text-left overflow-hidden hover:brightness-110 transition-all"
+                  style={{
+                    top: top + 2,
+                    height: LANE_H - 6,
+                    left: left + 2,
+                    width,
+                    backgroundColor: (b.event.color || '#A5D6A7') + '33',
+                    borderLeft: `3px solid ${b.event.color || '#A5D6A7'}`,
+                  }}
+                >
+                  <p className="text-[0.7rem] font-semibold text-foreground truncate leading-tight">{b.event.title}</p>
+                  <p className="text-[0.6rem] text-muted-foreground tabular-nums leading-tight truncate">
                     {fmtHM(b.start)} – {fmtHM(b.end)}
                   </p>
-                )}
-              </button>
-            )
-          })}
+                </button>
+              )
+            })}
+          </div>
         </div>
       )}
     </div>
