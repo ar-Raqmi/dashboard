@@ -40,6 +40,7 @@ import {
   FileCategoryService,
   formatFileSize,
   formatFileDate,
+  formatDuration,
 } from '@/lib/file-utils'
 import { cn } from '@/lib/utils'
 
@@ -279,6 +280,42 @@ export default function FilePreview() {
                   icon={<HardDrive className="size-4" />}
                   label="Size"
                   value={formatFileSize(previewFile.size)}
+                />
+                {previewFile.width && previewFile.height ? (
+                  <>
+                    <Separator />
+                    <DetailRow
+                      icon={<HardDrive className="size-4" />}
+                      label="Dims"
+                      value={`${previewFile.width} × ${previewFile.height}`}
+                    />
+                  </>
+                ) : null}
+                {previewFile.duration ? (
+                  <>
+                    <Separator />
+                    <DetailRow
+                      icon={<HardDrive className="size-4" />}
+                      label="Length"
+                      value={formatDuration(previewFile.duration)}
+                    />
+                  </>
+                ) : null}
+                {previewFile.mimeType ? (
+                  <>
+                    <Separator />
+                    <DetailRow
+                      icon={<HardDrive className="size-4" />}
+                      label="Type"
+                      value={previewFile.mimeType}
+                    />
+                  </>
+                ) : null}
+                <Separator />
+                <DetailRow
+                  icon={<Calendar className="size-4" />}
+                  label="Modified"
+                  value={formatFileDate(previewFile.updatedAt, true)}
                 />
                 <Separator />
                 <DetailRow

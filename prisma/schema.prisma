@@ -63,6 +63,11 @@ model FileItem {
   storageSource  String?
   starred        Boolean?   @default(false)
   lastAccessed   Float?
+  mimeType       String?
+  width          Int?
+  height         Int?
+  duration       Float?
+  thumbnailR2Key String?
   createdAt      DateTime   @default(now())
   updatedAt      DateTime
   parent         FileItem?  @relation("FileItemToFileItem", fields: [parentId], references: [id], onDelete: Cascade)

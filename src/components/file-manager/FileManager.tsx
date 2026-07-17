@@ -30,6 +30,7 @@ import {
   formatFileDate as formatDate,
   resolveFileCategory,
 } from '@/lib/file-utils'
+import { extractMediaMeta } from '@/lib/media-utils'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
@@ -1237,6 +1238,9 @@ function UploadModal({ open, onClose, folderId }: { open: boolean, onClose: () =
         else if (file.type === 'application/pdf') category = 'pdf'
         else if (file.type.includes('word') || file.type.includes('text')) category = 'doc'
 
+        // Extract dimensions / duration (images, audio, video)
+        const meta = await extractMediaMeta(file)
+
         await saveFile({
           sessionToken,
           name: file.name,
@@ -1246,6 +1250,10 @@ function UploadModal({ open, onClose, folderId }: { open: boolean, onClose: () =
           storageSource: 'r2',
           parentId: folderId as any,
           size: file.size,
+          mimeType: file.type || undefined,
+          width: meta.width,
+          height: meta.height,
+          duration: meta.duration,
         })
         
         setUploadProgress(prev => ({ ...prev, [file.name]: 100 }))

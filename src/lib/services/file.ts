@@ -50,6 +50,48 @@ export class FileService extends BaseService {
     return results
   }
 
+  /** Single serializer so every list/search path returns the same shape. */
+  private serializeFile(f: any) {
+    return {
+      id: f.id,
+      name: f.name,
+      type: f.type,
+      category: f.category || undefined,
+      parentId: f.parentId || null,
+      size: f.size || 0,
+      storageId: f.storageId || undefined,
+      r2Key: f.r2Key || undefined,
+      storageSource: f.storageSource || undefined,
+      starred: f.starred || false,
+      lastAccessed: f.lastAccessed || undefined,
+      mimeType: f.mimeType || undefined,
+      width: f.width || undefined,
+      height: f.height || undefined,
+      duration: f.duration || undefined,
+      thumbnailR2Key: f.thumbnailR2Key || undefined,
+      createdAt: f.createdAt.toISOString(),
+      updatedAt: f.updatedAt.toISOString(),
+    }
+  }
+
+  /** Returns a signed GET url for an R2 key (cheap local HMAC), with a proxy fallback. */
+  private async resolveSignedUrl(r2Key: string, sessionToken: string, contentDisposition?: string): Promise<string | null> {
+    const s3 = this.getS3Client()
+    if (s3) {
+      try {
+        const command = new GetObjectCommand({
+          Bucket: this.env?.R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'dashboard-files',
+          Key: r2Key,
+          ...(contentDisposition ? { ResponseContentDisposition: contentDisposition } : {}),
+        })
+        return await getSignedUrl(s3, command, { expiresIn: 3600 })
+      } catch (err) {
+        console.error('Failed to generate signed GET URL:', err)
+      }
+    }
+    return `/api/storage/proxy?key=${encodeURIComponent(r2Key)}&token=${encodeURIComponent(sessionToken)}`
+  }
+
   async list(args: {
     sessionToken: string
     parentId?: string | null
@@ -73,21 +115,7 @@ export class FileService extends BaseService {
       orderBy: { updatedAt: 'desc' },
     })
 
-    return files.map((f: any) => ({
-      id: f.id,
-      name: f.name,
-      type: f.type,
-      category: f.category || undefined,
-      parentId: f.parentId || null,
-      size: f.size || 0,
-      storageId: f.storageId || undefined,
-      r2Key: f.r2Key || undefined,
-      storageSource: f.storageSource || undefined,
-      starred: f.starred || false,
-      lastAccessed: f.lastAccessed || undefined,
-      createdAt: f.createdAt.toISOString(),
-      updatedAt: f.updatedAt.toISOString(),
-    }))
+    return files.map((f: any) => this.serializeFile(f))
   }
 
   async getPath(args: { sessionToken: string; folderId?: string }) {
@@ -117,21 +145,7 @@ export class FileService extends BaseService {
       where: { userId: user.id },
       orderBy: { updatedAt: 'desc' },
     })
-    return files.map((f: any) => ({
-      id: f.id,
-      name: f.name,
-      type: f.type,
-      category: f.category || undefined,
-      parentId: f.parentId || null,
-      size: f.size || 0,
-      storageId: f.storageId || undefined,
-      r2Key: f.r2Key || undefined,
-      storageSource: f.storageSource || undefined,
-      starred: f.starred || false,
-      lastAccessed: f.lastAccessed || undefined,
-      createdAt: f.createdAt.toISOString(),
-      updatedAt: f.updatedAt.toISOString(),
-    }))
+    return files.map((f: any) => this.serializeFile(f))
   }
 
   async getFilesRecursive(args: { sessionToken: string; ids: string[] }): Promise<any[]> {
@@ -202,21 +216,7 @@ export class FileService extends BaseService {
       },
       orderBy: { updatedAt: 'desc' },
     })
-    return files.map((f: any) => ({
-      id: f.id,
-      name: f.name,
-      type: f.type,
-      category: f.category || undefined,
-      parentId: f.parentId || null,
-      size: f.size || 0,
-      storageId: f.storageId || undefined,
-      r2Key: f.r2Key || undefined,
-      storageSource: f.storageSource || undefined,
-      starred: f.starred || false,
-      lastAccessed: f.lastAccessed || undefined,
-      createdAt: f.createdAt.toISOString(),
-      updatedAt: f.updatedAt.toISOString(),
-    }))
+    return files.map((f: any) => this.serializeFile(f))
   }
 
   async create(args: {
@@ -229,9 +229,14 @@ export class FileService extends BaseService {
     storageId?: string
     r2Key?: string
     storageSource?: string
+    mimeType?: string
+    width?: number
+    height?: number
+    duration?: number
+    thumbnailR2Key?: string
   }) {
     const user = await this.getAuthedUser(args.sessionToken)
-    const { name, type, category, parentId, size, storageId, r2Key, storageSource } = args
+    const { name, type, category, parentId, size, storageId, r2Key, storageSource, mimeType, width, height, duration, thumbnailR2Key } = args
     const f = await this.db.fileItem.create({
       data: {
         userId: user.id,
@@ -243,6 +248,11 @@ export class FileService extends BaseService {
         storageId: storageId || null,
         r2Key: r2Key || null,
         storageSource: storageSource || (storageId ? 'legacy' : r2Key ? 'r2' : null),
+        mimeType: mimeType || null,
+        width: width || null,
+        height: height || null,
+        duration: duration || null,
+        thumbnailR2Key: thumbnailR2Key || null,
         updatedAt: new Date(),
       },
     })
@@ -412,32 +422,18 @@ export class FileService extends BaseService {
     }
 
     if (r2Key) {
-      const s3 = this.getS3Client()
-      if (s3) {
-        try {
-          const cleanFilename = filename ? filename.replace(/["\\]/g, '') : undefined
-          const contentDisposition = cleanFilename
-            ? `attachment; filename="${cleanFilename}"`
-            : undefined
-
-          const command = new GetObjectCommand({
-            Bucket: this.env?.R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'dashboard-files',
-            Key: r2Key,
-            ResponseContentDisposition: contentDisposition,
-          })
-          const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 })
-          return signedUrl
-        } catch (err) {
-          console.error('Failed to generate signed GET URL:', err)
-        }
-      }
-
-      return `/api/storage/proxy?key=${encodeURIComponent(r2Key)}&token=${encodeURIComponent(
-        args.sessionToken
-      )}`
+      const cleanFilename = filename ? filename.replace(/["\\]/g, '') : undefined
+      const contentDisposition = cleanFilename ? `attachment; filename="${cleanFilename}"` : undefined
+      return this.resolveSignedUrl(r2Key, args.sessionToken, contentDisposition)
     }
 
     return null
+  }
+
+  /** Signed URL for a stored thumbnail (no content-disposition; inline display). */
+  async getThumbnailUrl(args: { sessionToken: string; thumbnailR2Key: string }) {
+    await this.getAuthedUser(args.sessionToken)
+    return this.resolveSignedUrl(args.thumbnailR2Key, args.sessionToken)
   }
 
   async getUploadUrl(args: { sessionToken: string; key: string; contentType?: string }) {
