@@ -201,6 +201,11 @@ interface AppStore {
   deleteCompletedTasks: () => void
   cleanupOldTasks: () => void
   toggleTaskStatus: (id: string) => void
+  applyTaskOccurrenceOverride: (
+    templateId: string,
+    occurrenceDate: string,
+    override: { status?: TaskStatus; newDate?: string; cancelled?: boolean }
+  ) => void
 
   // Goals
   goals: Goal[]
@@ -423,6 +428,20 @@ export const useAppStore = create<AppStore>()((set, get) => ({
           ? { ...t, status: t.status === 'pending' ? 'completed' : 'pending' }
           : t
       ),
+    })),
+  applyTaskOccurrenceOverride: (templateId, occurrenceDate, override) =>
+    set((state) => ({
+      tasks: state.tasks.flatMap((t) => {
+        if (t.recurrenceTemplateId === templateId && t.occurrenceDate === occurrenceDate) {
+          if (override.cancelled) return []
+          return [{
+            ...t,
+            ...(override.status !== undefined ? { status: override.status } : {}),
+            ...(override.newDate ? { dueDate: override.newDate } : {}),
+          }]
+        }
+        return [t]
+      }),
     })),
 
   // Goals

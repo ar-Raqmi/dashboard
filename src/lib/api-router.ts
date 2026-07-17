@@ -180,6 +180,8 @@ export async function handleMutation(path: string, args: any, env?: any) {
         return taskService.deleteOldCompleted(args)
       case 'tasks:toggleStatus':
         return taskService.toggleStatus(args)
+      case 'tasks:setOccurrenceException':
+        return taskService.setOccurrenceException(args)
 
       // Goals
       case 'goals:create':

@@ -27,6 +27,16 @@ export function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+/** Default read-expansion window: 90 days back (history) to 365 days ahead. */
+export function getDefaultRecurrenceWindow(): { windowStart: Date; windowEnd: Date } {
+  const now = new Date()
+  const windowStart = new Date(now)
+  windowStart.setDate(windowStart.getDate() - 90)
+  const windowEnd = new Date(now)
+  windowEnd.setDate(windowEnd.getDate() + 365)
+  return { windowStart, windowEnd }
+}
+
 function ordinal(n: number): string {
   const s = ['th', 'st', 'nd', 'rd']
   const v = n % 100

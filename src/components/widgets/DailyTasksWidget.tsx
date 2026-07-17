@@ -15,7 +15,7 @@ const priorityColors: Record<string, string> = {
 }
 
 export default function DailyTasksWidget() {
-  const { tasks, addTask, updateTask, toggleTaskStatus, setActivePage } = useAppStore()
+  const { tasks, addTask, updateTask, toggleTaskStatus, applyTaskOccurrenceOverride, setActivePage } = useAppStore()
   const [quickAdd, setQuickAdd] = useState('')
   const [editingTask, setEditingTask] = useState<Task | null>(null)
 
@@ -43,6 +43,16 @@ export default function DailyTasksWidget() {
   const handleFormSubmit = (data: { title: string; dueDate: string | null; priority: 'high' | 'medium' | 'low' }) => {
     if (editingTask) updateTask(editingTask.id, data)
     setEditingTask(null)
+  }
+
+  const handleToggle = (task: Task) => {
+    if (task.isRecurring && task.recurrenceTemplateId && task.occurrenceDate) {
+      applyTaskOccurrenceOverride(task.recurrenceTemplateId, task.occurrenceDate, {
+        status: task.status === 'completed' ? 'pending' : 'completed',
+      })
+    } else {
+      toggleTaskStatus(task.id)
+    }
   }
 
   return (
@@ -78,7 +88,7 @@ export default function DailyTasksWidget() {
               className={`flex items-center gap-2.5 px-3 py-2 rounded-2xl bg-[oklch(0.17_0.008_155)] hover:bg-[oklch(0.2_0.01_155)] transition-colors cursor-pointer group ${
                 task.status === 'completed' ? 'opacity-50' : ''
               }`}
-              onClick={() => toggleTaskStatus(task.id)}
+              onClick={() => handleToggle(task)}
             >
               {/* Checkbox */}
               {task.status === 'completed' ? (
@@ -103,18 +113,20 @@ export default function DailyTasksWidget() {
                 className={`w-2 h-2 rounded-full shrink-0 ${priorityColors[task.priority]}`}
               />
 
-              {/* Edit (hover) */}
-              <button
-                type="button"
-                aria-label="Edit task"
-                className="shrink-0 w-4 h-4 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 text-[oklch(0.6_0.01_155)] hover:text-[oklch(0.72_0.19_142)] transition-opacity"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  openEdit(task)
-                }}
-              >
-                <Pencil className="w-2.5 h-2.5" />
-              </button>
+              {/* Edit (hover) — hidden for recurring instances */}
+              {!task.isRecurring && (
+                <button
+                  type="button"
+                  aria-label="Edit task"
+                  className="shrink-0 w-4 h-4 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 text-[oklch(0.6_0.01_155)] hover:text-[oklch(0.72_0.19_142)] transition-opacity"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    openEdit(task)
+                  }}
+                >
+                  <Pencil className="w-2.5 h-2.5" />
+                </button>
+              )}
 
               {/* Due Date */}
               {task.dueDate && (
