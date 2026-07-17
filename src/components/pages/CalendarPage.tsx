@@ -5,7 +5,6 @@ import { Plus, Trash2, CalendarDays, Clock, History, Repeat, Pencil, Search, X }
 import { useAppStore } from '@/lib/store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Dialog,
   DialogContent,
@@ -61,22 +60,31 @@ function parseEventDate(dateStr: string): Date {
 }
 
 // Shared compact event row used by the sidebar mini-sections (DRY)
-type MiniEvent = { id: string; title: string; date: string; color?: string }
+type MiniEvent = { id: string; title: string; date: string; color?: string; isRecurring?: boolean; recurrenceTemplateId?: string; occurrenceDate?: string }
 
-function MiniEventRow({ event, onSelect }: { event: MiniEvent; onSelect: (date: string) => void }) {
+function MiniEventRow({ event, onSelect, onDelete }: { event: MiniEvent; onSelect: (date: string) => void; onDelete?: (event: MiniEvent) => void }) {
   return (
-    <div
-      className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-accent/50 cursor-pointer transition-colors"
-      onClick={() => onSelect(event.date)}
-    >
+    <div className="group flex items-center gap-2.5 p-2 rounded-xl hover:bg-accent/50 cursor-pointer transition-colors">
       <div
         className="size-2 rounded-full shrink-0"
         style={{ backgroundColor: event.color || EVENT_COLORS[0].value }}
+        onClick={() => onSelect(event.date)}
       />
-      <span className="text-xs text-foreground truncate flex-1 min-w-0">{event.title}</span>
+      <span className="text-xs text-foreground truncate flex-1 min-w-0" onClick={() => onSelect(event.date)}>
+        {event.title}
+      </span>
       <span className="text-[0.65rem] text-muted-foreground shrink-0">
         {format(parseLocalDateString(event.date), 'MMM d')}
       </span>
+      {onDelete && (
+        <button
+          className="size-5 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive shrink-0"
+          title={event.isRecurring ? 'Cancel this occurrence' : 'Delete event'}
+          onClick={(e) => { e.stopPropagation(); onDelete(event) }}
+        >
+          <Trash2 className="size-3" />
+        </button>
+      )}
     </div>
   )
 }
@@ -457,6 +465,7 @@ export default function CalendarPage() {
           <div className="rounded-3xl bg-card border border-border p-5 lg:w-80 min-h-[200px]" />
         </div>
       ) : (
+        <div className="flex flex-col gap-5">
         <div className="flex flex-col lg:flex-row gap-5">
           {/* Calendar Card */}
           <div className="rounded-3xl bg-card border border-border p-5 flex-1">
@@ -534,13 +543,6 @@ export default function CalendarPage() {
               </Button>
             </div>
 
-            {/* Day viewer (timeline for the selected date) */}
-            <ScrollArea className="flex-1 min-h-0 max-h-[55vh] lg:max-h-[60vh]">
-              <div className="pr-2">
-                <DayTimeline events={eventsForSelectedDate} onSelect={openEditDialog} />
-              </div>
-            </ScrollArea>
-
             {/* Today section (only when not viewing today) */}
             {todayEvents.length > 0 && (
               <>
@@ -554,7 +556,7 @@ export default function CalendarPage() {
                     {todayEvents.map((event) => (
                       <div
                         key={event.id}
-                        className="flex items-center gap-2.5 p-2 rounded-xl bg-primary/5 hover:bg-primary/10 cursor-pointer transition-colors"
+                        className="group flex items-center gap-2.5 p-2 rounded-xl bg-primary/5 hover:bg-primary/10 cursor-pointer transition-colors"
                         onClick={() => setSelectedDate(new Date())}
                       >
                         <div
@@ -562,6 +564,13 @@ export default function CalendarPage() {
                           style={{ backgroundColor: event.color || EVENT_COLORS[0].value }}
                         />
                         <span className="text-xs text-foreground truncate flex-1 min-w-0 font-medium">{event.title}</span>
+                        <button
+                          className="size-5 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive shrink-0"
+                          title={event.isRecurring ? 'Cancel this occurrence' : 'Delete event'}
+                          onClick={(e) => { e.stopPropagation(); handleDeleteEvent(event) }}
+                        >
+                          <Trash2 className="size-3" />
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -580,12 +589,29 @@ export default function CalendarPage() {
                   </div>
                   <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto">
                     {upcomingEvents.map((event) => (
-                      <MiniEventRow key={event.id} event={event} onSelect={(date) => setSelectedDate(parseLocalDateString(date))} />
+                      <MiniEventRow key={event.id} event={event} onSelect={(date) => setSelectedDate(parseLocalDateString(date))} onDelete={handleDeleteEvent} />
                     ))}
                   </div>
                 </div>
               </>
             )}
+          </div>
+        </div>
+
+          {/* Day viewer — horizontal timeline for the selected date */}
+          <div className="rounded-3xl bg-card border border-border p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h2 className="text-sm font-bold text-foreground">{format(selectedDate, 'EEEE, MMMM d')}</h2>
+                <p className="text-xs text-muted-foreground">
+                  {eventsForSelectedDate.length} {eventsForSelectedDate.length === 1 ? 'event' : 'events'}
+                </p>
+              </div>
+              <Button size="sm" onClick={openAddDialog} className="rounded-xl bg-primary/15 text-primary hover:bg-primary/25 shadow-none">
+                <Plus className="size-3.5 mr-1" /> Add
+              </Button>
+            </div>
+            <DayTimeline events={eventsForSelectedDate} onSelect={openEditDialog} />
           </div>
         </div>
       ))}
