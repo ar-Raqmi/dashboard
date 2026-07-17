@@ -33,7 +33,7 @@ import {
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog'
 import { useQuery, useMutation, useAction } from '@/hooks/useApi'
-import { api } from '@/lib/api-client'
+import { api, ApiClient } from '@/lib/api-client'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from 'sonner'
 import { PdfViewer } from '@/components/file-manager/PdfViewer'
@@ -151,6 +151,7 @@ export default function FilePreview() {
           storageId: previewFile.storageId as any,
           r2Key: previewFile.r2Key,
           filename: previewFile.name,
+          inline: true,
         }
       : 'skip',
   )
@@ -183,20 +184,29 @@ export default function FilePreview() {
     setPreviewFile({ ...previewFile, starred: !isStarred } as any)
   }
 
-  const handleDownload = () => {
-    if (!fileUrl) return
-    toast.info('Starting download…')
-    const downloadUrl = fileUrl.startsWith('/')
-      ? fileUrl.includes('?')
-        ? `${fileUrl}&download=1`
-        : `${fileUrl}?download=1`
-      : fileUrl
-    const a = document.createElement('a')
-    a.href = downloadUrl
-    a.download = previewFile.name
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
+  const handleDownload = async () => {
+    if (!sessionToken) return
+    try {
+      // Fetch an attachment-disposition URL so the browser downloads
+      // (the display URL above is inline, for previewing/open-in-tab).
+      const dlUrl = (await ApiClient.query(api.files.getFileUrl.path, {
+        sessionToken,
+        storageId: previewFile.storageId,
+        r2Key: previewFile.r2Key,
+        filename: previewFile.name,
+        inline: false,
+      } as any)) as string | null
+      if (!dlUrl) return
+      toast.info('Starting download…')
+      const a = document.createElement('a')
+      a.href = dlUrl
+      a.download = previewFile.name
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+    } catch {
+      toast.error('Download failed')
+    }
   }
 
   const handleCopyLink = async () => {

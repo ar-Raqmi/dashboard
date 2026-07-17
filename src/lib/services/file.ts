@@ -463,9 +463,9 @@ export class FileService extends BaseService {
     return { totalBytes: agg._sum.size || 0, count }
   }
 
-  async getFileUrl(args: { sessionToken: string; storageId?: string; r2Key?: string; filename?: string }) {
+  async getFileUrl(args: { sessionToken: string; storageId?: string; r2Key?: string; filename?: string; inline?: boolean }) {
     await this.getAuthedUser(args.sessionToken)
-    const { storageId, r2Key, filename } = args
+    const { storageId, r2Key, filename, inline } = args
 
     if (storageId) {
       return `/api/storage/${storageId}`
@@ -473,7 +473,8 @@ export class FileService extends BaseService {
 
     if (r2Key) {
       const cleanFilename = filename ? filename.replace(/["\\]/g, '') : undefined
-      const contentDisposition = cleanFilename ? `attachment; filename="${cleanFilename}"` : undefined
+      const contentDisposition =
+        inline || !cleanFilename ? undefined : `attachment; filename="${cleanFilename}"`
       return this.resolveSignedUrl(r2Key, args.sessionToken, contentDisposition)
     }
 
