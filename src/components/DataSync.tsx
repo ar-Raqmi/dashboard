@@ -277,7 +277,7 @@ export function DataSync({ children }: { children: React.ReactNode }) {
           if (override.status !== undefined) payload.status = override.status
           if (override.newDate !== undefined) payload.newDate = override.newDate
         }
-        setTaskOccurrenceExceptionMut(payload).catch(console.error)
+        setTaskOccurrenceExceptionMut(payload).then(() => triggerGlobalSync()).catch(console.error)
       },
 
       // Goal actions

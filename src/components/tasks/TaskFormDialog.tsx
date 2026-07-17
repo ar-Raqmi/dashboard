@@ -41,6 +41,8 @@ interface TaskFormDialogProps {
   mode: 'create' | 'edit'
   task?: Task | null
   defaultDueDate?: string | null
+  /** When editing a recurring series, hide the date/postpone fields. */
+  lockDate?: boolean
   onSubmit: (data: TaskFormData) => void
 }
 
@@ -61,12 +63,16 @@ function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-export function TaskFormDialog({ open, onOpenChange, mode, task, defaultDueDate, onSubmit }: TaskFormDialogProps) {
+export function TaskFormDialog({ open, onOpenChange, mode, task, defaultDueDate, lockDate, onSubmit }: TaskFormDialogProps) {
   // State is initialized from props and the parent remounts this component via
   // a `key` whenever the dialog target changes, so no effect is needed.
   const [title, setTitle] = useState(task?.title ?? '')
   const [dueDate, setDueDate] = useState<Date | undefined>(() => {
-    if (mode === 'edit') return task?.dueDate ? toDate(task.dueDate) : undefined
+    if (mode === 'edit') {
+      // For a recurring series the date field is hidden; base defaults on dtstart.
+      if (task?.isRecurring && task?.dtstart) return toDate(task.dtstart)
+      return task?.dueDate ? toDate(task.dueDate) : undefined
+    }
     return defaultDueDate ? toDate(defaultDueDate) : new Date()
   })
   const [priority, setPriority] = useState<Priority>(task?.priority ?? 'medium')
@@ -114,30 +120,32 @@ export function TaskFormDialog({ open, onOpenChange, mode, task, defaultDueDate,
               autoFocus
             />
           </div>
-          <div className="flex flex-col gap-2">
-            <label className="text-sm text-on-surface-variant">Due Date</label>
-            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="rounded-2xl bg-input border-border justify-start text-left font-normal"
-                >
-                  <CalendarDays className="mr-2 size-4" />
-                  {dueDate ? format(dueDate, 'PPP') : 'Pick a date'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 bg-card border-border rounded-2xl">
-                <Calendar
-                  mode="single"
-                  selected={dueDate}
-                  onSelect={(date) => {
-                    setDueDate(date)
-                    setCalendarOpen(false)
-                  }}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+          {!lockDate && (
+            <div className="flex flex-col gap-2">
+              <label className="text-sm text-on-surface-variant">Due Date</label>
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="rounded-2xl bg-input border-border justify-start text-left font-normal"
+                  >
+                    <CalendarDays className="mr-2 size-4" />
+                    {dueDate ? format(dueDate, 'PPP') : 'Pick a date'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-card border-border rounded-2xl">
+                  <Calendar
+                    mode="single"
+                    selected={dueDate}
+                    onSelect={(date) => {
+                      setDueDate(date)
+                      setCalendarOpen(false)
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
 
           <div className="flex flex-col gap-2">
             <label className="text-sm text-on-surface-variant">Repeat</label>
@@ -151,7 +159,7 @@ export function TaskFormDialog({ open, onOpenChange, mode, task, defaultDueDate,
             )}
           </div>
 
-          {mode === 'edit' && (
+          {mode === 'edit' && !lockDate && (
             <div className="flex flex-col gap-2">
               <label className="text-sm text-on-surface-variant flex items-center gap-1.5">
                 <Clock className="size-3.5" /> Postpone
