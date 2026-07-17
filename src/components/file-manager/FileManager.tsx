@@ -2,14 +2,14 @@
 
 import React, { useState, useMemo } from 'react'
 import { useQuery, useMutation, useAction } from '@/hooks/useApi'
-import { api } from '@/lib/api-client'
+import { api, ApiClient } from '@/lib/api-client'
 import { useAuth } from '@/hooks/useAuth'
 import { 
   Folder, File, Upload, FolderPlus, ArrowLeft, MoreVertical, 
   Trash2, FileText, ImageIcon, Music, Film, Loader2, 
   Check, X, Search, Grid, List, Star, Clock, Image, 
   FileStack, ChevronRight, Download, Edit3, Share2, Filter,
-  MoreHorizontal, Play, Pause, ExternalLink, Menu, Plus
+  MoreHorizontal, Play, Pause, ExternalLink, Menu, Plus, HardDrive
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
@@ -82,10 +82,13 @@ export default function FileManager() {
     sessionToken, 
     parentId: navCategory === 'all' ? (currentFolderId as any) : undefined,
     starred: navCategory === 'starred' ? true : undefined,
+    recent: navCategory === 'recent' ? true : undefined,
     category: ['images', 'audio', 'video', 'docs'].includes(navCategory) 
       ? (navCategory === 'images' ? 'image' : navCategory === 'audio' ? 'audio' : navCategory === 'video' ? 'video' : 'doc') as any 
       : undefined
   } : 'skip')
+
+  const storageStats = useQuery(api.files.getStorageStats, sessionToken ? { sessionToken } : 'skip')
 
   const searchResults = useQuery(api.files.search, sessionToken && searchQuery ? { sessionToken, query: searchQuery } : 'skip')
   const path = useQuery(api.files.getPath, sessionToken ? { sessionToken, folderId: currentFolderId as any } : 'skip')
@@ -363,6 +366,23 @@ export default function FileManager() {
     await toggleStar({ sessionToken, id: id as any })
   }
 
+  const handleCopyLink = async (file: any) => {
+    if (!sessionToken) return
+    try {
+      const url = await ApiClient.query(api.files.getFileUrl.path, {
+        sessionToken,
+        storageId: file.storageId,
+        r2Key: file.r2Key,
+        filename: file.name,
+      } as any)
+      if (!url) throw new Error('no url')
+      await navigator.clipboard.writeText(url as string)
+      toast.success('Link copied (valid for 1 hour)')
+    } catch {
+      toast.error('Failed to copy link')
+    }
+  }
+
   const getDisplayFiles = () => {
     let items = searchQuery ? searchResults : files
     if (!items) return items
@@ -403,6 +423,15 @@ export default function FileManager() {
           <NavButton active={navCategory === 'video'} onClick={() => { setNavCategory('video'); setSearchQuery(''); }} icon={<Film className="size-5" />} label="Videos" />
           <NavButton active={navCategory === 'docs'} onClick={() => { setNavCategory('docs'); setSearchQuery(''); }} icon={<FileText className="size-5" />} label="Documents" />
         </nav>
+
+        <div className="mt-auto rounded-2xl border border-white/5 bg-white/5 p-4">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Storage used</span>
+            <HardDrive className="size-4 text-muted-foreground" />
+          </div>
+          <p className="text-lg font-bold">{formatSize(storageStats?.totalBytes)}</p>
+          <p className="text-xs text-muted-foreground">{storageStats?.count || 0} files</p>
+        </div>
       </div>
 
       {/* Main Content Area */}
@@ -581,11 +610,25 @@ export default function FileManager() {
         <ScrollArea className="flex-1 min-h-0">
           <div 
             ref={containerRef}
-            className="p-4 md:p-6 pb-24 md:pb-6 relative min-h-[calc(100vh-240px)] md:min-h-[calc(100vh-280px)] scrollbar-none select-none"
+            tabIndex={0}
+            className="p-4 md:p-6 pb-24 md:pb-6 relative min-h-[calc(100vh-240px)] md:min-h-[calc(100vh-280px)] scrollbar-none select-none outline-none"
             onPointerDown={handleMarqueePointerDown}
             onPointerMove={handleMarqueePointerMove}
             onPointerUp={handleMarqueePointerUp}
             onPointerCancel={handleMarqueePointerUp}
+            onKeyDown={(e) => {
+              const tag = (e.target as HTMLElement)?.tagName
+              if (tag === 'INPUT' || tag === 'TEXTAREA') return
+              if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'a') {
+                e.preventDefault()
+                handleSelectAll()
+              } else if ((e.key === 'Delete' || e.key === 'Backspace') && selectedIds.size > 0) {
+                e.preventDefault()
+                handleBatchDelete()
+              } else if (e.key === 'Escape') {
+                setSelectedIds(new Set())
+              }
+            }}
           >
             {isDraggingSelection && dragStart && dragCurrent && (
               <div 
@@ -635,6 +678,7 @@ export default function FileManager() {
                       })}
                       onDelete={() => handleDelete(file._id)}
                       onDownload={() => handleBatchDownload([file._id])}
+                      onCopyLink={() => handleCopyLink(file)}
                       onToggleStar={(e) => handleToggleStar(file._id, e)}
                       onDragStart={(e) => {
                         e.dataTransfer.setData('fileId', file._id)
@@ -688,6 +732,7 @@ export default function FileManager() {
                         })}
                         onDelete={() => handleDelete(file._id)}
                         onDownload={() => handleBatchDownload([file._id])}
+                        onCopyLink={() => handleCopyLink(file)}
                         onToggleStar={(e) => handleToggleStar(file._id, e)}
                         onDragStart={(e) => {
                           e.dataTransfer.setData('fileId', file._id)
@@ -918,12 +963,13 @@ function useLongPress(callback: (isShift?: boolean) => void, ms = 600) {
 }
 
 function FileGridItem({ 
-  file, onOpen, onDelete, onDownload, onToggleStar, selected, onToggleSelect, onDragStart, onDrop, onRename, onMove, isSelectionMode
+  file, onOpen, onDelete, onDownload, onCopyLink, onToggleStar, selected, onToggleSelect, onDragStart, onDrop, onRename, onMove, isSelectionMode
 }: { 
   file: any, 
   onOpen: () => void, 
   onDelete: () => void, 
   onDownload: () => void,
+  onCopyLink: () => void,
   onToggleStar: (e: React.MouseEvent) => void, 
   selected: boolean, 
   onToggleSelect: (isShift?: boolean) => void, 
@@ -1027,6 +1073,11 @@ function FileGridItem({
                 <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onDownload(); }}>
                   <Download className="size-4 mr-2" /> {file.type === 'folder' ? 'Download ZIP' : 'Download'}
                 </DropdownMenuItem>
+                {file.type !== 'folder' && (
+                  <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onCopyLink(); }}>
+                    <Share2 className="size-4 mr-2" /> Copy link
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator className="bg-white/10" />
                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-destructive rounded-xl hover:bg-destructive/10 py-2.5">
                   <Trash2 className="size-4 mr-2" /> Delete
@@ -1062,12 +1113,13 @@ function FileGridItem({
 }
 
 function FileListItem({ 
-  file, onOpen, onDelete, onDownload, onToggleStar, selected, onToggleSelect, onDragStart, onDrop, onRename, onMove, isSelectionMode
+  file, onOpen, onDelete, onDownload, onCopyLink, onToggleStar, selected, onToggleSelect, onDragStart, onDrop, onRename, onMove, isSelectionMode
 }: { 
   file: any, 
   onOpen: () => void, 
   onDelete: () => void, 
   onDownload: () => void,
+  onCopyLink: () => void,
   onToggleStar: (e: React.MouseEvent) => void, 
   selected: boolean, 
   onToggleSelect: (isShift?: boolean) => void, 
@@ -1149,6 +1201,11 @@ function FileListItem({
                 <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onDownload(); }}>
                   <Download className="size-4 mr-2" /> Download
                 </DropdownMenuItem>
+                {file.type !== 'folder' && (
+                  <DropdownMenuItem className="rounded-xl py-2.5" onClick={(e) => { e.stopPropagation(); onCopyLink(); }}>
+                    <Share2 className="size-4 mr-2" /> Copy link
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator className="bg-white/10" />
                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-destructive rounded-xl hover:bg-destructive/10 py-2.5">
                   <Trash2 className="size-4 mr-2" /> Delete
