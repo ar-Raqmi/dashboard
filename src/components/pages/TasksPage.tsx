@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, CheckCircle2, Trash2, ListTodo, CalendarDays, AlertTriangle, Clock, Pencil, CalendarClock } from 'lucide-react'
+import { Plus, CheckCircle2, Trash2, ListTodo, CalendarDays, AlertTriangle, Clock, Pencil, CalendarClock, Repeat } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import type { Priority, TaskStatus, Task } from '@/lib/store'
 import { Button } from '@/components/ui/button'
@@ -68,10 +68,10 @@ function categorizeTasks(tasks: Task[]) {
 }
 
 // ===== Task Card for full page =====
-function TaskCard({ task, onToggle, initiateDelete, onEdit, onPostpone, isHighlighted }: {
+function TaskCard({ task, onToggle, onDelete, onEdit, onPostpone, isHighlighted }: {
   task: Task
-  onToggle: (id: string) => void
-  initiateDelete: (id: string) => void
+  onToggle: (task: Task) => void
+  onDelete: (task: Task) => void
   onEdit: (task: Task) => void
   onPostpone: (task: Task) => void
   isHighlighted?: boolean
@@ -111,7 +111,7 @@ function TaskCard({ task, onToggle, initiateDelete, onEdit, onPostpone, isHighli
       <div className="pt-0.5 shrink-0">
         <Checkbox
           checked={isCompleted}
-          onCheckedChange={() => onToggle(task.id)}
+          onCheckedChange={() => onToggle(task)}
           className={`size-5 rounded-lg ${
             isOverdue
               ? 'data-[state=unchecked]:border-destructive data-[state=unchecked]:hover:border-destructive/80'
@@ -160,6 +160,12 @@ function TaskCard({ task, onToggle, initiateDelete, onEdit, onPostpone, isHighli
               {format(new Date(task.dueDate + 'T12:00:00'), 'MMM d')}
             </Badge>
           )}
+          {task.isRecurring && (
+            <Badge className="rounded-xl text-[0.6rem] bg-primary/10 text-primary border border-primary/20 gap-1 px-2 py-0.5">
+              <Repeat className="size-2.5" />
+              Repeats
+            </Badge>
+          )}
           <Badge
             variant="outline"
             className={`rounded-xl text-[0.65rem] px-2 py-0.5 border ${priorityConfig[task.priority].className}`}
@@ -182,26 +188,28 @@ function TaskCard({ task, onToggle, initiateDelete, onEdit, onPostpone, isHighli
         >
           <CalendarClock className="size-4" />
         </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-8 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary/10"
-          title="Edit task"
-          onClick={(e) => {
-            e.stopPropagation()
-            onEdit(task)
-          }}
-        >
-          <Pencil className="size-4" />
-        </Button>
+        {!task.isRecurring && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary/10"
+            title="Edit task"
+            onClick={(e) => {
+              e.stopPropagation()
+              onEdit(task)
+            }}
+          >
+            <Pencil className="size-4" />
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="icon"
           className="size-8 rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10"
-          title="Delete task"
+          title={task.isRecurring ? 'Cancel this occurrence' : 'Delete task'}
           onClick={(e) => {
             e.stopPropagation()
-            initiateDelete(task.id)
+            onDelete(task)
           }}
         >
           <Trash2 className="size-4" />
@@ -238,7 +246,7 @@ function SectionHeader({ label, icon, count, variant }: {
 }
 
 export default function TasksPage() {
-  const { tasks, addTask, updateTask, toggleTaskStatus, deleteTask, deleteCompletedTasks, highlightedTaskId, setHighlightedTask } = useAppStore()
+  const { tasks, addTask, updateTask, toggleTaskStatus, applyTaskOccurrenceOverride, deleteTask, deleteCompletedTasks, highlightedTaskId, setHighlightedTask } = useAppStore()
   const [filter, setFilter] = useState<FilterType>('all')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
@@ -294,7 +302,29 @@ export default function TasksPage() {
     const next = new Date(base)
     next.setDate(base.getDate() + 1)
     const nextStr = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`
-    updateTask(task.id, { dueDate: nextStr })
+    if (task.isRecurring && task.recurrenceTemplateId && task.occurrenceDate) {
+      applyTaskOccurrenceOverride(task.recurrenceTemplateId, task.occurrenceDate, { newDate: nextStr })
+    } else {
+      updateTask(task.id, { dueDate: nextStr })
+    }
+  }
+
+  const handleToggle = (task: Task) => {
+    if (task.isRecurring && task.recurrenceTemplateId && task.occurrenceDate) {
+      applyTaskOccurrenceOverride(task.recurrenceTemplateId, task.occurrenceDate, {
+        status: task.status === 'completed' ? 'pending' : 'completed',
+      })
+    } else {
+      toggleTaskStatus(task.id)
+    }
+  }
+
+  const handleDelete = (task: Task) => {
+    if (task.isRecurring && task.recurrenceTemplateId && task.occurrenceDate) {
+      applyTaskOccurrenceOverride(task.recurrenceTemplateId, task.occurrenceDate, { cancelled: true })
+    } else {
+      setDeleteTaskId(task.id)
+    }
   }
 
   const handleDialogChange = (open: boolean) => {
@@ -451,8 +481,8 @@ export default function TasksPage() {
                       <TaskCard
                         key={task.id}
                         task={task}
-                        onToggle={toggleTaskStatus}
-                        initiateDelete={setDeleteTaskId}
+                        onToggle={handleToggle}
+                        onDelete={handleDelete}
                         onEdit={openEdit}
                         onPostpone={handleQuickPostpone}
                         isHighlighted={highlightedTaskId === task.id}
@@ -481,8 +511,8 @@ export default function TasksPage() {
                       <TaskCard
                         key={task.id}
                         task={task}
-                        onToggle={toggleTaskStatus}
-                        initiateDelete={setDeleteTaskId}
+                        onToggle={handleToggle}
+                        onDelete={handleDelete}
                         onEdit={openEdit}
                         onPostpone={handleQuickPostpone}
                         isHighlighted={highlightedTaskId === task.id}
@@ -511,8 +541,8 @@ export default function TasksPage() {
                         <TaskCard
                           key={task.id}
                           task={task}
-                          onToggle={toggleTaskStatus}
-                          initiateDelete={setDeleteTaskId}
+                          onToggle={handleToggle}
+                          onDelete={handleDelete}
                           onEdit={openEdit}
                           onPostpone={handleQuickPostpone}
                           isHighlighted={highlightedTaskId === task.id}

@@ -24,11 +24,15 @@ import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { format, addDays } from 'date-fns'
 import type { Priority, Task } from '@/lib/store'
+import { RecurrencePicker } from '@/components/recurrence/RecurrencePicker'
+import { configToRRuleString, rruleStringToConfig, describeRecurrence, type RecurrenceConfig } from '@/lib/recurrence'
 
 export interface TaskFormData {
   title: string
   dueDate: string | null
   priority: Priority
+  rrule?: string | null
+  dtstart?: string | null
 }
 
 interface TaskFormDialogProps {
@@ -67,15 +71,22 @@ export function TaskFormDialog({ open, onOpenChange, mode, task, defaultDueDate,
   })
   const [priority, setPriority] = useState<Priority>(task?.priority ?? 'medium')
   const [calendarOpen, setCalendarOpen] = useState(false)
+  const [recurrence, setRecurrence] = useState<RecurrenceConfig | null>(() =>
+    task?.rrule ? rruleStringToConfig(task.rrule) : null,
+  )
 
   const handleSubmit = () => {
     const trimmed = title.trim()
     if (!trimmed) return
-    onSubmit({
-      title: trimmed,
-      dueDate: dueDate ? toDateStr(dueDate) : null,
-      priority,
-    })
+    const due = dueDate ? toDateStr(dueDate) : null
+    let rrule: string | null = null
+    let dtstart: string | null = null
+    if (recurrence) {
+      const start = due ?? toDateStr(new Date())
+      rrule = configToRRuleString(recurrence, start)
+      dtstart = start
+    }
+    onSubmit({ title: trimmed, dueDate: due, priority, rrule, dtstart })
     onOpenChange(false)
   }
 
@@ -128,12 +139,23 @@ export function TaskFormDialog({ open, onOpenChange, mode, task, defaultDueDate,
             </Popover>
           </div>
 
+          <div className="flex flex-col gap-2">
+            <label className="text-sm text-on-surface-variant">Repeat</label>
+            <RecurrencePicker
+              value={recurrence}
+              onChange={setRecurrence}
+              startDate={dueDate ?? new Date()}
+            />
+            {recurrence && (
+              <p className="text-xs text-primary font-medium">{describeRecurrence(recurrence)}</p>
+            )}
+          </div>
+
           {mode === 'edit' && (
             <div className="flex flex-col gap-2">
               <label className="text-sm text-on-surface-variant flex items-center gap-1.5">
                 <Clock className="size-3.5" /> Postpone
-              </label>
-              <div className="flex flex-wrap gap-2">
+              </label>              <div className="flex flex-wrap gap-2">
                 {POSTPONE_OPTIONS.map((opt) => (
                   <Badge
                     key={opt.days}

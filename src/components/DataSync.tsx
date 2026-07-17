@@ -55,6 +55,7 @@ export function DataSync({ children }: { children: React.ReactNode }) {
   const deleteCompletedTasksMut = useMutation(api.tasks.deleteCompleted)
   const deleteOldCompletedTasksMut = useMutation(api.tasks.deleteOldCompleted)
   const toggleTaskStatusMut = useMutation(api.tasks.toggleStatus)
+  const setTaskOccurrenceExceptionMut = useMutation(api.tasks.setOccurrenceException)
 
   const createGoal = useMutation(api.goals.create)
   const updateGoalMut = useMutation(api.goals.update)
@@ -218,7 +219,9 @@ export function DataSync({ children }: { children: React.ReactNode }) {
         const createdAt = new Date().toISOString()
         const newTask = { ...task, id, createdAt }
         store.setState((state) => ({ tasks: [...state.tasks, newTask] }))
-        createTask({ sessionToken, ...task }).catch(console.error)
+        createTask({ sessionToken, ...task })
+          .then(() => { if (task.rrule) triggerGlobalSync() })
+          .catch(console.error)
       },
       updateTask: (id, updates) => {
         store.setState((state) => ({
@@ -251,6 +254,28 @@ export function DataSync({ children }: { children: React.ReactNode }) {
           ),
         }))
         toggleTaskStatusMut({ sessionToken, taskId: id as any }).catch(console.error)
+      },
+      applyTaskOccurrenceOverride: (templateId, occurrenceDate, override) => {
+        store.setState((state) => ({
+          tasks: state.tasks.flatMap((t) => {
+            if (t.recurrenceTemplateId === templateId && t.occurrenceDate === occurrenceDate) {
+              if (override.cancelled) return []
+              return [{
+                ...t,
+                ...(override.status !== undefined ? { status: override.status } : {}),
+                ...(override.newDate ? { dueDate: override.newDate } : {}),
+              }]
+            }
+            return [t]
+          }),
+        }))
+        const payload: any = { sessionToken, entityId: templateId, date: occurrenceDate }
+        if (override.cancelled) payload.status = 'cancelled'
+        else {
+          if (override.status !== undefined) payload.status = override.status
+          if (override.newDate !== undefined) payload.newDate = override.newDate
+        }
+        setTaskOccurrenceExceptionMut(payload).catch(console.error)
       },
 
       // Goal actions
