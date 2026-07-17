@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Film } from 'lucide-react'
 import { FileCategoryService, resolveFileCategory } from '@/lib/file-utils'
+import { PdfThumb } from '@/components/file-manager/PdfThumb'
 import { cn } from '@/lib/utils'
 
 interface FileThumbnailProps {
@@ -65,6 +66,10 @@ export function FileThumbnail({ file, variant = 'grid', className }: FileThumbna
         </div>
       </div>
     )
+  }
+
+  if (category === 'pdf' && file?.fileUrl) {
+    return <PdfThumb url={file.fileUrl} className={cn('object-cover w-full h-full', className)} />
   }
 
   return <div className={cn('flex items-center justify-center w-full h-full', className)}>{iconEl}</div>
