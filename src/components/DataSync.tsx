@@ -69,7 +69,9 @@ export function DataSync({ children }: { children: React.ReactNode }) {
   const toggleNotePinnedMut = useMutation(api.notes.togglePinned)
 
   const createEvent = useMutation(api.events.create)
+  const updateEventMut = useMutation(api.events.update)
   const deleteEventMut = useMutation(api.events.remove)
+  const setEventOccurrenceExceptionMut = useMutation(api.events.setOccurrenceException)
 
   const createFile = useMutation(api.files.create)
   const renameFileMut = useMutation(api.files.rename)
@@ -375,11 +377,43 @@ export function DataSync({ children }: { children: React.ReactNode }) {
       addEvent: (event) => {
         const id = crypto.randomUUID()
         store.setState((state) => ({ events: [...state.events, { ...event, id }] }))
-        createEvent({ sessionToken, ...event }).catch(console.error)
+        createEvent({ sessionToken, ...event })
+          .then(() => { if (event.rrule) triggerGlobalSync() })
+          .catch(console.error)
+      },
+      updateEvent: (id, updates) => {
+        store.setState((state) => ({
+          events: state.events.map((e) => (e.id === id ? { ...e, ...updates } : e)),
+        }))
+        const { recurrenceTemplateId, occurrenceDate, isRecurring, id: _id, ...rest } = updates as any
+        void recurrenceTemplateId; void occurrenceDate; void isRecurring
+        updateEventMut({ sessionToken, eventId: id as any, ...rest }).catch(console.error)
       },
       deleteEvent: (id) => {
         store.setState((state) => ({ events: state.events.filter((e) => e.id !== id) }))
         deleteEventMut({ sessionToken, eventId: id as any }).catch(console.error)
+      },
+      applyEventOccurrenceOverride: (templateId, occurrenceDate, override) => {
+        store.setState((state) => ({
+          events: state.events.flatMap((e) => {
+            if (e.recurrenceTemplateId === templateId && e.occurrenceDate === occurrenceDate) {
+              if (override.cancelled) return []
+              return [{
+                ...e,
+                ...(override.newDate ? { date: override.newDate } : {}),
+                ...(override.title ? { title: override.title } : {}),
+              }]
+            }
+            return [e]
+          }),
+        }))
+        const payload: any = { sessionToken, entityId: templateId, date: occurrenceDate }
+        if (override.cancelled) payload.status = 'cancelled'
+        else {
+          if (override.newDate !== undefined) payload.newDate = override.newDate
+          if (override.title !== undefined) payload.title = override.title
+        }
+        setEventOccurrenceExceptionMut(payload).catch(console.error)
       },
 
       // File actions

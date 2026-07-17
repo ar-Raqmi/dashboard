@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { Plus, Trash2, CalendarDays, Clock, History } from 'lucide-react'
+import { Plus, Trash2, CalendarDays, Clock, History, Repeat, Pencil } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,6 +18,9 @@ import {
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { format } from 'date-fns'
+import { RecurrencePicker } from '@/components/recurrence/RecurrencePicker'
+import { configToRRuleString, rruleStringToConfig, describeRecurrence, type RecurrenceConfig } from '@/lib/recurrence'
+import type { CalendarEvent } from '@/lib/store'
 
 const EVENT_COLORS = [
   { value: '#A5D6A7', label: 'Green' },
@@ -77,13 +80,15 @@ function MiniEventRow({ event, onSelect }: { event: MiniEvent; onSelect: (date: 
 }
 
 export default function CalendarPage() {
-  const { events, addEvent, deleteEvent } = useAppStore()
+  const { events, addEvent, updateEvent, deleteEvent, applyEventOccurrenceOverride } = useAppStore()
   const [mounted, setMounted] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null)
   const [eventTitle, setEventTitle] = useState('')
   const [eventDate, setEventDate] = useState<Date>(selectedDate)
   const [eventColor, setEventColor] = useState(EVENT_COLORS[0].value)
+  const [eventRecurrence, setEventRecurrence] = useState<RecurrenceConfig | null>(null)
   const [calendarOpen, setCalendarOpen] = useState(false)
 
   useEffect(() => {
@@ -160,24 +165,83 @@ export default function CalendarPage() {
     return events.filter((e) => e.date.startsWith(monthPrefix))
   }, [events, selectedDate])
 
-  const handleAddEvent = () => {
+  const handleSaveEvent = () => {
     if (!eventTitle.trim()) return
-    addEvent({
-      title: eventTitle.trim(),
-      date: toLocalDateString(eventDate),
-      color: eventColor,
-    })
+    const dateStr = toLocalDateString(eventDate)
+    let rrule: string | null = null
+    let dtstart: string | null = null
+    if (eventRecurrence) {
+      rrule = configToRRuleString(eventRecurrence, dateStr)
+      dtstart = dateStr
+    }
+
+    if (editingEvent) {
+      const targetId = editingEvent.recurrenceTemplateId ?? editingEvent.id
+      const updates: Partial<CalendarEvent> = {
+        title: eventTitle.trim(),
+        color: eventColor,
+        rrule,
+        dtstart: rrule ? dtstart : null,
+      }
+      if (!editingEvent.isRecurring) {
+        updates.date = dateStr
+      }
+      if (!rrule) {
+        // clearing recurrence on the series
+        ;(updates as any).rrule = null
+        ;(updates as any).dtstart = null
+      }
+      updateEvent(targetId, updates)
+    } else {
+      addEvent({
+        title: eventTitle.trim(),
+        date: dateStr,
+        color: eventColor,
+        rrule,
+        dtstart,
+      })
+    }
+    resetEventForm()
+    setDialogOpen(false)
+  }
+
+  const resetEventForm = () => {
     setEventTitle('')
     setEventColor(EVENT_COLORS[0].value)
-    setDialogOpen(false)
+    setEventRecurrence(null)
+    setEditingEvent(null)
+  }
+
+  const handleDialogChange = (open: boolean) => {
+    setDialogOpen(open)
+    if (!open) resetEventForm()
   }
 
   const openAddDialog = useCallback(() => {
     setEventDate(selectedDate)
     setEventTitle('')
     setEventColor(EVENT_COLORS[0].value)
+    setEventRecurrence(null)
+    setEditingEvent(null)
     setDialogOpen(true)
   }, [selectedDate])
+
+  const openEditDialog = (event: CalendarEvent) => {
+    setEditingEvent(event)
+    setEventTitle(event.title)
+    setEventColor(event.color || EVENT_COLORS[0].value)
+    setEventDate(event.date ? parseLocalDateString(event.date) : selectedDate)
+    setEventRecurrence(event.rrule ? rruleStringToConfig(event.rrule) : null)
+    setDialogOpen(true)
+  }
+
+  const handleDeleteEvent = (event: CalendarEvent) => {
+    if (event.isRecurring && event.recurrenceTemplateId && event.occurrenceDate) {
+      applyEventOccurrenceOverride(event.recurrenceTemplateId, event.occurrenceDate, { cancelled: true })
+    } else {
+      deleteEvent(event.id)
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6 max-w-5xl mx-auto">
@@ -195,7 +259,7 @@ export default function CalendarPage() {
           </div>
         </div>
 
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog open={dialogOpen} onOpenChange={handleDialogChange}>
           <DialogTrigger asChild>
             <Button className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90" onClick={openAddDialog}>
               <Plus className="size-4 mr-1.5" />
@@ -204,7 +268,9 @@ export default function CalendarPage() {
           </DialogTrigger>
           <DialogContent className="bg-card border-border rounded-3xl">
             <DialogHeader>
-              <DialogTitle className="text-foreground">Add New Event</DialogTitle>
+              <DialogTitle className="text-foreground">
+                {editingEvent ? 'Edit Event' : 'Add New Event'}
+              </DialogTitle>
             </DialogHeader>
             <div className="flex flex-col gap-4 py-2">
               <div className="flex flex-col gap-2">
@@ -217,32 +283,40 @@ export default function CalendarPage() {
                   autoFocus
                 />
               </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-sm text-muted-foreground font-medium">Date</label>
-                <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="rounded-2xl bg-input border-border justify-start text-left font-normal"
-                    >
-                      <CalendarDays className="mr-2 size-4" />
-                      {mounted && eventDate ? format(eventDate, 'EEEE, MMMM d, yyyy') : 'Pick a date'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-card border-border rounded-2xl">
-                    <Calendar
-                      mode="single"
-                      selected={eventDate}
-                      onSelect={(date) => {
-                        if (date) {
-                          setEventDate(date)
-                          setCalendarOpen(false)
-                        }
-                      }}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
+              {!(editingEvent?.isRecurring) && (
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm text-muted-foreground font-medium">Date</label>
+                  <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="rounded-2xl bg-input border-border justify-start text-left font-normal"
+                      >
+                        <CalendarDays className="mr-2 size-4" />
+                        {mounted && eventDate ? format(eventDate, 'EEEE, MMMM d, yyyy') : 'Pick a date'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 bg-card border-border rounded-2xl">
+                      <Calendar
+                        mode="single"
+                        selected={eventDate}
+                        onSelect={(date) => {
+                          if (date) {
+                            setEventDate(date)
+                            setCalendarOpen(false)
+                          }
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              )}
+              {editingEvent?.isRecurring && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/40 rounded-xl px-3 py-2">
+                  <Repeat className="size-3.5" />
+                  Editing the recurring series
+                </div>
+              )}
               <div className="flex flex-col gap-2">
                 <label className="text-sm text-muted-foreground font-medium">Color</label>
                 <div className="flex gap-2 flex-wrap">
@@ -258,17 +332,28 @@ export default function CalendarPage() {
                   ))}
                 </div>
               </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm text-muted-foreground font-medium">Repeat</label>
+                <RecurrencePicker
+                  value={eventRecurrence}
+                  onChange={setEventRecurrence}
+                  startDate={eventDate}
+                />
+                {eventRecurrence && (
+                  <p className="text-xs text-primary font-medium">{describeRecurrence(eventRecurrence)}</p>
+                )}
+              </div>
             </div>
             <DialogFooter>
               <DialogClose asChild>
                 <Button variant="ghost" className="rounded-2xl">Cancel</Button>
               </DialogClose>
               <Button
-                onClick={handleAddEvent}
+                onClick={handleSaveEvent}
                 disabled={!eventTitle.trim()}
                 className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
               >
-                Add Event
+                {editingEvent ? 'Save Changes' : 'Add Event'}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -379,16 +464,30 @@ export default function CalendarPage() {
                   eventsForSelectedDate.map((event) => (
                     <div
                       key={event.id}
-                      className="flex items-center gap-3 p-3 rounded-2xl bg-muted/80 group hover:bg-muted transition-colors"
+                      className="flex items-center gap-3 p-3 rounded-2xl bg-muted/80 group hover:bg-muted transition-colors cursor-pointer"
+                      onClick={() => openEditDialog(event)}
                     >
                       <div
                         className="size-3 rounded-full shrink-0 shadow-sm"
                         style={{ backgroundColor: event.color || EVENT_COLORS[0].value }}
                       />
-                      <span className="flex-1 text-sm text-foreground font-medium">{event.title}</span>
+                      <div className="flex-1 min-w-0 flex items-center gap-2">
+                        <span className="text-sm text-foreground font-medium truncate">{event.title}</span>
+                        {event.isRecurring && (
+                          <Repeat className="size-3 text-primary shrink-0" />
+                        )}
+                      </div>
+                      <button
+                        className="size-7 rounded-xl flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Edit"
+                        onClick={(e) => { e.stopPropagation(); openEditDialog(event) }}
+                      >
+                        <Pencil className="size-3.5" />
+                      </button>
                       <button
                         className="size-7 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => deleteEvent(event.id)}
+                        title={event.isRecurring ? 'Cancel this occurrence' : 'Delete event'}
+                        onClick={(e) => { e.stopPropagation(); handleDeleteEvent(event) }}
                       >
                         <Trash2 className="size-3.5" />
                       </button>
