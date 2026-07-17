@@ -6,7 +6,6 @@ import {
   Trash2,
   Calendar,
   HardDrive,
-  ExternalLink,
   Loader2,
   Star,
   X,
@@ -36,6 +35,7 @@ import { useQuery, useMutation, useAction } from '@/hooks/useApi'
 import { api } from '@/lib/api-client'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from 'sonner'
+import { PdfViewer } from '@/components/file-manager/PdfViewer'
 import {
   FileCategoryService,
   formatFileSize,
@@ -95,18 +95,11 @@ function PreviewMedia({ file, fileUrl }: { file: FileItem; fileUrl?: string | nu
       )
     case 'pdf':
       return (
-        <div className={cn(shell, 'flex-col gap-4 py-10')}>
-          <div className="flex flex-col items-center gap-2 text-center">
-            <p className="font-medium text-foreground line-clamp-1 max-w-full">{file.name}</p>
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">PDF Document</p>
-          </div>
-          {fileUrl && (
-            <Button asChild>
-              <a href={fileUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="size-4" />
-                Open in new tab
-              </a>
-            </Button>
+        <div className="rounded-xl border bg-muted/20 p-3">
+          {fileUrl ? (
+            <PdfViewer key={fileUrl} url={fileUrl} filename={file.name} />
+          ) : (
+            <p className="text-sm text-muted-foreground py-10 text-center">Preview unavailable</p>
           )}
         </div>
       )
