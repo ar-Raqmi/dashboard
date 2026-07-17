@@ -125,9 +125,19 @@ export class FileService extends BaseService {
     parentId?: string | null
     starred?: boolean
     category?: string
+    recent?: boolean
   }) {
     const user = await this.getAuthedUser(args.sessionToken)
-    const { parentId, starred, category } = args
+    const { parentId, starred, category, recent } = args
+
+    if (recent) {
+      const files = await this.db.fileItem.findMany({
+        where: { userId: user.id, type: 'file' },
+        orderBy: { updatedAt: 'desc' },
+        take: 60,
+      })
+      return this.attachUrls(files.map((f: any) => this.serializeFile(f)), args.sessionToken)
+    }
 
     const whereClause: any = { userId: user.id }
     if (starred !== undefined) {
@@ -439,6 +449,18 @@ export class FileService extends BaseService {
       data: { starred: !file.starred },
     })
     return { success: true, starred: updated.starred }
+  }
+
+  async getStorageStats(args: { sessionToken: string }) {
+    const user = await this.getAuthedUser(args.sessionToken)
+    const agg = await this.db.fileItem.aggregate({
+      where: { userId: user.id, type: 'file' },
+      _sum: { size: true },
+    })
+    const count = await this.db.fileItem.count({
+      where: { userId: user.id, type: 'file' },
+    })
+    return { totalBytes: agg._sum.size || 0, count }
   }
 
   async getFileUrl(args: { sessionToken: string; storageId?: string; r2Key?: string; filename?: string }) {

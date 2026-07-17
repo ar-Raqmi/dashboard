@@ -55,10 +55,10 @@ export async function handleQuery(path: string, args: any, env?: any) {
       // Files
       case 'files:list':
         return fileService.list(args)
-      case 'files:getPath':
-        return fileService.getPath(args)
       case 'files:listAll':
         return fileService.listAll(args)
+      case 'files:getStorageStats':
+        return fileService.getStorageStats(args)
       case 'files:getFileUrl':
         return fileService.getFileUrl(args)
       case 'files:getThumbnailUrl':

@@ -8,6 +8,7 @@ import {
   HardDrive,
   Loader2,
   Star,
+  Share2,
   X,
 } from 'lucide-react'
 import { useAppStore, type FileItem } from '@/lib/store'
@@ -198,6 +199,16 @@ export default function FilePreview() {
     document.body.removeChild(a)
   }
 
+  const handleCopyLink = async () => {
+    if (!fileUrl) return
+    try {
+      await navigator.clipboard.writeText(fileUrl)
+      toast.success('Link copied (valid for 1 hour)')
+    } catch {
+      toast.error('Failed to copy link')
+    }
+  }
+
   return (
     <>
       <Dialog open={!!previewFile} onOpenChange={(v) => { if (!v) setPreviewFile(null) }}>
@@ -325,6 +336,16 @@ export default function FilePreview() {
             <Button className="flex-1 h-11" onClick={handleDownload} disabled={!fileUrl}>
               <Download className="size-4" />
               Download
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-11 w-11"
+              onClick={handleCopyLink}
+              disabled={!fileUrl}
+              aria-label="Copy link"
+            >
+              <Share2 className="size-5" />
             </Button>
             <Button
               variant="outline"
