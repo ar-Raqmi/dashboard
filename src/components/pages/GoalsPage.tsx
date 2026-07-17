@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Trash2, Flag, CheckCircle2, Circle, Pencil, GripVertical, Check, Layout as LayoutIcon } from 'lucide-react'
+import { Plus, Trash2, Flag, CheckCircle2, Circle, Pencil, GripVertical, Check, Layout as LayoutIcon, ChevronDown, ChevronRight, Search, X } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -97,15 +97,25 @@ function SortableMilestoneItem({ milestone, index, onRemove, onLabelChange }: Mi
   )
 }
 
-// --- Goal Card Component ---
-function SortableGoalCard({ goal, isRearranging, onEdit, onDelete, onToggleMilestone, isHighlighted }: {
+// --- Goal Card (presentational, shared by sortable + completed goals) ---
+interface GoalCardInnerProps {
   goal: any
+  expanded: boolean
   isRearranging: boolean
+  isDragging?: boolean
+  onToggleExpand: () => void
   onEdit: (goal: any) => void
   onDelete: (id: string) => void
   onToggleMilestone: (goalId: string, msId: string) => void
   isHighlighted: boolean
-}) {
+  grip?: React.ReactNode
+  setNodeRef?: (node: HTMLElement | null) => void
+  style?: React.CSSProperties
+}
+
+function GoalCardInner({
+  goal, expanded, isRearranging, isDragging, onToggleExpand, onEdit, onDelete, onToggleMilestone, isHighlighted, grip, setNodeRef, style,
+}: GoalCardInnerProps) {
   const cardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -114,28 +124,14 @@ function SortableGoalCard({ goal, isRearranging, onEdit, onDelete, onToggleMiles
     }
   }, [isHighlighted])
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: goal.id, disabled: !isRearranging })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 50 : 1,
+  const mergedRef = (node: HTMLDivElement | null) => {
+    cardRef.current = node
+    setNodeRef?.(node)
   }
 
   return (
     <div
-      ref={(node) => {
-        setNodeRef(node)
-        // @ts-ignore
-        cardRef.current = node
-      }}
+      ref={mergedRef}
       style={style}
       className={`group rounded-3xl bg-card border flex flex-col transition-all duration-300 ${
         isDragging ? 'opacity-50 shadow-2xl scale-[1.02] border-primary ring-4 ring-primary/10' : 'border-border'
@@ -144,12 +140,17 @@ function SortableGoalCard({ goal, isRearranging, onEdit, onDelete, onToggleMiles
       }`}
     >
       <div className="p-6 flex flex-col gap-5">
-        {/* Goal Header */}
-        <div className="flex items-center justify-between">
+        {/* Header — click to expand/collapse (grip shown while rearranging) */}
+        <div
+          className={`flex items-center justify-between ${isRearranging ? '' : 'cursor-pointer select-none'}`}
+          onClick={() => { if (!isRearranging) onToggleExpand() }}
+        >
           <div className="flex items-center gap-3 min-w-0">
-            {isRearranging && (
-              <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1.5 rounded-xl bg-muted hover:bg-primary/10 hover:text-primary transition-colors">
-                <GripVertical className="size-5" />
+            {isRearranging ? (
+              grip ?? null
+            ) : (
+              <div className="p-1.5 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors shrink-0">
+                {expanded ? <ChevronDown className="size-4.5" /> : <ChevronRight className="size-4.5" />}
               </div>
             )}
             <h3 className="font-bold text-foreground text-xl truncate arabic-text">
@@ -166,7 +167,7 @@ function SortableGoalCard({ goal, isRearranging, onEdit, onDelete, onToggleMiles
                   variant="ghost"
                   size="icon"
                   className="size-9 rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary/10"
-                  onClick={() => onEdit(goal)}
+                  onClick={(e) => { e.stopPropagation(); onEdit(goal) }}
                 >
                   <Pencil className="size-4.5" />
                 </Button>
@@ -174,7 +175,7 @@ function SortableGoalCard({ goal, isRearranging, onEdit, onDelete, onToggleMiles
                   variant="ghost"
                   size="icon"
                   className="size-9 rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={() => onDelete(goal.id)}
+                  onClick={(e) => { e.stopPropagation(); onDelete(goal.id) }}
                 >
                   <Trash2 className="size-4.5" />
                 </Button>
@@ -183,7 +184,7 @@ function SortableGoalCard({ goal, isRearranging, onEdit, onDelete, onToggleMiles
           </div>
         </div>
 
-        {/* Progress Bar */}
+        {/* Progress Bar — always visible */}
         <div className="w-full h-3.5 rounded-full bg-muted overflow-hidden relative shadow-inner">
           <motion.div
             className="h-full rounded-full bg-primary relative z-10"
@@ -194,41 +195,83 @@ function SortableGoalCard({ goal, isRearranging, onEdit, onDelete, onToggleMiles
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent z-20 pointer-events-none" />
         </div>
 
-        {/* Milestones - Flexible Height */}
-        <div className="flex flex-col gap-2">
-          {goal.milestones.map((milestone: any) => (
-            <button
-              key={milestone.id}
-              disabled={isRearranging}
-              className={`flex items-start gap-4 p-3 rounded-2xl transition-all duration-200 text-left w-full group/ms ${
-                isRearranging 
-                  ? 'opacity-70 cursor-default' 
-                  : 'hover:bg-muted/80 active:scale-[0.98]'
-              }`}
-              onClick={() => onToggleMilestone(goal.id, milestone.id)}
+        {/* Milestones — collapsible */}
+        <AnimatePresence initial={false}>
+          {expanded && (
+            <motion.div
+              key="milestones"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
             >
-              <div className="mt-0.5 shrink-0 transition-transform duration-200 group-hover/ms:scale-110">
-                {milestone.completed ? (
-                  <CheckCircle2 className="size-5.5 text-primary" />
-                ) : (
-                  <Circle className="size-5.5 text-outline group-hover/ms:text-primary/50" />
-                )}
+              <div className="flex flex-col gap-2 pt-1">
+                {goal.milestones.map((milestone: any) => (
+                  <button
+                    key={milestone.id}
+                    disabled={isRearranging}
+                    className={`flex items-start gap-4 p-3 rounded-2xl transition-all duration-200 text-left w-full group/ms ${
+                      isRearranging
+                        ? 'opacity-70 cursor-default'
+                        : 'hover:bg-muted/80 active:scale-[0.98]'
+                    }`}
+                    onClick={() => onToggleMilestone(goal.id, milestone.id)}
+                  >
+                    <div className="mt-0.5 shrink-0 transition-transform duration-200 group-hover/ms:scale-110">
+                      {milestone.completed ? (
+                        <CheckCircle2 className="size-5.5 text-primary" />
+                      ) : (
+                        <Circle className="size-5.5 text-outline group-hover/ms:text-primary/50" />
+                      )}
+                    </div>
+                    <span
+                      className={`text-[15px] leading-relaxed flex-1 arabic-text ${
+                        milestone.completed
+                          ? 'line-through text-outline'
+                          : 'text-foreground font-medium'
+                      }`}
+                      dir="auto"
+                    >
+                      {milestone.label}
+                    </span>
+                  </button>
+                ))}
               </div>
-              <span
-                className={`text-[15px] leading-relaxed flex-1 arabic-text ${
-                  milestone.completed
-                    ? 'line-through text-outline'
-                    : 'text-foreground font-medium'
-                }`}
-                dir="auto"
-              >
-                {milestone.label}
-              </span>
-            </button>
-          ))}
-        </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
+  )
+}
+
+// --- Sortable wrapper around the shared card (DnD for active goals only) ---
+function SortableGoalCard(props: Omit<GoalCardInnerProps, 'grip' | 'setNodeRef' | 'style' | 'isDragging'>) {
+  const {
+    attributes, listeners, setNodeRef, transform, transition, isDragging,
+  } = useSortable({ id: props.goal.id, disabled: !props.isRearranging })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : 1,
+  }
+
+  const grip = (
+    <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1.5 rounded-xl bg-muted hover:bg-primary/10 hover:text-primary transition-colors">
+      <GripVertical className="size-5" />
+    </div>
+  )
+
+  return (
+    <GoalCardInner
+      {...props}
+      grip={props.isRearranging ? grip : undefined}
+      setNodeRef={setNodeRef}
+      style={style}
+      isDragging={isDragging}
+    />
   )
 }
 
@@ -244,10 +287,44 @@ export default function GoalsPage() {
   const [goalIdToDelete, setGoalIdToDelete] = useState<string | null>(null)
   const [isRearranging, setIsRearranging] = useState(false)
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [expandedGoalIds, setExpandedGoalIds] = useState<Set<string>>(new Set())
+  const [searchQuery, setSearchQuery] = useState('')
+  const [completedSectionOpen, setCompletedSectionOpen] = useState(false)
 
   const sortedGoals = useMemo(() => {
     return [...goals].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-  }, [goals]) // Simplified dependency as goals change is enough
+  }, [goals])
+
+  // Search + active/completed split (completed === progress 100%)
+  const normalizedQuery = searchQuery.trim().toLowerCase()
+  const searchActive = normalizedQuery !== ''
+
+  const filteredGoals = useMemo(() => {
+    if (!searchActive) return sortedGoals
+    return sortedGoals.filter((g) =>
+      g.title.toLowerCase().includes(normalizedQuery) ||
+      g.milestones.some((m) => m.label.toLowerCase().includes(normalizedQuery))
+    )
+  }, [sortedGoals, normalizedQuery, searchActive])
+
+  const activeGoals = useMemo(() => filteredGoals.filter((g) => g.progress < 100), [filteredGoals])
+  const completedGoals = useMemo(() => filteredGoals.filter((g) => g.progress >= 100), [filteredGoals])
+
+  // Matches auto-expand while searching; otherwise honor manual expand state
+  const isGoalExpanded = (id: string) => (searchActive ? true : expandedGoalIds.has(id))
+  const toggleExpand = (id: string) =>
+    setExpandedGoalIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+
+  const toggleRearranging = () => {
+    const next = !isRearranging
+    setIsRearranging(next)
+    if (next) setSearchQuery('')
+  }
 
   // Clear highlight after 3 seconds
   useEffect(() => {
@@ -312,13 +389,15 @@ export default function GoalsPage() {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
     setActiveId(null)
-    
+
     if (over && active.id !== over.id) {
-      const oldIndex = sortedGoals.findIndex((g) => g.id === active.id)
-      const newIndex = sortedGoals.findIndex((g) => g.id === over.id)
-      
-      const newGoals = arrayMove(sortedGoals, oldIndex, newIndex)
-      reorderGoals(newGoals.map(g => g.id))
+      const ids = activeGoals.map((g) => g.id)
+      const oldIndex = ids.indexOf(active.id as string)
+      const newIndex = ids.indexOf(over.id as string)
+      if (oldIndex === -1 || newIndex === -1) return
+
+      const reorderedActive = arrayMove(ids, oldIndex, newIndex)
+      reorderGoals([...reorderedActive, ...completedGoals.map((g) => g.id)])
     }
   }
 
@@ -405,7 +484,7 @@ export default function GoalsPage() {
                 ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30 ring-2 ring-primary/20' 
                 : 'border-border hover:bg-muted'
             }`}
-            onClick={() => setIsRearranging(!isRearranging)}
+            onClick={toggleRearranging}
           >
             {isRearranging ? <Check className="size-4.5" /> : <LayoutIcon className="size-4.5" />}
             {isRearranging ? 'Done' : 'Rearrange'}
@@ -513,6 +592,28 @@ export default function GoalsPage() {
         </div>
       </motion.div>
 
+      {/* Search */}
+      {goals.length > 0 && (
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search goals or milestones..."
+            className="pl-11 pr-10 rounded-2xl bg-card border-border h-11"
+          />
+          {searchActive && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label="Clear search"
+            >
+              <X className="size-4" />
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Goals List */}
       <div className="flex-1">
         {goals.length === 0 ? (
@@ -532,6 +633,11 @@ export default function GoalsPage() {
               Get Started
             </Button>
           </motion.div>
+        ) : filteredGoals.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-3 bg-muted/20 rounded-[2rem] border border-dashed border-border">
+            <Search className="size-8 text-muted-foreground/40" />
+            <p className="text-muted-foreground font-medium">No goals match &ldquo;{searchQuery}&rdquo;</p>
+          </div>
         ) : (
           <DndContext
             sensors={sensors}
@@ -539,24 +645,81 @@ export default function GoalsPage() {
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
+            {/* Active goals (draggable while rearranging) */}
             <SortableContext
-              items={sortedGoals.map(g => g.id)}
+              items={activeGoals.map((g) => g.id)}
               strategy={verticalListSortingStrategy}
             >
               <div className="flex flex-col gap-6">
-                {sortedGoals.map((goal) => (
+                {activeGoals.map((goal) => (
                   <SortableGoalCard
                     key={goal.id}
                     goal={goal}
                     isRearranging={isRearranging}
+                    expanded={isGoalExpanded(goal.id)}
+                    onToggleExpand={() => toggleExpand(goal.id)}
                     onEdit={handleEditClick}
                     onDelete={handleDeleteClick}
                     onToggleMilestone={toggleMilestone}
                     isHighlighted={highlightedGoalId === goal.id}
                   />
                 ))}
+                {activeGoals.length === 0 && !searchActive && (
+                  <div className="flex flex-col items-center justify-center py-16 gap-3 bg-muted/20 rounded-3xl border border-dashed border-border">
+                    <CheckCircle2 className="size-10 text-primary/40" />
+                    <p className="text-muted-foreground font-medium">All goals completed! 🎉</p>
+                  </div>
+                )}
               </div>
             </SortableContext>
+
+            {/* Completed section (collapsed by default) */}
+            {completedGoals.length > 0 && (
+              <div className="mt-6">
+                <button
+                  onClick={() => setCompletedSectionOpen((o) => !o)}
+                  className="flex items-center gap-2 w-full mb-3 text-left group"
+                >
+                  <div className="p-1 rounded-lg text-on-surface-variant group-hover:text-primary transition-colors">
+                    {(searchActive || completedSectionOpen) ? (
+                      <ChevronDown className="size-4" />
+                    ) : (
+                      <ChevronRight className="size-4" />
+                    )}
+                  </div>
+                  <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Completed</span>
+                  <span className="text-xs text-muted-foreground/70">({completedGoals.length})</span>
+                </button>
+                <AnimatePresence initial={false}>
+                  {(searchActive || completedSectionOpen) && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="flex flex-col gap-6">
+                        {completedGoals.map((goal) => (
+                          <GoalCardInner
+                            key={goal.id}
+                            goal={goal}
+                            isRearranging={false}
+                            expanded={isGoalExpanded(goal.id)}
+                            onToggleExpand={() => toggleExpand(goal.id)}
+                            onEdit={handleEditClick}
+                            onDelete={handleDeleteClick}
+                            onToggleMilestone={toggleMilestone}
+                            isHighlighted={highlightedGoalId === goal.id}
+                          />
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+
             <DragOverlay dropAnimation={{
               sideEffects: defaultDropAnimationSideEffects({
                 styles: {
@@ -570,6 +733,8 @@ export default function GoalsPage() {
                 <SortableGoalCard
                   goal={activeGoal}
                   isRearranging={true}
+                  expanded={false}
+                  onToggleExpand={() => {}}
                   onEdit={() => {}}
                   onDelete={() => {}}
                   onToggleMilestone={() => {}}
