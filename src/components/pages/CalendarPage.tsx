@@ -10,7 +10,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogTrigger,
   DialogFooter,
   DialogClose,
@@ -21,6 +20,7 @@ import { Switch } from '@/components/ui/switch'
 import { format } from 'date-fns'
 import { RecurrencePicker } from '@/components/recurrence/RecurrencePicker'
 import { DayTimeline } from '@/components/calendar/DayTimeline'
+import { RecurringDeleteDialog } from '@/components/recurrence/RecurringDeleteDialog'
 import { configToRRuleString, rruleStringToConfig, describeRecurrence, type RecurrenceConfig } from '@/lib/recurrence'
 import type { CalendarEvent } from '@/lib/store'
 
@@ -467,54 +467,17 @@ export default function CalendarPage() {
         </Dialog>
       </div>
 
-      {/* Event delete choice (from edit dialog) */}
-      <Dialog open={!!deleteChoiceEvent} onOpenChange={(open) => !open && setDeleteChoiceEvent(null)}>
-        <DialogContent className="bg-card border-border rounded-3xl sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-destructive">
-              <Trash2 className="size-5" />
-              {deleteChoiceEvent?.isRecurring ? 'Delete recurring event' : 'Delete event'}
-            </DialogTitle>
-            <DialogDescription className="text-muted-foreground pt-2">
-              {deleteChoiceEvent?.isRecurring
-                ? 'This event repeats. Choose what to delete.'
-                : `Delete "${deleteChoiceEvent?.title}"? This action cannot be undone.`}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex-col gap-2 sm:gap-2">
-            {deleteChoiceEvent?.isRecurring && (
-              <Button
-                onClick={confirmDeleteOccurrence}
-                variant="outline"
-                className="rounded-2xl w-full justify-start whitespace-normal h-auto py-3 items-start text-left"
-              >
-                <div className="flex flex-col items-start text-left min-w-0">
-                  <span className="font-medium">Delete this day only</span>
-                  <span className="text-xs text-muted-foreground font-normal break-words">
-                    Skip {deleteChoiceEvent.occurrenceDate} &mdash; the series continues
-                  </span>
-                </div>
-              </Button>
-            )}
-            <Button
-              onClick={confirmDeleteEvent}
-              className={`rounded-2xl w-full justify-start whitespace-normal h-auto py-3 items-start text-left ${deleteChoiceEvent?.isRecurring ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : 'bg-destructive text-destructive-foreground hover:bg-destructive/90'}`}
-            >
-              <div className="flex flex-col items-start text-left min-w-0">
-                <span className="font-medium">
-                  {deleteChoiceEvent?.isRecurring ? 'Delete the entire series' : 'Delete event'}
-                </span>
-                <span className="text-xs opacity-80 font-normal break-words">
-                  {deleteChoiceEvent?.isRecurring ? 'Remove every occurrence permanently' : 'This cannot be undone'}
-                </span>
-              </div>
-            </Button>
-            <DialogClose asChild>
-              <Button variant="ghost" className="rounded-2xl w-full">Cancel</Button>
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Event delete choice (shared component, from edit dialog) */}
+      <RecurringDeleteDialog
+        open={!!deleteChoiceEvent}
+        onOpenChange={(open) => !open && setDeleteChoiceEvent(null)}
+        kind="event"
+        mode={deleteChoiceEvent?.isRecurring ? 'recurring' : 'single'}
+        itemTitle={deleteChoiceEvent?.title}
+        occurrenceDate={deleteChoiceEvent?.occurrenceDate}
+        onDeleteThis={confirmDeleteOccurrence}
+        onDeleteAll={confirmDeleteEvent}
+      />
 
       {/* View toggle */}
       <div className="flex gap-2">

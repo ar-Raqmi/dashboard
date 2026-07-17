@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/dialog'
 import { format } from 'date-fns'
 import { TaskFormDialog } from '@/components/tasks/TaskFormDialog'
+import { RecurringDeleteDialog } from '@/components/recurrence/RecurringDeleteDialog'
 
 type FilterType = 'all' | 'pending' | 'completed'
 
@@ -418,46 +419,16 @@ export default function TasksPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Recurring task delete choice */}
-      <Dialog open={!!deleteChoiceTask} onOpenChange={(open) => !open && setDeleteChoiceTask(null)}>
-        <DialogContent className="bg-card border-border rounded-3xl sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Repeat className="size-5 text-primary" />
-              Delete recurring task
-            </DialogTitle>
-            <DialogDescription className="text-muted-foreground pt-2">
-              This task repeats. Choose what to delete.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex-col gap-2 sm:gap-2">
-            <Button
-              onClick={confirmDeleteThisDay}
-              variant="outline"
-              className="rounded-2xl w-full justify-start whitespace-normal h-auto py-3 items-start text-left"
-            >
-              <div className="flex flex-col items-start text-left min-w-0">
-                <span className="font-medium">Delete this day only</span>
-                <span className="text-xs text-muted-foreground font-normal break-words">
-                  Skip {deleteChoiceTask?.occurrenceDate} &mdash; the series continues
-                </span>
-              </div>
-            </Button>
-            <Button
-              onClick={confirmDeleteSeries}
-              className="rounded-2xl w-full justify-start whitespace-normal h-auto py-3 items-start text-left bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              <div className="flex flex-col items-start text-left min-w-0">
-                <span className="font-medium">Delete the entire series</span>
-                <span className="text-xs opacity-80 font-normal break-words">Remove every occurrence permanently</span>
-              </div>
-            </Button>
-            <DialogClose asChild>
-              <Button variant="ghost" className="rounded-2xl w-full">Cancel</Button>
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Recurring task delete choice (shared component) */}
+      <RecurringDeleteDialog
+        open={!!deleteChoiceTask}
+        onOpenChange={(open) => !open && setDeleteChoiceTask(null)}
+        kind="task"
+        mode="recurring"
+        occurrenceDate={deleteChoiceTask?.occurrenceDate}
+        onDeleteThis={confirmDeleteThisDay}
+        onDeleteAll={confirmDeleteSeries}
+      />
 
       {/* Filters */}
       <motion.div
