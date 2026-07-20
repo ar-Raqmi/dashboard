@@ -3,7 +3,7 @@ import { RecurrenceService } from './recurrence'
 import { groupRecurringForTasks, getDefaultRecurrenceWindow } from '../recurrence'
 
 export class TaskService extends BaseService {
-  async list(args: { sessionToken: string }) {
+  async list(args: { sessionToken: string; today?: string }) {
     const user = await this.getAuthedUser(args.sessionToken)
     const tasks = await this.db.task.findMany({
       where: { userId: user.id },
@@ -34,7 +34,7 @@ export class TaskService extends BaseService {
       entityIds: templateIds,
     })
     const { windowEnd } = getDefaultRecurrenceWindow()
-    const today = new Date().toISOString().slice(0, 10)
+    const today = args.today || new Date().toISOString().slice(0, 10)
     return groupRecurringForTasks(mapped, { today, windowEnd, exceptions })
   }
 
