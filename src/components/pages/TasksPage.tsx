@@ -21,7 +21,7 @@ import { format } from 'date-fns'
 import { TaskFormDialog } from '@/components/tasks/TaskFormDialog'
 import { RecurringDeleteDialog } from '@/components/recurrence/RecurringDeleteDialog'
 
-type FilterType = 'all' | 'pending' | 'completed'
+type FilterType = 'all' | 'pending' | 'completed' | 'repeating'
 
 const priorityConfig: Record<Priority, { label: string; className: string }> = {
   high: { label: 'High', className: 'priority-high' },
@@ -30,7 +30,9 @@ const priorityConfig: Record<Priority, { label: string; className: string }> = {
 }
 
 // ===== Categorize tasks into overdue / today / upcoming =====
-function categorizeTasks(tasks: Task[]) {
+// hideRecurringUpcoming: pull future repeating tasks out of Upcoming
+// (they live on the Repeating tab). Today/overdue repeats still surface.
+function categorizeTasks(tasks: Task[], hideRecurringUpcoming = false) {
   const today = new Date()
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
 
@@ -53,15 +55,17 @@ function categorizeTasks(tasks: Task[]) {
     return (priorityOrder[a.priority] ?? 2) - (priorityOrder[b.priority] ?? 2)
   })
 
+  const skipAsUpcoming = (t: Task) => Boolean(t.isRecurring && hideRecurringUpcoming)
+
   for (const task of sorted) {
     if (!task.dueDate) {
-      upcoming.push(task)
+      if (!skipAsUpcoming(task)) upcoming.push(task)
     } else if (task.dueDate < todayStr && task.status !== 'completed') {
       overdue.push(task)
     } else if (task.dueDate === todayStr) {
       todayList.push(task)
     } else {
-      upcoming.push(task)
+      if (!skipAsUpcoming(task)) upcoming.push(task)
     }
   }
 
@@ -266,16 +270,18 @@ export default function TasksPage() {
   }, [highlightedTaskId, setHighlightedTask])
 
   // Filter tasks first
-  const filteredTasks = useMemo(() => tasks.filter((task) => {
-    if (filter === 'pending') return task.status === 'pending'
-    if (filter === 'completed') return task.status === 'completed'
-    return true
-  }), [tasks, filter])
+  const filteredTasks = useMemo(() => {
+    if (filter === 'repeating') return tasks.filter((t) => t.isRecurring)
+    if (filter === 'pending') return tasks.filter((task) => task.status === 'pending')
+    if (filter === 'completed') return tasks.filter((task) => task.status === 'completed')
+    return tasks
+  }, [tasks, filter])
 
-  // Then categorize
+  // Then categorize. On non-Repeating tabs, pull future repeats out of
+  // Upcoming (they live on the Repeating tab); today/overdue repeats stay.
   const { overdue, today: todayTasks, upcoming } = useMemo(
-    () => categorizeTasks(filteredTasks),
-    [filteredTasks]
+    () => categorizeTasks(filteredTasks, filter !== 'repeating'),
+    [filteredTasks, filter]
   )
 
   const openCreate = () => {
@@ -357,6 +363,7 @@ export default function TasksPage() {
     all: tasks.length,
     pending: tasks.filter((t) => t.status === 'pending').length,
     completed: tasks.filter((t) => t.status === 'completed').length,
+    repeating: tasks.filter((t) => t.isRecurring).length,
   }
 
   return (
@@ -438,20 +445,21 @@ export default function TasksPage() {
         className="flex items-center gap-2"
       >
         <div className="flex gap-2">
-          {(['all', 'pending', 'completed'] as FilterType[]).map((f) => (
-            <Button
-              key={f}
-              variant={filter === f ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setFilter(f)}
-              className={`rounded-2xl capitalize ${
-                filter === f
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-on-surface-variant'
-              }`}
-            >
-              {f} ({filterCounts[f]})
-            </Button>
+           {(['all', 'pending', 'completed', 'repeating'] as FilterType[]).map((f) => (
+             <Button
+               key={f}
+               variant={filter === f ? 'default' : 'ghost'}
+               size="sm"
+               onClick={() => setFilter(f)}
+               className={`rounded-2xl capitalize ${
+                 filter === f
+                   ? 'bg-primary text-primary-foreground'
+                   : 'text-on-surface-variant'
+               }`}
+             >
+               {f === 'repeating' && <Repeat className="size-3.5 mr-1" />}
+               {f} ({filterCounts[f]})
+             </Button>
           ))}
         </div>
         {filterCounts.completed > 0 && (
@@ -484,6 +492,8 @@ export default function TasksPage() {
                   ? 'No tasks yet. Add your first task!'
                   : filter === 'pending'
                   ? 'All tasks completed! 🎉'
+                  : filter === 'repeating'
+                  ? 'No repeating tasks yet.'
                   : 'No completed tasks yet.'}
               </p>
             </motion.div>
