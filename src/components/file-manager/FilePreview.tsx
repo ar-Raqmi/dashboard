@@ -20,7 +20,6 @@ import {
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import {
   AlertDialog,
@@ -223,7 +222,7 @@ export default function FilePreview() {
     <>
       <Dialog open={!!previewFile} onOpenChange={(v) => { if (!v) setPreviewFile(null) }}>
         <DialogContent
-          className="bg-background/95 backdrop-blur-xl border text-foreground sm:max-w-2xl w-[95vw] sm:w-full rounded-2xl p-0 overflow-hidden flex flex-col max-h-[90vh] shadow-2xl"
+          className="bg-background/95 backdrop-blur-xl border text-foreground sm:max-w-2xl w-[95vw] sm:w-full rounded-2xl p-0 max-h-[90vh] overflow-y-auto shadow-2xl"
           showCloseButton={false}
           aria-describedby={undefined}
         >
@@ -232,7 +231,7 @@ export default function FilePreview() {
           </DialogTitle>
 
           {/* Header */}
-          <div className="flex items-start gap-3 p-4 border-b shrink-0">
+          <div className="flex items-start gap-3 p-4 border-b">
             <div
               className={cn(
                 'size-11 rounded-xl flex items-center justify-center shrink-0',
@@ -284,9 +283,8 @@ export default function FilePreview() {
           </div>
 
           {/* Body */}
-          <ScrollArea className="flex-1 min-h-0">
-            <div className="p-4 space-y-4">
-              <PreviewMedia file={previewFile} fileUrl={fileUrl} />
+          <div className="p-4 space-y-4">
+            <PreviewMedia file={previewFile} fileUrl={fileUrl} />
 
               {/* Details */}
               <div className="rounded-xl border px-4">
@@ -339,10 +337,9 @@ export default function FilePreview() {
                 />
               </div>
             </div>
-          </ScrollArea>
 
           {/* Footer actions */}
-          <div className="flex items-center gap-2 p-4 border-t shrink-0">
+          <div className="flex items-center gap-2 p-4 border-t">
             <Button className="flex-1 h-11" onClick={handleDownload} disabled={!fileUrl}>
               <Download className="size-4" />
               Download
