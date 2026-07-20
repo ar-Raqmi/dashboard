@@ -18,7 +18,11 @@ export function DataSync({ children }: { children: React.ReactNode }) {
   const [isInitialSyncComplete, setIsInitialSyncComplete] = useState(false)
 
   // Subscribe to all API queries via a single aggregated query endpoint
-  const dashboardData = useQuery(api.dashboard.getData, sessionToken ? { sessionToken } : 'skip')
+  // Send the client's LOCAL today so server-side grouping (recurring task
+  // active occurrence) matches the user's timezone, not the server's UTC day.
+  const todayDate = new Date()
+  const todayStr = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, '0')}-${String(todayDate.getDate()).padStart(2, '0')}`
+  const dashboardData = useQuery(api.dashboard.getData, sessionToken ? { sessionToken, today: todayStr } : 'skip')
 
   const tasks = dashboardData?.tasks
   const goals = dashboardData?.goals
