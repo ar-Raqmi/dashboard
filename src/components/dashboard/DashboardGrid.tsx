@@ -141,13 +141,14 @@ function DailyTasksContent({ h }: { w: number; h: number }) {
 
     for (const task of sorted) {
       if (!task.dueDate) {
-        upcoming.push(task)
+        // Repeating tasks don't belong in the dashboard Upcoming list
+        if (!task.isRecurring) upcoming.push(task)
       } else if (task.dueDate < todayStr && task.status !== 'completed') {
         overdue.push(task)
       } else if (task.dueDate === todayStr) {
         todayList.push(task)
       } else {
-        upcoming.push(task)
+        if (!task.isRecurring) upcoming.push(task)
       }
     }
 
