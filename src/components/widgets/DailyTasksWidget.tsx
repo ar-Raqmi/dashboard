@@ -21,8 +21,9 @@ export default function DailyTasksWidget() {
 
   const todayDate = new Date()
   const today = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, '0')}-${String(todayDate.getDate()).padStart(2, '0')}`
+  // Today's tasks + overdue pending only (future tasks live on the Tasks page)
   const todaysTasks = tasks.filter(
-    (t) => t.dueDate === today || t.status === 'pending'
+    (t) => t.dueDate === today || (t.status === 'pending' && t.dueDate && t.dueDate < today)
   )
   const visibleTasks = todaysTasks.slice(0, 5)
 
