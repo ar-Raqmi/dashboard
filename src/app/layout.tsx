@@ -1,92 +1,56 @@
-import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Noto_Sans_Arabic } from "next/font/google";
-import { ThemeProvider } from "next-themes";
-import "./globals.css";
-import { Toaster } from "@/components/ui/sonner";
-import Script from "next/script";
-import { Providers } from "@/components/Providers";
-import { PWAProvider } from "@/components/PWAProvider";
-import DynamicHead from "@/components/DynamicHead";
+import type { Metadata, Viewport } from 'next'
+import { Inter, JetBrains_Mono, Amiri } from 'next/font/google'
+import Script from 'next/script'
+import './globals.css'
+import { Providers } from '@/components/Providers'
+import { PWAProvider } from '@/components/PWAProvider'
+import DynamicHead from '@/components/DynamicHead'
+import ToastHost from '@/components/app/ToastHost'
+import { THEME_BOOT_SCRIPT } from '@/lib/theme'
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const notoSansArabic = Noto_Sans_Arabic({
-  variable: "--font-arabic",
-  subsets: ["arabic"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
+const inter = Inter({ variable: '--font-inter', subsets: ['latin'], display: 'swap' })
+const jetbrains = JetBrains_Mono({ variable: '--font-jetbrains', subsets: ['latin'], display: 'swap' })
+const amiri = Amiri({ variable: '--font-amiri', subsets: ['arabic', 'latin'], weight: ['400', '700'], display: 'swap' })
 
 export const metadata: Metadata = {
-  title: "Dashboard",
-  description: "Premium PWA Personal Dashboard",
-  manifest: "/manifest.json",
-  icons: {
-    icon: "/logo.png",
-    apple: "/logo.png",
-  },
-};
+  title: 'Dashboard',
+  description: 'Personal dashboard',
+  manifest: '/manifest.json',
+  icons: { icon: '/logo.png', apple: '/logo.png' },
+}
 
+// The boot script rewrites these to the chosen theme; the media queries only cover the first paint.
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f5faf5" },
-    { media: "(prefers-color-scheme: dark)", color: "#1a2e1a" },
+    { media: '(prefers-color-scheme: light)', color: '#EFEBD4' },
+    { media: '(prefers-color-scheme: dark)', color: '#232A2E' },
   ],
-  width: "device-width",
+  width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-};
+  viewportFit: 'cover',
+}
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${notoSansArabic.variable} antialiased bg-background text-foreground font-sans`}
-      >
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                const originalSet = Element.prototype.setAttribute;
-                Element.prototype.setAttribute = function(name, val) {
-                  if (name === 'aria-hidden' && val === 'true' && this.contains(document.activeElement)) {
-                    return;
-                  }
-                  originalSet.call(this, name, val);
-                };
-              })();
-            `
-          }}
-        />
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem={false}
-          disableTransitionOnChange={false}
-        >
-          <DynamicHead />
-          <PWAProvider>
-            <Providers>
-              {children}
-            </Providers>
-          </PWAProvider>
-          <Toaster richColors position="bottom-right" />
-          <Script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" strategy="lazyOnload" />
-        </ThemeProvider>
+    <html
+      lang="en"
+      data-theme="dark"
+      suppressHydrationWarning
+      className={`${inter.variable} ${jetbrains.variable} ${amiri.variable}`}
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+      </head>
+      <body>
+        <DynamicHead />
+        <PWAProvider>
+          <Providers>{children}</Providers>
+        </PWAProvider>
+        <ToastHost />
+        <Script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" strategy="lazyOnload" />
       </body>
     </html>
-  );
+  )
 }

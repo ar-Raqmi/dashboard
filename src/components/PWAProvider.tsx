@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect } from 'react'
-import { toast } from 'sonner'
+import { notify } from '@/lib/toast'
 
 export function PWAProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -14,8 +14,9 @@ export function PWAProvider({ children }: { children: React.ReactNode }) {
         const deferredPrompt = e
         
         // Show a "Install" toast or banner
-        toast.info('Install Dashboard', {
-          description: 'Add this app to your home screen for a better experience.',
+        notify('Install Dashboard', {
+          tone: 'info',
+          detail: 'Add this app to your home screen for a better experience.',
           duration: 10000,
           action: {
             label: 'Install',
@@ -41,8 +42,9 @@ export function PWAProvider({ children }: { children: React.ReactNode }) {
       if (isIOS && !isStandalone) {
         // Show iOS guidance toast after a short delay
         setTimeout(() => {
-          toast.info('Install on iOS', {
-            description: 'To install the Dashboard, tap the Share icon and then "Add to Home Screen".',
+          notify('Install on iOS', {
+            tone: 'info',
+            detail: 'Tap the Share icon, then "Add to Home Screen".',
             duration: 10000,
           })
         }, 5000)
@@ -96,9 +98,10 @@ export function PWAProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const showUpdateToast = (registration: ServiceWorkerRegistration) => {
-    toast.info('Update Available', {
-      description: 'A new version of the Dashboard is available. Update now to see the latest changes.',
-      duration: Infinity,
+    notify('Update available', {
+      tone: 'info',
+      detail: 'A new version of the dashboard is ready.',
+      duration: 0,
       action: {
         label: 'Update',
         onClick: () => {

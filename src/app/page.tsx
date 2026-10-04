@@ -1,16 +1,12 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useAppStore, type ActivePage } from '@/lib/store'
 import { useAuth } from '@/hooks/useAuth'
 import { DataSync } from '@/components/DataSync'
-import Header from '@/components/navigation/Header'
-import TabBar from '@/components/navigation/TabBar'
-import { DashboardGrid } from '@/components/dashboard/DashboardGrid'
-import { DashboardManager } from '@/components/dashboard/DashboardManager'
-import GlobalSearch from '@/components/search/GlobalSearch'
-import FilePreview from '@/components/file-manager/FilePreview'
+import { useAppStore, type ActivePage } from '@/lib/store'
+import AppShell from '@/components/app/AppShell'
+import LoginPage from '@/components/pages/LoginPage'
+import Overview from '@/components/overview/Overview'
 import TasksPage from '@/components/pages/TasksPage'
 import CalendarPage from '@/components/pages/CalendarPage'
 import NotesPage from '@/components/pages/NotesPage'
@@ -18,14 +14,11 @@ import FileManagerPage from '@/components/pages/FileManagerPage'
 import SpiritualPage from '@/components/pages/SpiritualPage'
 import GoalsPage from '@/components/pages/GoalsPage'
 import SettingsPage from '@/components/pages/SettingsPage'
-import LoginPage from '@/components/pages/LoginPage'
 import TwoFactorPage from '@/components/pages/TwoFactorPage'
 import { Loader2 } from 'lucide-react'
-import { useAction } from '@/hooks/useApi'
-import { api } from '@/lib/api-client'
 
-const pageComponents: Record<ActivePage, React.ComponentType> = {
-  dashboard: DashboardGrid,
+const PAGES: Record<ActivePage, React.ComponentType> = {
+  dashboard: Overview,
   tasks: TasksPage,
   calendar: CalendarPage,
   notes: NotesPage,
@@ -36,75 +29,9 @@ const pageComponents: Record<ActivePage, React.ComponentType> = {
   twoFactor: TwoFactorPage,
 }
 
-const GRADIENT_MAP: Record<string, string> = {
-  'citrus-dawn': 'linear-gradient(135deg, #A5D6A7 0%, #F48FB1 50%, #CE93D8 100%)',
-  'citrus-breeze': 'linear-gradient(135deg, #80CBC4 0%, #A5D6A7 50%, #C5E1A5 100%)',
-  'pink-sunset': 'linear-gradient(135deg, #F48FB1 0%, #CE93D8 50%, #9FA8DA 100%)',
-  'ocean-mist': 'linear-gradient(135deg, #80DEEA 0%, #80CBC4 50%, #A5D6A7 100%)',
-  'warm-sand': 'linear-gradient(135deg, #FFE082 0%, #FFCC80 50%, #F48FB1 100%)',
-  'forest-dew': 'linear-gradient(135deg, #A5D6A7 0%, #66BB6A 50%, #26A69A 100%)',
-  'lavender-dream': 'linear-gradient(135deg, #CE93D8 0%, #B39DDB 50%, #9FA8DA 100%)',
-  'golden-hour': 'linear-gradient(135deg, #FFD54F 0%, #FFB74D 50%, #FF8A65 100%)',
-}
-
 export default function Home() {
   const { user, loading } = useAuth()
-  const activePage = useAppStore((s) => s.activePage)
-  const setVerse = useAppStore((s) => s.setVerse)
-  const setVerseLoading = useAppStore((s) => s.setVerseLoading)
-  const setHadith = useAppStore((s) => s.setHadith)
-  const setHadithLoading = useAppStore((s) => s.setHadithLoading)
-  const background = useAppStore((s) => s.background)
-
-  const getVerseAction = useAction(api.content.getDailyVerseAction)
-  const getHadithAction = useAction(api.content.getDailyHadithAction)
-
-  // Fetch spiritual data on mount
-  useEffect(() => {
-    const fetchSpiritual = async () => {
-      const { verseDate, hadithDate } = useAppStore.getState()
-      const { getGMT8DateStr } = await import('@/lib/store')
-      const today = getGMT8DateStr()
-      
-      const needsVerse = !useAppStore.getState().verse || verseDate !== today
-      const needsHadith = !useAppStore.getState().hadith || hadithDate !== today
-      
-      if (!needsVerse && !needsHadith) return
-      
-      if (needsVerse) setVerseLoading(true)
-      if (needsHadith) setHadithLoading(true)
-      
-      try {
-        const promises = []
-        if (needsVerse) promises.push(getVerseAction({}))
-        if (needsHadith) promises.push(getHadithAction({}))
-        
-        const results = await Promise.all(promises)
-        
-        if (needsVerse) {
-          const verseRes = results[0]
-          if (verseRes) {
-            setVerse(verseRes)
-            useAppStore.getState().setVerseDate(today)
-          }
-        }
-        
-        if (needsHadith) {
-          const hadithRes = needsVerse ? results[1] : results[0]
-          if (hadithRes) {
-            setHadith(hadithRes)
-            useAppStore.getState().setHadithDate(today)
-          }
-        }
-      } catch (err) {
-        console.error('Failed to fetch daily content:', err)
-      } finally {
-        if (needsVerse) setVerseLoading(false)
-        if (needsHadith) setHadithLoading(false)
-      }
-    }
-    fetchSpiritual()
-  }, [getVerseAction, getHadithAction, setVerse, setVerseLoading, setHadith, setHadithLoading])
+  const page = useAppStore((s) => s.activePage)
 
   if (loading) {
     return (
@@ -117,122 +44,25 @@ export default function Home() {
     )
   }
 
-  if (!user) {
-    return <LoginPage />
-  }
+  if (!user) return <LoginPage />
+
+  const Page = PAGES[page]
 
   return (
-    <DataSync key={user?.id || 'public'}>
-      <AuthenticatedApp
-        activePage={activePage}
-        background={background}
-      />
-    </DataSync>
-  )
-}
-
-function AuthenticatedApp({
-  activePage,
-  background,
-}: {
-  activePage: ActivePage
-  background: any
-}) {
-  const setActivePage = useAppStore((s) => s.setActivePage)
-  const PageComponent = pageComponents[activePage]
-
-  // Handle browser back button navigation
-  useEffect(() => {
-    const handlePopState = () => {
-      // If the user hits "back" and we're not on the dashboard,
-      // return to the dashboard instead of exiting the site
-      if (activePage !== 'dashboard') {
-        setActivePage('dashboard')
-      }
-    }
-
-    window.addEventListener('popstate', handlePopState)
-    return () => window.removeEventListener('popstate', handlePopState)
-  }, [activePage, setActivePage])
-
-  // Sync internal state to browser history
-  useEffect(() => {
-    if (activePage !== 'dashboard') {
-      // Push a history entry when moving away from dashboard
-      // so the back button has something to "pop" from
-      if (!window.history.state?.isSubPage) {
-        window.history.pushState({ isSubPage: true, page: activePage }, '')
-      } else if (window.history.state?.page !== activePage) {
-        // If we're already in sub-page territory, just update the current state
-        window.history.replaceState({ isSubPage: true, page: activePage }, '')
-      }
-    } else {
-      // If we are on dashboard but the history state thinks we are on a subpage
-      // (happens when navigating back via UI), we don't necessarily need to do anything,
-      // but it helps to keep it clean.
-    }
-  }, [activePage])
-
-  const bgStyle = useMemo(() => {
-    if (background.type === 'default') return null
-    const opacity = background.opacity / 100
-    switch (background.type) {
-      case 'color':
-        return { backgroundColor: background.color, opacity }
-      case 'gradient': {
-        const gradient = GRADIENT_MAP[background.gradient] || background.gradient
-        return { background: gradient, opacity }
-      }
-      case 'image':
-        return {
-          backgroundImage: `url(${background.image})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          opacity,
-        }
-      default:
-        return null
-    }
-  }, [background])
-
-  return (
-    <div className="min-h-screen flex flex-col bg-background relative">
-      {bgStyle && (
-        <div
-          className="fixed inset-0 pointer-events-none z-0"
-          style={bgStyle}
-        />
-      )}
-      <Header />
-      
-      <main className="flex-1 pt-[120px] md:pt-[80px] pb-[60px] overflow-y-auto relative z-10">
+    <DataSync>
+      <AppShell>
         <AnimatePresence mode="wait">
           <motion.div
-            key={activePage}
+            key={page}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            transition={{
-              type: 'spring',
-              stiffness: 300,
-              damping: 30,
-              mass: 0.8,
-            }}
-            className={activePage === 'dashboard' ? 'p-4 md:p-6' : ''}
+            transition={{ type: 'spring', stiffness: 300, damping: 30, mass: 0.8 }}
           >
-            <PageComponent />
+            <Page />
           </motion.div>
         </AnimatePresence>
-      </main>
-      
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-xl border-t border-border">
-        <TabBar />
-      </div>
-      
-      <DashboardManager />
-      <GlobalSearch />
-      <FilePreview />
-    </div>
+      </AppShell>
+    </DataSync>
   )
 }
