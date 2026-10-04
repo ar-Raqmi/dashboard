@@ -621,6 +621,7 @@ textarea.wrap-80 { max-width: calc(80ch + 5px); } /* + scrollbar, so 80 columns 
 .note-list-item:hover { padding-left: 10px; background: rgba(255,255,255,.015); }
 .note-list-item:hover > .icon:last-child { opacity: 1; }
 .goals-view { display: flex; flex-direction: column; gap: 37px; }
+.goals-view > .task-tabs { margin: 0 0 -14px; }
 .goal-detail + .goal-detail { border-top: 1px solid var(--border); padding-top: 31px; }
 .goal-detail-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .goal-project-label { display: flex; align-items: center; gap: 6px; font-size: 9px; letter-spacing: .8px; color: var(--muted); }
