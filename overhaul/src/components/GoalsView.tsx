@@ -1,30 +1,15 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { goalColor, useStore, type GoalView } from '../store';
 import { cn } from '../utils/cn';
 import { Icon } from './Icon';
 import { ConfirmModal, Modal } from './Modal';
 
-export type ProjectFocus = { id: string; nonce: number } | null;
-
-export function GoalsView({ focus, onClearFocus, notify }: { focus: ProjectFocus; onClearFocus: () => void; notify: (message: string) => void }) {
-  const goals = useStore(s => s.goals);
+export function GoalsView({ onOpenProject, notify }: { onOpenProject: (goalId: string) => void; notify: (message: string) => void }) {
+  const goals = useStore(s => s.goals), tasks = useStore(s => s.tasks);
   const toggleMilestone = useStore(s => s.toggleMilestone), mutate = useStore(s => s.mutate);
   const [deleting, setDeleting] = useState<GoalView | null>(null), [renaming, setRenaming] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const fail = (err: unknown) => notify((err as Error).message);
-  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
-  const focusId = focus && goals.some(g => g.id === focus.id) ? focus.id : null;
-  // Scroll the requested project into view, then drop the highlight on the next user input or after a few seconds.
-  useEffect(() => {
-    if (!focus || !focusId) return;
-    sectionRefs.current[focusId]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    const events = ['wheel', 'touchmove', 'keydown', 'pointerdown'] as const;
-    const clear = () => onClearFocus();
-    const arm = window.setTimeout(() => events.forEach(e => window.addEventListener(e, clear, { once: true, passive: true })), 400);
-    const expire = window.setTimeout(clear, 5000);
-    return () => { window.clearTimeout(arm); window.clearTimeout(expire); events.forEach(e => window.removeEventListener(e, clear)); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focus?.nonce, focusId]);
 
   if (!goals.length) return <div className="goals-view"><div className="empty-state"><Icon name="flag" size={36}/><h3>Small steps start here</h3><p>Create a project with a few milestones, then file tasks under it.</p></div></div>;
 
@@ -45,8 +30,8 @@ export function GoalsView({ focus, onClearFocus, notify }: { focus: ProjectFocus
 
   return <div className="goals-view">{goals.map((goal, index) => {
     const color = goalColor(goals, goal.id), done = goal.milestones.filter(m => m.completed).length, total = goal.milestones.length;
-    const focused = focusId === goal.id;
-    return <section key={goal.id} ref={el => { sectionRefs.current[goal.id] = el; }} className={cn('goal-detail', focused && 'goal-focused')} style={focused ? { ['--goal-focus' as string]: color } : undefined}>
+    const openTasks = tasks.filter(t => t.goalId === goal.id && t.status !== 'completed').length;
+    return <section key={goal.id} className="goal-detail">
       <div className="goal-detail-heading"><div>
         <div className="goal-project-label"><i style={{ background: color }}/><span>PROJECT</span>
           <span className="ml-auto flex gap-1"><button className="icon-button compact" title="Move up" aria-label={`Move ${goal.title} up`} disabled={index === 0} onClick={() => move(goal, -1)}><span className="inline-flex rotate-180"><Icon name="down" size={13}/></span></button><button className="icon-button compact" title="Move down" aria-label={`Move ${goal.title} down`} disabled={index === goals.length - 1} onClick={() => move(goal, 1)}><Icon name="down" size={13}/></button><button className="icon-button compact" title="Rename project" aria-label={`Rename ${goal.title}`} onClick={() => setRenaming(goal.id)}><Icon name="pen" size={13}/></button><button className="icon-button compact danger-button" title="Delete project" aria-label={`Delete ${goal.title}`} onClick={() => setDeleting(goal)}><Icon name="trash" size={13}/></button></span>
@@ -54,6 +39,7 @@ export function GoalsView({ focus, onClearFocus, notify }: { focus: ProjectFocus
         {renaming === goal.id
           ? <input className="note-title-input" aria-label="Project name" autoFocus defaultValue={goal.title} maxLength={200} onBlur={e => { setRenaming(null); const v = e.target.value.trim(); if (v && v !== goal.title) void mutate('goals:update', { id: goal.id, title: v }, ['goals']).catch(fail); }} onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') setRenaming(null); }}/>
           : <h2>{goal.title}</h2>}
+        <p><button className="text-button" onClick={() => onOpenProject(goal.id)}>{openTasks ? `${openTasks} open task${openTasks === 1 ? '' : 's'}` : 'No open tasks'}<Icon name="arrow" size={12}/></button></p>
       </div><span className="goal-big-percentage">{goal.progress}<small>%</small></span></div>
       <div className="goal-progress-track" role="progressbar" aria-valuenow={goal.progress} aria-valuemin={0} aria-valuemax={100} aria-label={`${goal.title} progress`} title={total ? `${done} of ${total} milestones completed` : `${goal.progress}% complete`}><span style={{ width: `${goal.progress}%`, background: color }}/></div>
       <div className="goal-progress-meta"><span>{total ? `${done} of ${total} milestones complete` : 'No milestones yet. Set progress manually or add one below.'}</span><span>{goal.progress >= 100 ? 'Complete' : goal.progress > 0 ? 'In motion' : 'Not started'}</span></div>
