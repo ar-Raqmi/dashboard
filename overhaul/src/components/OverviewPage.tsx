@@ -27,9 +27,10 @@ export function OverviewPage({ selectedTaskId, onSelectTask, onAddTask, onOpenNo
   const [wrap80] = useNoteWrap();
 
   return <>
-    {(visible('verse') || visible('twoFactor')) && <section className="overview-anchors" aria-label="Daily anchors">
-      {visible('verse') && <div className="metric"><OverviewVerse/></div>}
-      {visible('twoFactor') && <div className="metric"><MiniAuthenticator notify={notify} onOpen={onOpenAuthenticator} onAdd={onAddAccount}/></div>}
+    {(visible('verse') || visible('clipboard') || visible('twoFactor')) && <section className="overview-anchors" aria-label="Daily anchors">
+      {visible('verse') && <div className="metric anchor-verse"><OverviewVerse/></div>}
+      {visible('clipboard') && <div className="metric anchor-clipboard"><ClipboardCard notify={notify}/></div>}
+      {visible('twoFactor') && <div className="metric anchor-codes"><MiniAuthenticator notify={notify} onOpen={onOpenAuthenticator} onAdd={onAddAccount}/></div>}
     </section>}
     <MiniCalendar onEvent={onEvent} onOpenDay={onOpenDay}/>
     {visible('tasks') && <TaskTable onSelect={onSelectTask} onAdd={onAddTask} projectFilter={null} selectedId={selectedTaskId} onViewAll={() => navigate('Tasks')} onNotice={notify}/>}
@@ -37,6 +38,5 @@ export function OverviewPage({ selectedTaskId, onSelectTask, onAddTask, onOpenNo
       {visible('goals') && <section className="goals-summary"><div className="section-heading"><h2>Goals in motion</h2><button className="icon-button compact" title="View goals" aria-label="View goals" onClick={() => navigate('Goals')}><Icon name="upRight" size={15}/></button></div>{goals.map(goal => <button className="goal-summary-item" key={goal.id} onClick={() => navigate('Goals')} title={goal.milestones.length ? `${goal.milestones.filter(m => m.completed).length} of ${goal.milestones.length} milestones complete` : `${goal.progress}% complete`}><span><strong><i style={{ background: goalColor(goals, goal.id) }}/>{goal.title}</strong><small>{goal.progress}%</small></span><span className="goal-progress-track"><span style={{ width: `${goal.progress}%`, background: goalColor(goals, goal.id) }}/></span></button>)}{!goals.length && <p className="muted-note">Set a goal to see it move here.</p>}</section>}
       {visible('notes') && <section className="pinned-notes"><div className="section-heading"><h2>Pinned notes</h2><button className="icon-button compact" title="View all notes" aria-label="View all notes" onClick={() => navigate('Notes')}><Icon name="upRight" size={15}/></button></div>{notes.filter(n => n.pinned).slice(0, 3).map(note => <button key={note.id} className="pinned-note" onClick={() => onOpenNote(note)} title={note.title}><span className="pinned-note-icon" style={{ color: note.color }}><Icon name="notes" size={14}/></span><span className="pinned-note-body"><span className="pinned-note-title">{note.title}</span><Markdown source={note.content} empty="Empty note" className={`pinned-note-preview ${wrap80 ? 'wrap-80' : ''}`} inert/></span><small>{shortDate(note.updatedAt)}</small></button>)}{!notes.some(n => n.pinned) && <p className="muted-note">Pin a note to keep it close.</p>}</section>}
     </div>}
-    {visible('clipboard') && <ClipboardCard notify={notify}/>}
   </>;
 }
