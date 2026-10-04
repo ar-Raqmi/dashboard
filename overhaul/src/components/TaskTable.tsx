@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { goalColor, useStore, type Priority, type TaskView } from '../store';
+import { goalColor, isActionable, taskDate, useStore, type Priority, type TaskView } from '../store';
 import { downloadFile, dueLabel, todayKey } from '../utils/date';
 import { Icon } from './Icon';
 import { PriorityMark } from './PriorityMark';
@@ -20,7 +20,8 @@ export function TaskTable({ onSelect, onAdd, full = false, projectFilter, onView
   const projectName = (t: TaskView) => goals.find(g => g.id === t.goalId)?.title || 'No project';
   const open = (t: TaskView) => t.status !== 'completed';
   const base = projectFilter ? tasks.filter(t => t.goalId === projectFilter) : tasks;
-  const inTab = (t: TaskView, which: Tab) => which === 'all' ? open(t) : which === 'today' ? open(t) && !!t.dueDate && t.dueDate <= today : which === 'upcoming' ? open(t) && !!t.dueDate && t.dueDate > today : !open(t);
+  // Future occurrences of a repeating task stay out of All/Today until their day arrives; Upcoming still lists them.
+  const inTab = (t: TaskView, which: Tab) => { const date = taskDate(t); return which === 'all' ? isActionable(t, today) : which === 'today' ? isActionable(t, today) && !!date && date <= today : which === 'upcoming' ? open(t) && !!date && date > today : !open(t); };
   const counts = { all: base.filter(t => inTab(t, 'all')).length, today: base.filter(t => inTab(t, 'today')).length, upcoming: base.filter(t => inTab(t, 'upcoming')).length, completed: base.filter(t => inTab(t, 'completed')).length };
   const filtered = base.filter(t => inTab(t, tab) && (priority === 'all' || t.priority === priority));
   const value = (t: TaskView, key: SortKey) => key === 'title' ? t.title : key === 'project' ? projectName(t) : key === 'due' ? t.dueDate || '9999' : String(PRIORITY_ORDER.indexOf(t.priority));

@@ -19,7 +19,7 @@ import { SpiritualPage } from './components/SpiritualPage';
 import { TaskDetail } from './components/TaskDetail';
 import { TasksPage } from './components/TasksPage';
 import { Verse } from './components/Verse';
-import { goalColor, useStore, type EventView, type NoteView, type TaskView, type Theme } from './store';
+import { goalColor, isActionable, useStore, type EventView, type NoteView, type TaskView, type Theme } from './store';
 import { downloadFile, formatTime, parseDateKey, todayKey } from './utils/date';
 
 type Page = 'Overview' | 'Tasks' | 'Calendar' | 'Notes' | 'Files' | 'Spiritual' | 'Goals' | 'Authenticator' | 'Settings';
@@ -77,7 +77,7 @@ function Workspace() {
   const reducedMotion = preferences.reducedMotion ?? window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const today = todayKey();
   const activeTask = tasks.find(t => t.id === selectedTask);
-  const openTasks = tasks.filter(t => t.status !== 'completed').length;
+  const openTasks = tasks.filter(t => isActionable(t, today)).length;
   const overdue = tasks.filter(t => t.status !== 'completed' && t.dueDate && t.dueDate < today).length;
   const todaysEvents = events.filter(e => e.date === today);
   const nextEvent = events.find(e => e.date >= today);

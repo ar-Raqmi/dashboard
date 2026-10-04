@@ -51,6 +51,14 @@ export type TaskStatus = 'pending' | 'in_progress' | 'completed';
 export interface TaskView extends Omit<Task, 'userId' | 'priority' | 'status'> {
   priority: Priority; status: TaskStatus; isRecurring: boolean; occurrenceDate: string | null; goalId: string | null; description: string;
 }
+/** A repeating task's own date is its occurrence; one-off tasks use their due date. */
+export const taskDate = (t: TaskView) => (t.isRecurring ? t.occurrenceDate ?? t.dueDate : t.dueDate);
+/** Open and actionable now. A repeating task's occurrence only counts once its own day has started. */
+export const isActionable = (t: TaskView, today: string) => {
+  if (t.status === 'completed') return false;
+  const date = taskDate(t);
+  return !t.isRecurring || !date || date <= today;
+};
 export interface Completion { taskId: string; date: string }
 export interface GoalView extends Omit<Goal, 'userId' | 'order'> { order: number; milestones: Omit<Milestone, 'goalId'>[] }
 export type NoteView = Omit<Note, 'userId'>;
