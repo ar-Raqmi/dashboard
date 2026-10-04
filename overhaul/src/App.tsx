@@ -19,7 +19,7 @@ import { SpiritualPage } from './components/SpiritualPage';
 import { TaskDetail } from './components/TaskDetail';
 import { TasksPage } from './components/TasksPage';
 import { Verse } from './components/Verse';
-import { goalColor, isActionable, useStore, type EventView, type NoteView, type TaskView, type Theme } from './store';
+import { isActionable, useStore, type EventView, type NoteView, type TaskView, type Theme } from './store';
 import { downloadFile, formatTime, parseDateKey, todayKey } from './utils/date';
 
 type Page = 'Overview' | 'Tasks' | 'Calendar' | 'Notes' | 'Files' | 'Spiritual' | 'Goals' | 'Authenticator' | 'Settings';
@@ -28,7 +28,6 @@ type Page = 'Overview' | 'Tasks' | 'Calendar' | 'Notes' | 'Files' | 'Spiritual' 
 const pageLabel = (page: Page) => (page === 'Goals' ? 'Projects' : page);
 const navItems: { name: Page; icon: IconName }[] = [{ name: 'Overview', icon: 'overview' }, { name: 'Tasks', icon: 'tasks' }, { name: 'Calendar', icon: 'calendar' }, { name: 'Notes', icon: 'notes' }, { name: 'Files', icon: 'files' }, { name: 'Goals', icon: 'flag' }];
 const personalItems: { name: Page; icon: IconName }[] = [{ name: 'Spiritual', icon: 'book' }, { name: 'Authenticator', icon: 'shield' }];
-const projectIcons: IconName[] = ['target', 'bolt', 'book'];
 const pageDescriptions: Record<Page, string> = { Overview: 'A little clarity for the day ahead.', Tasks: 'Your priorities, all in one place.', Calendar: 'Your commitments, with room to breathe.', Notes: 'A place for the thoughts worth keeping.', Files: 'The documents behind your work.', Spiritual: 'Stay grounded in your daily rhythm.', Goals: 'Every project, one milestone at a time.', Authenticator: 'A quiet place for your one-time codes.', Settings: 'Make the workspace your own.' };
 
 const initialsOf = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]?.toUpperCase()).join('') || '·';
@@ -208,8 +207,6 @@ function Workspace() {
       <div className="sidebar-scroll">
         <div className="nav-section-label">WORKSPACE</div>
         <nav className="main-nav">{navItems.map(item => <button key={item.name} className={`nav-item ${page === item.name && !projectFilter ? 'active' : ''}`} onClick={() => navigate(item.name)} title={pageLabel(item.name)} aria-current={page === item.name && !projectFilter ? 'page' : undefined}><Icon name={item.icon} size={18}/><span>{pageLabel(item.name)}</span>{item.name === 'Tasks' && <small>{openTasks}</small>}</button>)}</nav>
-        <div className="nav-section-label project-section-label"><span>PROJECTS</span><button className="icon-button compact" title="Create a project" aria-label="Create a project" onClick={() => { navigate('Goals'); setNewGoal(true); }}><Icon name="plus" size={13}/></button></div>
-        <nav className="project-nav">{goals.slice(0, 5).map((goal, i) => <button className={`nav-item project-nav-item ${projectFilter === goal.id ? 'active' : ''}`} key={goal.id} onClick={() => navigate('Tasks', goal.id)} title={goal.title}><span className="project-symbol" style={{ color: goalColor(goals, goal.id) }}><Icon name={projectIcons[i % projectIcons.length]} size={15}/></span><span>{goal.title}</span><small>{tasks.filter(t => t.goalId === goal.id && t.status !== 'completed').length}</small></button>)}{!goals.length && <button className="nav-item project-nav-item" onClick={() => { navigate('Goals'); setNewGoal(true); }}><span className="project-symbol"><Icon name="plus" size={15}/></span><span>Add a project</span></button>}</nav>
         <div className="nav-section-label personal-section-label">PERSONAL</div>
         <nav>{personalItems.map(item => <button key={item.name} className={`nav-item ${page === item.name ? 'active' : ''}`} title={item.name} onClick={() => navigate(item.name)} aria-current={page === item.name ? 'page' : undefined}><Icon name={item.icon} size={18}/><span>{item.name}</span></button>)}</nav>
       </div>

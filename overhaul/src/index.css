@@ -77,18 +77,13 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
 .nav-section-label { display: flex; justify-content: space-between; align-items: center; font-size: 9px; letter-spacing: 1.2px; color: var(--muted); font-weight: 550; padding: 0 10px; height: 26px; margin-bottom: 5px; }
 .nav-item { width: 100%; display: flex; align-items: center; text-align: left; height: 38px; padding: 0 10px; margin: 3px 0; gap: 11px; font-size: 13px; color: var(--subtle); border-radius: 6px; position: relative; transition: background .15s, color .15s; white-space: nowrap; }
 .nav-item > .icon { color: var(--subtle); }
-.nav-item > span:not(.project-symbol) { flex: 1; }
+.nav-item > span { flex: 1; }
 .nav-item:hover { color: var(--fg); background: rgba(255,255,255,.03); }
 .nav-item.active { color: var(--fg); background: var(--bg1); box-shadow: 0 1px 2px rgba(0,0,0,.035), inset 0 1px 0 rgba(255,255,255,.025); }
 .nav-item.active > .icon { color: var(--fg); }
 .nav-item.active:before { content: ''; position: absolute; left: -14px; height: 17px; width: 2px; border-radius: 0 2px 2px 0; background: var(--fg); opacity: .7; }
 .nav-item small { font-family: var(--mono); font-size: 11px; color: var(--muted); padding-right: 1px; }
 .nav-item kbd { font-size: 9px; padding: 0 4px; border-color: transparent; color: var(--muted); background: none; }
-.project-section-label { margin-top: 28px; }
-.project-nav-item { height: 34px; font-size: 12px; }
-.project-symbol { width: 18px; display: flex; justify-content: center; align-items: center; opacity: .85; }
-.project-nav-item small { opacity: 0; transition: opacity .15s; }
-.project-nav-item:hover small, .project-nav-item.active small { opacity: 1; }
 .personal-section-label { margin-top: 24px; }
 .sidebar-bottom { padding-top: 18px; }
 .quick-capture { width: calc(100% - 6px); margin: 0 3px 15px; height: 35px; display: flex; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid var(--border-hover); border-radius: 6px; color: var(--subtle); font-size: 12px; background: rgba(255,255,255,.015); transition: background .15s; }
@@ -105,11 +100,10 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
 .sidebar-collapsed { --sidebar-width: 66px; }
 .sidebar-collapsed .sidebar { padding: 0 11px; }
 .sidebar-collapsed .brand-row { padding: 0; justify-content: center; }
-.sidebar-collapsed .brand > span, .sidebar-collapsed .collapse-button, .sidebar-collapsed .workspace-text, .sidebar-collapsed .workspace-switcher > .icon, .sidebar-collapsed .nav-section-label, .sidebar-collapsed .nav-item > span:not(.project-symbol), .sidebar-collapsed .nav-item > small, .sidebar-collapsed .nav-item > kbd, .sidebar-collapsed .sidebar-profile > div, .sidebar-collapsed .quick-capture > span, .sidebar-collapsed .quick-capture > kbd, .sidebar-collapsed .sidebar-bottom > .nav-item > .icon:last-child:not(:first-child) { display: none; }
+.sidebar-collapsed .brand > span, .sidebar-collapsed .collapse-button, .sidebar-collapsed .workspace-text, .sidebar-collapsed .workspace-switcher > .icon, .sidebar-collapsed .nav-section-label, .sidebar-collapsed .nav-item > span, .sidebar-collapsed .nav-item > small, .sidebar-collapsed .nav-item > kbd, .sidebar-collapsed .sidebar-profile > div, .sidebar-collapsed .quick-capture > span, .sidebar-collapsed .quick-capture > kbd, .sidebar-collapsed .sidebar-bottom > .nav-item > .icon:last-child:not(:first-child) { display: none; }
 .sidebar-collapsed .nav-item { justify-content: center; padding: 0; height: 39px; }
 .sidebar-collapsed .nav-item.active:before { left: -11px; }
 .sidebar-collapsed .workspace-switcher { justify-content: center; padding: 9px 0; }
-.sidebar-collapsed .project-nav { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 12px 0; margin: 17px 0; }
 .sidebar-collapsed .sidebar-profile { justify-content: center; }
 .sidebar-collapsed .quick-capture { padding: 0; justify-content: center; }
 .sidebar-collapsed .workspace-menu { left: 45px; }
@@ -862,10 +856,9 @@ textarea.wrap-80 { max-width: calc(80ch + 5px); } /* + scrollbar, so 80 columns 
   :root { --sidebar-width: 66px; }
   .sidebar { padding: 0 11px; }
   .brand-row { padding: 0; justify-content: center; }
-  .brand > span, .collapse-button, .workspace-text, .workspace-switcher > .icon, .nav-section-label, .nav-item > span:not(.project-symbol), .nav-item > small, .nav-item > kbd, .sidebar-profile > div, .quick-capture > span, .quick-capture > kbd, .sidebar-bottom > .nav-item > .icon:last-child:not(:first-child) { display: none; }
+  .brand > span, .collapse-button, .workspace-text, .workspace-switcher > .icon, .nav-section-label, .nav-item > span, .nav-item > small, .nav-item > kbd, .sidebar-profile > div, .quick-capture > span, .quick-capture > kbd, .sidebar-bottom > .nav-item > .icon:last-child:not(:first-child) { display: none; }
   .nav-item { justify-content: center; padding: 0; height: 39px; }
   .workspace-switcher { justify-content: center; padding: 9px 0; }
-  .project-nav { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 12px 0; margin: 17px 0; }
   .sidebar-profile { justify-content: center; }
   .quick-capture { padding: 0; justify-content: center; }
   .workspace-menu { left: 45px; }
@@ -915,10 +908,9 @@ textarea.wrap-80 { max-width: calc(80ch + 5px); } /* + scrollbar, so 80 columns 
   .sidebar .brand-row { padding: 0 6px; justify-content: space-between; }
   .sidebar .brand > span, .sidebar .workspace-text, .sidebar .workspace-switcher > .icon { display: block; }
   .sidebar .nav-section-label { display: flex; }
-  .sidebar .nav-item > span:not(.project-symbol), .sidebar .nav-item > small, .sidebar .nav-item > kbd { display: block; }
+  .sidebar .nav-item > span, .sidebar .nav-item > small, .sidebar .nav-item > kbd { display: block; }
   .sidebar .nav-item { justify-content: flex-start; padding: 0 10px; }
   .sidebar .nav-item.active:before { left: -14px; }
-  .sidebar .project-nav { border: 0; padding: 0; margin: 0; }
   .sidebar .sidebar-profile { justify-content: flex-start; }
   .sidebar .sidebar-profile > div { display: block; }
   .sidebar .workspace-switcher { justify-content: flex-start; padding: 10px 5px 13px; }
