@@ -99,7 +99,6 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
 .sidebar-bottom > .nav-item > .icon:last-child:not(:first-child) { color: var(--muted); }
 .sidebar-profile { border-top: 1px solid var(--border); margin-top: 17px; padding: 19px 3px 21px; display: flex; align-items: center; gap: 9px; }
 .avatar { width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 550; letter-spacing: -.3px; background: var(--bg2); border: 1px solid rgba(211,198,170,.13); color: var(--fg); flex-shrink: 0; }
-.profile-avatar { background: var(--bg1); }
 .sidebar-profile > div { flex: 1; min-width: 0; }
 .sidebar-profile strong { display: block; font-size: 11px; font-weight: 510; white-space: nowrap; }
 .sidebar-profile > div > span { display: block; font-size: 10px; color: var(--muted); margin-top: 4px; white-space: nowrap; }
