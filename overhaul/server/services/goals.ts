@@ -1,6 +1,5 @@
 import { assert, bool, iso, nowIso, uuid } from '../db';
 import { BaseService, reqStr } from './base';
-import { TaskService } from './tasks';
 
 interface GoalRow { id: string; title: string; progress: number; order: number | null; createdAt: string }
 interface MilestoneRow { id: string; goalId: string; label: string; completed: number; order: number }
@@ -62,7 +61,6 @@ export class GoalService extends BaseService {
       { sql: 'DELETE FROM Milestone WHERE goalId = ?', params: [goal.id] },
       { sql: 'DELETE FROM Goal WHERE id = ?', params: [goal.id] },
     ]);
-    await new TaskService(this.db, this.env, this.user).unlinkGoal(goal.id);
     return { success: true };
   }
 

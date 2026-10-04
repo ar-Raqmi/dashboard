@@ -62,7 +62,7 @@ function Workspace() {
   const widgetVisible = useWidgetVisible();
 
   const [page, setPage] = useState<Page>('Overview'), [mobileNav, setMobileNav] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<string | null>(null), [projectFilter, setProjectFilter] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<string | null>(null);
   const [newTask, setNewTask] = useState(false), [newGoal, setNewGoal] = useState(false), [addingAccount, setAddingAccount] = useState(false);
   const [noteEditor, setNoteEditor] = useState<NoteView | 'new' | null>(null), [eventDetail, setEventDetail] = useState<EventView | null>(null);
   const [calendarDate, setCalendarDate] = useState<string | null>(null), [help, setHelp] = useState(false);
@@ -89,11 +89,11 @@ function Workspace() {
   const profilePicture = settings?.profilePicture || '', appLogo = settings?.appLogo || '';
   const logoStyle = appLogo ? { background: settings?.iconBackgroundColor, overflow: 'hidden' } : undefined;
   const hijri = hijriLabel(prayer, settings);
-  const pageTitle = projectFilter ? goals.find(g => g.id === projectFilter)?.title || 'Project' : pageLabel(page);
+  const pageTitle = pageLabel(page);
 
   const notify = useCallback((message: string) => { setToast(message); if (toastTimer.current) clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(''), 3500); }, []);
   const fail = (err: unknown) => notify((err as Error).message);
-  function navigate(next: Page, project: string | null = null) { setPage(next); setProjectFilter(project); setCalendarDate(null); setSelectedTask(null); setMobileNav(false); setWorkspaceOpen(false); mainRef.current?.scrollTo({ top: 0, behavior: 'instant' }); }
+  function navigate(next: Page) { setPage(next); setCalendarDate(null); setSelectedTask(null); setMobileNav(false); setWorkspaceOpen(false); mainRef.current?.scrollTo({ top: 0, behavior: 'instant' }); }
   const setCollapsed = (v: boolean) => void store.updatePreferences({ sidebarCollapsed: v }).catch(fail);
   function setTheme(next: Theme) { setThemeState(next); void store.updatePreferences({ theme: next }).catch(() => undefined); }
 
@@ -179,7 +179,7 @@ function Workspace() {
   useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current); }, []);
 
   const searchResults = [
-    ...tasks.map(t => ({ id: `task:${t.id}`, title: t.title, kind: `Task / ${goals.find(g => g.id === t.goalId)?.title || 'No project'}`, icon: 'tasks' as IconName, action: () => { navigate('Tasks'); setSelectedTask(t.id); } })),
+    ...tasks.map(t => ({ id: `task:${t.id}`, title: t.title, kind: 'Task', icon: 'tasks' as IconName, action: () => { navigate('Tasks'); setSelectedTask(t.id); } })),
     ...notes.map(n => ({ id: `note:${n.id}`, title: n.title, kind: 'Note', icon: 'notes' as IconName, action: () => setNoteEditor(n) })),
     ...goals.map(g => ({ id: `goal:${g.id}`, title: g.title, kind: `Project / ${g.progress}%`, icon: 'flag' as IconName, action: () => navigate('Goals') })),
     ...events.filter(e => e.date >= today).slice(0, 50).map(e => ({ id: `event:${e.id}:${e.date}`, title: e.title, kind: `Event / ${parseDateKey(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`, icon: 'calendar' as IconName, action: () => setEventDetail(e) })),
@@ -206,7 +206,7 @@ function Workspace() {
       </div>
       <div className="sidebar-scroll">
         <div className="nav-section-label">WORKSPACE</div>
-        <nav className="main-nav">{navItems.map(item => <button key={item.name} className={`nav-item ${page === item.name && !projectFilter ? 'active' : ''}`} onClick={() => navigate(item.name)} title={pageLabel(item.name)} aria-current={page === item.name && !projectFilter ? 'page' : undefined}><Icon name={item.icon} size={18}/><span>{pageLabel(item.name)}</span>{item.name === 'Tasks' && <small>{openTasks}</small>}</button>)}</nav>
+        <nav className="main-nav">{navItems.map(item => <button key={item.name} className={`nav-item ${page === item.name ? 'active' : ''}`} onClick={() => navigate(item.name)} title={pageLabel(item.name)} aria-current={page === item.name ? 'page' : undefined}><Icon name={item.icon} size={18}/><span>{pageLabel(item.name)}</span>{item.name === 'Tasks' && <small>{openTasks}</small>}</button>)}</nav>
         <div className="nav-section-label personal-section-label">PERSONAL</div>
         <nav>{personalItems.map(item => <button key={item.name} className={`nav-item ${page === item.name ? 'active' : ''}`} title={item.name} onClick={() => navigate(item.name)} aria-current={page === item.name ? 'page' : undefined}><Icon name={item.icon} size={18}/><span>{item.name}</span></button>)}</nav>
       </div>
@@ -234,16 +234,16 @@ function Workspace() {
       </header>
       <main className="main-content" id="main-content" ref={mainRef}>
         <div className="page-content">
-          <div className="page-heading"><div><div className="page-title-row"><h1>{pageTitle}</h1><button className="sample-label" title="Sync status. Click to refresh." onClick={() => void refresh()}><span className={`tiny-dot ${store.status === 'error' ? 'warning-dot' : ''}`}/>{syncLabel}</button></div><p>{projectFilter ? `Keep your ${pageTitle} work moving forward.` : pageDescriptions[page]}</p></div><div className="page-heading-actions"><span className="sample-date"><Icon name="calendar" size={14}/>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</span><button className={`icon-button refresh-button ${refreshing ? 'refreshing' : ''}`} title="Refresh workspace" aria-label="Refresh workspace" onClick={() => void refresh()} disabled={refreshing}><Icon name="refresh" size={15}/></button>{primaryAction}</div></div>
+          <div className="page-heading"><div><div className="page-title-row"><h1>{pageTitle}</h1><button className="sample-label" title="Sync status. Click to refresh." onClick={() => void refresh()}><span className={`tiny-dot ${store.status === 'error' ? 'warning-dot' : ''}`}/>{syncLabel}</button></div><p>{pageDescriptions[page]}</p></div><div className="page-heading-actions"><span className="sample-date"><Icon name="calendar" size={14}/>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</span><button className={`icon-button refresh-button ${refreshing ? 'refreshing' : ''}`} title="Refresh workspace" aria-label="Refresh workspace" onClick={() => void refresh()} disabled={refreshing}><Icon name="refresh" size={15}/></button>{primaryAction}</div></div>
           {store.status === 'error' && <div className="security-notice"><Icon name="info" size={19}/><p><strong>Could not load your workspace.</strong> {store.error} <button className="text-button" style={{ display: 'inline-flex' }} onClick={() => void refresh()}>Try again</button></p></div>}
           <div className={`content-grid ${activeTask ? 'has-task-detail' : ''}`}>
-            <div className="primary-content" key={page + (projectFilter || '')}>
+            <div className="primary-content" key={page}>
               {store.status === 'loading' ? <div className="chart-canvas is-loading" aria-label="Loading your workspace"><div className="chart-skeleton"><div/><div/><div/><div/></div></div> : <>
                 {page === 'Overview' && <OverviewPage selectedTaskId={selectedTask || undefined} onSelectTask={t => setSelectedTask(t.id)} onAddTask={() => setNewTask(true)} onOpenNote={setNoteEditor} onEvent={setEventDetail} onOpenDay={date => { navigate('Calendar'); setCalendarDate(date); }} onOpenAuthenticator={() => navigate('Authenticator')} onAddAccount={() => { navigate('Authenticator'); setAddingAccount(true); }} navigate={p => navigate(p)} notify={notify}/>}
-                {page === 'Tasks' && <TasksPage projectFilter={projectFilter} selectedTaskId={selectedTask || undefined} onSelectTask={t => setSelectedTask(t.id)} onAddTask={() => setNewTask(true)} notify={notify}/>}
+                {page === 'Tasks' && <TasksPage selectedTaskId={selectedTask || undefined} onSelectTask={t => setSelectedTask(t.id)} onAddTask={() => setNewTask(true)} notify={notify}/>}
                 {page === 'Calendar' && <CalendarPage key={calendarDate || 'today'} onEvent={setEventDetail} initialDate={calendarDate || undefined}/>}
                 {page === 'Notes' && <NotesPage onOpenNote={setNoteEditor}/>}
-                {page === 'Goals' && <GoalsPage onOpenProject={id => navigate('Tasks', id)} notify={notify}/>}
+                {page === 'Goals' && <GoalsPage notify={notify}/>}
                 {page === 'Spiritual' && <SpiritualPage onManageClocks={() => navigate('Settings')}/>}
                 {page === 'Files' && <FilesPage notify={notify} uploadTrigger={uploadTrigger}/>}
                 {page === 'Authenticator' && <AuthenticatorPage notify={notify} adding={addingAccount} setAdding={setAddingAccount}/>}
@@ -263,7 +263,7 @@ function Workspace() {
       </main>
     </div>
 
-    {newTask && <NewTaskModal onClose={() => setNewTask(false)} defaultGoalId={projectFilter} onCreated={message => { setNewTask(false); notify(message); }}/>}
+    {newTask && <NewTaskModal onClose={() => setNewTask(false)} onCreated={message => { setNewTask(false); notify(message); }}/>}
     {newGoal && <NewGoalModal onClose={() => setNewGoal(false)} onCreated={message => { setNewGoal(false); notify(message); }}/>}
     {noteEditor && <NoteModal key={noteEditor === 'new' ? 'new' : noteEditor.id} note={noteEditor === 'new' ? null : noteEditor} onClose={() => setNoteEditor(null)} notify={notify} onSaved={() => { setNoteEditor(null); notify('Note saved'); }} onDelete={note => setConfirmDelete({ type: 'note', item: note })}/>}
     {eventDetail && <EventDetailModal event={eventDetail} onClose={() => setEventDetail(null)} notify={notify}/>}

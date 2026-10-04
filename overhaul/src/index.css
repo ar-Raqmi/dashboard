@@ -235,9 +235,8 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
 .task-table th:hover .sort-hint { opacity: .8; }
 .task-table th .rotate { transform: rotate(180deg); }
 .task-table th:nth-child(2) { width: auto; }
-.task-table th:nth-child(3) { width: 137px; }
-.task-table th:nth-child(4) { width: 92px; }
-.task-table th:nth-child(5) { width: 85px; }
+.task-table th:nth-child(3) { width: 92px; }
+.task-table th:nth-child(4) { width: 85px; }
 .task-table td { height: 45px; padding: 0 6px; font-size: 14px; border-bottom: 1px solid var(--border); color: var(--subtle); }
 .task-table tbody tr { cursor: pointer; transition: background .15s; }
 .task-table tbody tr:hover { background: rgba(255,255,255,.023); }
@@ -252,8 +251,6 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
 .table-check:hover { border-color: var(--fg); opacity: 1; }
 .task-name > button { display: block; text-align: left; width: 100%; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg); font-size: 14px; font-weight: 400; }
 .completed-row .task-name > button { text-decoration: line-through; color: var(--muted); }
-.project-name { font-size: 12px; display: flex; align-items: center; gap: 7px; white-space: nowrap; }
-.project-name i { width: 5px; height: 5px; border-radius: 1.5px; flex-shrink: 0; opacity: .85; }
 .due-date { font-size: 12px; color: var(--muted); white-space: nowrap; }
 .due-date.overdue { color: var(--red); }
 .due-date.due-today { color: var(--subtle); }
@@ -748,10 +745,9 @@ textarea.wrap-80 { max-width: calc(80ch + 5px); } /* + scrollbar, so 80 columns 
   .chart-canvas { height: 190px; }
   .task-table td { height: 47px; }
   .task-name > button { font-size: 14px; }
-  .task-table th:nth-child(3) { width: 150px; }
-  .task-table th:nth-child(4) { width: 105px; }
-  .task-table th:nth-child(5) { width: 90px; }
-  .project-name, .due-date { font-size: 12px; }
+  .task-table th:nth-child(3) { width: 105px; }
+  .task-table th:nth-child(4) { width: 90px; }
+  .due-date { font-size: 12px; }
   .priority { font-size: 11px; }
   .rail-section-heading h2 { font-size: 15px; }
   .prayer-row { height: 36px; }
@@ -778,9 +774,8 @@ textarea.wrap-80 { max-width: calc(80ch + 5px); } /* + scrollbar, so 80 columns 
   .task-table th { font-size: 12px; height: 38px; }
   .task-tabs { height: 38px; }
   .task-tabs > button { font-size: 12px; }
-  .task-table th:nth-child(3) { width: 170px; }
-  .task-table th:nth-child(4) { width: 116px; }
-  .task-table th:nth-child(5) { width: 96px; }
+  .task-table th:nth-child(3) { width: 116px; }
+  .task-table th:nth-child(4) { width: 96px; }
   .rail-date { padding-bottom: 26px; margin-bottom: 27px; }
   .prayer-row { height: 39px; }
   .event-item { padding: 16px 0; }
@@ -818,11 +813,9 @@ textarea.wrap-80 { max-width: calc(80ch + 5px); } /* + scrollbar, so 80 columns 
   .event-copy > strong { font-size: 10px; }
   .event-copy > small { font-size: 8px; }
   .middle-dot { margin: 0 3px; }
-  .task-table th:nth-child(3) { width: 116px; }
-  .task-table th:nth-child(4) { width: 80px; }
-  .task-table th:nth-child(5) { width: 76px; }
+  .task-table th:nth-child(3) { width: 80px; }
+  .task-table th:nth-child(4) { width: 76px; }
   .task-name > button { font-size: 12px; }
-  .project-name { font-size: 10px; gap: 5px; }
   .priority { font-size: 9px; gap: 5px; }
   .due-date { font-size: 10px; }
   .panel-heading { padding-left: 19px; padding-right: 19px; }
@@ -840,9 +833,8 @@ textarea.wrap-80 { max-width: calc(80ch + 5px); } /* + scrollbar, so 80 columns 
   .context-rail { padding-left: 19px; }
   .sample-date { display: none; }
   .metric { padding: 0 15px; }
-  .task-table th:nth-child(3) { width: 103px; }
-  .task-table th:nth-child(4) { width: 67px; }
-  .task-table th:nth-child(5) { width: 36px; }
+  .task-table th:nth-child(3) { width: 67px; }
+  .task-table th:nth-child(4) { width: 36px; }
   .priority > span:last-child { display: none; }
   .task-tabs { gap: 20px; }
   .next-prayer-time { font-size: 21px; }
@@ -869,9 +861,8 @@ textarea.wrap-80 { max-width: calc(80ch + 5px); } /* + scrollbar, so 80 columns 
   .workspace-menu { left: 45px; }
   .content-grid { grid-template-columns: minmax(0, 1fr) 234px; gap: 24px; }
   .context-rail { padding-left: 21px; }
-  .task-table th:nth-child(3) { width: 103px; }
-  .task-table th:nth-child(4) { width: 70px; }
-  .task-table th:nth-child(5) { width: 37px; }
+  .task-table th:nth-child(3) { width: 70px; }
+  .task-table th:nth-child(4) { width: 37px; }
   .desktop-expand { display: none; }
   .event-copy > strong { font-size: 11px; }
   .event-copy > small { font-size: 9px; }
@@ -891,12 +882,10 @@ textarea.wrap-80 { max-width: calc(80ch + 5px); } /* + scrollbar, so 80 columns 
   .daily-verse blockquote { font-size: 13px; }
   .rail-bottom-note { display: none; }
   .context-rail.detail-rail { display: block; position: fixed; right: 0; top: 64px; bottom: 0; width: 310px; z-index: 40; border-left: 1px solid var(--border); border-top: 0; padding: 24px; margin-top: 0; background: var(--bg0); overflow-y: auto; box-shadow: -20px 0 50px rgba(0,0,0,.2); }
-  .task-table th:nth-child(3) { width: 121px; }
-  .task-table th:nth-child(4) { width: 85px; }
-  .task-table th:nth-child(5) { width: 78px; }
+  .task-table th:nth-child(3) { width: 85px; }
+  .task-table th:nth-child(4) { width: 78px; }
   .priority > span:last-child { display: block; }
   .priority { font-size: 10px; }
-  .project-name { font-size: 11px; }
   .task-name > button { font-size: 12px; }
   .chart-canvas { height: 214px; }
   .bottom-split h2, .clipboard-card h2 { font-size: 14px; }
@@ -964,16 +953,13 @@ textarea.wrap-80 { max-width: calc(80ch + 5px); } /* + scrollbar, so 80 columns 
   .task-tabs > button > span { font-size: 9px; }
   .task-table { min-width: 370px; }
   .task-table .check-column { width: 24px; padding-left: 1px; padding-right: 2px; }
-  .task-table th:nth-child(3) { width: 83px; }
-  .task-table th:nth-child(4) { width: 60px; }
-  .task-table th:nth-child(5) { width: 31px; }
-  .task-table th:nth-child(5) > button { font-size: 0; }
-  .task-table th:nth-child(5) > button > .icon { opacity: .6; width: 12px; height: 12px; }
+  .task-table th:nth-child(3) { width: 60px; }
+  .task-table th:nth-child(4) { width: 31px; }
+  .task-table th:nth-child(4) > button { font-size: 0; }
+  .task-table th:nth-child(4) > button > .icon { opacity: .6; width: 12px; height: 12px; }
   .task-table td { height: 46px; padding: 0 4px; }
   .task-table th { padding: 0 4px; font-size: 9px; }
   .task-name > button { font-size: 11px; }
-  .project-name { font-size: 9px; gap: 5px; }
-  .project-name > i { width: 4px; height: 4px; }
   .due-date { font-size: 9px; }
   .priority > span:last-child { display: none; }
   .sample-table-label { display: none; }

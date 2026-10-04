@@ -4,15 +4,15 @@ import { cn } from '../utils/cn';
 import { Icon } from './Icon';
 import { ConfirmModal, Modal } from './Modal';
 
-export function GoalsView({ onOpenProject, notify }: { onOpenProject: (goalId: string) => void; notify: (message: string) => void }) {
-  const goals = useStore(s => s.goals), tasks = useStore(s => s.tasks);
+export function GoalsView({ notify }: { notify: (message: string) => void }) {
+  const goals = useStore(s => s.goals);
   const toggleMilestone = useStore(s => s.toggleMilestone), mutate = useStore(s => s.mutate);
   const [deleting, setDeleting] = useState<GoalView | null>(null), [renaming, setRenaming] = useState<string | null>(null);
   const [tab, setTab] = useState<'ongoing' | 'complete'>('ongoing');
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const fail = (err: unknown) => notify((err as Error).message);
 
-  if (!goals.length) return <div className="goals-view"><div className="empty-state"><Icon name="flag" size={36}/><h3>Small steps start here</h3><p>Create a project with a few milestones, then file tasks under it.</p></div></div>;
+  if (!goals.length) return <div className="goals-view"><div className="empty-state"><Icon name="flag" size={36}/><h3>Small steps start here</h3><p>Create a project with a few milestones and tick them off as you go.</p></div></div>;
 
   function addMilestone(e: FormEvent, goal: GoalView) {
     e.preventDefault();
@@ -39,7 +39,6 @@ export function GoalsView({ onOpenProject, notify }: { onOpenProject: (goalId: s
     {!shown.length && <div className="empty-state" role="tabpanel"><Icon name="flag" size={36}/><h3>{tab === 'ongoing' ? 'No ongoing projects' : 'No completed projects yet'}</h3><p>{tab === 'ongoing' ? 'Every project is complete. Create a new one to keep moving.' : 'A project lands here once all of its milestones are done.'}</p></div>}
     {shown.map((goal, index) => {
     const color = goalColor(goals, goal.id), done = goal.milestones.filter(m => m.completed).length, total = goal.milestones.length;
-    const openTasks = tasks.filter(t => t.goalId === goal.id && t.status !== 'completed').length;
     return <section key={goal.id} className="goal-detail">
       <div className="goal-detail-heading"><div>
         <div className="goal-project-label"><i style={{ background: color }}/><span>PROJECT</span>
@@ -48,7 +47,7 @@ export function GoalsView({ onOpenProject, notify }: { onOpenProject: (goalId: s
         {renaming === goal.id
           ? <input className="note-title-input" aria-label="Project name" autoFocus defaultValue={goal.title} maxLength={200} onBlur={e => { setRenaming(null); const v = e.target.value.trim(); if (v && v !== goal.title) void mutate('goals:update', { id: goal.id, title: v }, ['goals']).catch(fail); }} onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') setRenaming(null); }}/>
           : <h2>{goal.title}</h2>}
-        <p><button className="text-button" onClick={() => onOpenProject(goal.id)}>{openTasks ? `${openTasks} open task${openTasks === 1 ? '' : 's'}` : 'No open tasks'}<Icon name="arrow" size={12}/></button></p>
+        <p className="goal-summary">{total ? `${done} of ${total} milestone${total === 1 ? '' : 's'} done` : 'No milestones yet'}</p>
       </div><span className="goal-big-percentage">{goal.progress}<small>%</small></span></div>
       <div className="goal-progress-track" role="progressbar" aria-valuenow={goal.progress} aria-valuemin={0} aria-valuemax={100} aria-label={`${goal.title} progress`} title={total ? `${done} of ${total} milestones completed` : `${goal.progress}% complete`}><span style={{ width: `${goal.progress}%`, background: color }}/></div>
       <div className="goal-progress-meta"><span>{total ? `${done} of ${total} milestones complete` : 'No milestones yet. Set progress manually or add one below.'}</span><span>{goal.progress >= 100 ? 'Complete' : goal.progress > 0 ? 'In motion' : 'Not started'}</span></div>
@@ -60,7 +59,7 @@ export function GoalsView({ onOpenProject, notify }: { onOpenProject: (goalId: s
       <form className="inline-search mt-3" onSubmit={e => addMilestone(e, goal)}><Icon name="plus" size={14}/><input aria-label={`Add a milestone to ${goal.title}`} placeholder="Add a milestone..." maxLength={300} value={drafts[goal.id] || ''} onChange={e => setDrafts(d => ({ ...d, [goal.id]: e.target.value }))}/></form>
     </section>;
   })}
-    {deleting && <ConfirmModal title="Delete this project?" message={`"${deleting.title}" and its milestones will be removed. Tasks filed under it stay, without a project.`} onClose={() => setDeleting(null)} onConfirm={() => { const goal = deleting; setDeleting(null); void mutate('goals:remove', { id: goal.id }, ['goals', 'tasks']).then(() => notify('Project deleted')).catch(fail); }}/>}
+    {deleting && <ConfirmModal title="Delete this project?" message={`"${deleting.title}" and its milestones will be removed.`} onClose={() => setDeleting(null)} onConfirm={() => { const goal = deleting; setDeleting(null); void mutate('goals:remove', { id: goal.id }, ['goals']).then(() => notify('Project deleted')).catch(fail); }}/>}
   </div>;
 }
 
@@ -83,5 +82,5 @@ export function NewGoalModal({ onClose, onCreated }: { onClose: () => void; onCr
     <label className="form-label">Project name<input autoFocus required maxLength={200} placeholder="What are you working toward?" value={title} onChange={e => setTitle(e.target.value)}/></label>
     <label className="form-label">Milestones <span>(one per line, optional)</span><textarea rows={5} placeholder={'First step\nSecond step'} value={milestones} onChange={e => setMilestones(e.target.value)}/></label>
     {error && <p className="form-error" role="alert">{error}</p>}
-  </div><div className="modal-footer"><span>File tasks under it later</span><div><button type="button" className="button" onClick={onClose}>Cancel</button><button className="button primary" type="submit" disabled={busy}><Icon name="plus" size={15}/>{busy ? 'Creating...' : 'Create project'}</button></div></div></form></Modal>;
+  </div><div className="modal-footer"><span>Add milestones any time</span><div><button type="button" className="button" onClick={onClose}>Cancel</button><button className="button primary" type="submit" disabled={busy}><Icon name="plus" size={15}/>{busy ? 'Creating...' : 'Create project'}</button></div></div></form></Modal>;
 }

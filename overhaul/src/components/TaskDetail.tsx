@@ -7,7 +7,7 @@ import { repeatLabel } from './NewTaskModal';
 export const statusLabel = (s: TaskStatus) => (s === 'completed' ? 'Completed' : s === 'in_progress' ? 'In progress' : 'To do');
 
 export function TaskDetail({ task, onClose, onDelete, onNotice }: { task: TaskView; onClose: () => void; onDelete: (task: TaskView) => void; onNotice: (message: string) => void }) {
-  const goals = useStore(s => s.goals), updateTask = useStore(s => s.updateTask), toggleTask = useStore(s => s.toggleTask), mutate = useStore(s => s.mutate);
+  const updateTask = useStore(s => s.updateTask), toggleTask = useStore(s => s.toggleTask), mutate = useStore(s => s.mutate);
   const profileName = useStore(s => s.settings?.profileName || '');
   const [editingTitle, setEditingTitle] = useState(false);
   const fail = (err: unknown) => onNotice((err as Error).message);
@@ -16,7 +16,6 @@ export function TaskDetail({ task, onClose, onDelete, onNotice }: { task: TaskVi
   const initials = profileName.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]?.toUpperCase()).join('') || '·';
 
   return <section className="task-detail"><div className="detail-overline"><span>{task.isRecurring ? 'REPEATING TASK' : 'TASK'}</span><button className="icon-button compact" onClick={onClose} title="Close task details" aria-label="Close task details"><Icon name="close" size={16}/></button></div>
-    <span className="sample-detail">{goals.find(g => g.id === task.goalId)?.title || 'No project'}</span>
     {editingTitle
       ? <input className="note-title-input" aria-label="Task name" autoFocus defaultValue={task.title} maxLength={300} onBlur={e => { setEditingTitle(false); const v = e.target.value.trim(); if (v && v !== task.title) update({ title: v }); }} onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') setEditingTitle(false); }}/>
       : <h2 onDoubleClick={() => setEditingTitle(true)} title="Double-click to rename">{task.title}</h2>}
@@ -24,7 +23,6 @@ export function TaskDetail({ task, onClose, onDelete, onNotice }: { task: TaskVi
     <div className="detail-fields">
       <label><span>Status</span><select value={task.status} disabled={task.isRecurring} onChange={e => update({ status: e.target.value as TaskStatus })}><option value="pending">To do</option><option value="in_progress">In progress</option><option value="completed">Completed</option></select></label>
       <label><span>Priority</span><select value={task.priority} onChange={e => update({ priority: e.target.value as Priority })}><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></label>
-      <label><span>Project</span><select value={task.goalId || ''} onChange={e => update({ goalId: e.target.value || null })}><option value="">No project</option>{goals.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}</select></label>
       <label><span>{task.isRecurring ? 'Next date' : 'Due date'}</span><input aria-label="Task due date" type="date" value={task.dueDate || ''} disabled={task.isRecurring} onChange={e => update({ dueDate: e.target.value || null })}/></label>
     </div>
     {task.rrule && <div className="detail-fields"><label><span>Repeat</span><span className="flex items-center justify-between gap-2"><span>{repeatLabel(task.rrule)}</span><button className="text-button" onClick={() => void mutate('tasks:update', { id: task.id, clearRecurrence: true }, ['tasks']).then(() => onNotice('Task no longer repeats')).catch(fail)}>Stop repeating</button></span></label></div>}

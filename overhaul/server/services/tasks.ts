@@ -10,8 +10,8 @@ interface TaskRow {
   id: string; title: string; dueDate: string | null; priority: string; status: string; createdAt: string;
   rrule: string | null; dtstart: string | null; recurrenceUntil: string | null; recurrenceCount: number | null;
 }
-/** Project (goal) and description live beside the Task row so the shared schema stays unchanged. */
-type TaskMeta = Record<string, { goalId?: string | null; description?: string }>;
+/** Description lives beside the Task row so the shared schema stays unchanged. */
+type TaskMeta = Record<string, { description?: string }>;
 const TASK_META = 'overhaul:taskMeta';
 /** Day each one-off task was completed (the Task table has no completion timestamp). */
 type CompletionLog = Record<string, string>;
@@ -56,7 +56,6 @@ export class TaskService extends BaseService {
         recurrenceCount: t.recurrenceCount,
         isRecurring: !!occurrence,
         occurrenceDate: occurrence,
-        goalId: meta[t.id]?.goalId ?? null,
         description: meta[t.id]?.description ?? '',
       };
     });
@@ -154,25 +153,12 @@ export class TaskService extends BaseService {
     return { removed: rows.length };
   }
 
-  /** Detaches tasks from a goal that is being deleted. */
-  async unlinkGoal(goalId: string) {
-    const meta = await this.meta().get<TaskMeta>(TASK_META, {});
-    let changed = false;
-    for (const entry of Object.values(meta)) if (entry.goalId === goalId) { entry.goalId = null; changed = true; }
-    if (changed) await this.meta().set(TASK_META, meta);
-  }
-
   private async saveMeta(id: string, args: Record<string, unknown>) {
-    if (args.goalId === undefined && args.description === undefined) return;
+    if (args.description === undefined) return;
     const meta = await this.meta().get<TaskMeta>(TASK_META, {});
-    const entry = { ...meta[id] };
-    if (args.goalId !== undefined) {
-      if (args.goalId) await this.owned('Goal', args.goalId, 'Project');
-      entry.goalId = (args.goalId as string) || null;
-    }
-    if (args.description !== undefined) entry.description = str(args.description, 20000) ?? '';
-    meta[id] = entry;
-    if (!entry.goalId && !entry.description) delete meta[id];
+    const description = str(args.description, 20000) ?? '';
+    if (description) meta[id] = { description };
+    else delete meta[id];
     await this.meta().set(TASK_META, meta);
   }
 

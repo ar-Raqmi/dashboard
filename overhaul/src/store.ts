@@ -49,7 +49,7 @@ export interface UserSettings {
 export type Priority = 'high' | 'medium' | 'low';
 export type TaskStatus = 'pending' | 'in_progress' | 'completed';
 export interface TaskView extends Omit<Task, 'userId' | 'priority' | 'status'> {
-  priority: Priority; status: TaskStatus; isRecurring: boolean; occurrenceDate: string | null; goalId: string | null; description: string;
+  priority: Priority; status: TaskStatus; isRecurring: boolean; occurrenceDate: string | null; description: string;
 }
 /** A repeating task's own date is its occurrence; one-off tasks use their due date. */
 export const taskDate = (t: TaskView) => (t.isRecurring ? t.occurrenceDate ?? t.dueDate : t.dueDate);
@@ -113,7 +113,7 @@ interface WorkspaceState extends WorkspaceData {
   reset: () => void;
 
   toggleTask: (task: TaskView) => Promise<void>;
-  updateTask: (id: string, patch: Partial<Pick<TaskView, 'title' | 'dueDate' | 'priority' | 'status' | 'goalId' | 'description'>>) => Promise<void>;
+  updateTask: (id: string, patch: Partial<Pick<TaskView, 'title' | 'dueDate' | 'priority' | 'status' | 'description'>>) => Promise<void>;
   toggleMilestone: (goalId: string, milestoneId: string) => Promise<void>;
   saveNote: (note: { id?: string; title: string; content: string; pinned: boolean; color?: string }) => Promise<string>;
   updatePreferences: (patch: Preferences) => Promise<void>;
