@@ -1,5 +1,5 @@
-import { GoalsView } from './GoalsView';
+import { GoalsView, type ProjectFocus } from './GoalsView';
 
-export function GoalsPage({ onOpenProject, notify }: { onOpenProject: (goalId: string) => void; notify: (message: string) => void }) {
-  return <GoalsView onOpenProject={onOpenProject} notify={notify}/>;
+export function GoalsPage({ focus, onClearFocus, notify }: { focus: ProjectFocus; onClearFocus: () => void; notify: (message: string) => void }) {
+  return <GoalsView focus={focus} onClearFocus={onClearFocus} notify={notify}/>;
 }
