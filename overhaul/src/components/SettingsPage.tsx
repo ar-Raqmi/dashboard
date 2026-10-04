@@ -12,6 +12,9 @@ function Row({ title, hint, children }: { title: string; hint?: string; children
   return <div className="setting-row"><span><strong>{title}</strong>{hint && <small>{hint}</small>}</span>{children}</div>;
 }
 
+/** Seeded by the server but not rendered anywhere on the Overview yet, so a toggle would do nothing. */
+const WIDGETS_WITHOUT_EFFECT = ['clock', 'files'];
+
 export function SettingsPage({ theme, setTheme, notify }: { theme: Theme; setTheme: (theme: Theme) => void; notify: (message: string) => void }) {
   const { user, logout } = useAuth();
   const settings = useStore(s => s.settings), preferences = useStore(s => s.preferences), widgets = useStore(s => s.widgets), clocks = useStore(s => s.clocks);
@@ -36,7 +39,7 @@ export function SettingsPage({ theme, setTheme, notify }: { theme: Theme; setThe
 
     <div className="settings-group"><span className="eyebrow">OVERVIEW WIDGETS</span>
       <p className="settings-description">Choose which sections appear on the Overview and in the side rail.</p>
-      {widgets.filter(w => ['tasks', 'goals', 'notes', 'clipboard', 'calendar', 'verse', 'prayerTimes'].includes(w.type)).map(w => <Row key={w.type} title={w.label}><Toggle on={w.visible} label={w.label} onChange={() => void mutate('widgets:toggle', { type: w.type }, ['widgets']).catch(fail)}/></Row>)}
+      {widgets.filter(w => !WIDGETS_WITHOUT_EFFECT.includes(w.type)).map(w => <Row key={w.type} title={w.label}><Toggle on={w.visible} label={w.label} onChange={() => void mutate('widgets:toggle', { type: w.type }, ['widgets']).catch(fail)}/></Row>)}
     </div>
 
     <PasswordGroup notify={notify}/>
