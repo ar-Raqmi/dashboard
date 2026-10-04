@@ -293,6 +293,14 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
 .markdown-body.pinned-note-preview :is(pre, code) { white-space: normal; font-size: inherit; background: none; border: 0; padding: 0; }
 .markdown-body.pinned-note-preview blockquote { border: 0; padding: 0; margin: 0; }
 .markdown-body.pinned-note-preview :is(img, hr, table, .heading-anchor, .footnotes) { display: none; }
+/* Its own full-width row under Goals / Pinned notes, ruled off the same way. */
+.clipboard-card { margin-top: 18px; padding-top: 21px; border-top: 1px solid var(--border); padding-bottom: 11px; }
+.bottom-split + .clipboard-card { margin-top: 7px; }
+.clipboard-card h2 { font-size: 14px; }
+.clipboard-card > .section-heading { margin-bottom: 10px; min-height: 20px; }
+.clipboard-card .text-button:disabled { cursor: default; }
+.clipboard-card .text-button:disabled:hover { color: var(--subtle); gap: 7px; }
+.clipboard-card > textarea { display: block; width: 100%; min-height: 96px; padding: 10px 11px; background: var(--bg0); font-size: 12px; color: var(--fg); }
 .muted-note { font-size: 11px; color: var(--muted); padding: 9px 0; }
 .context-rail { border-left: 1px solid var(--border); padding-left: 25px; min-width: 0; align-self: stretch; }
 .rail-date { border-bottom: 1px solid var(--border); padding: 2px 0 21px; margin-bottom: 24px; }
@@ -804,7 +812,7 @@ textarea.wrap-80 { max-width: calc(80ch + 5px); } /* + scrollbar, so 80 columns 
   .prayer-disclaimer { white-space: normal; line-height: 1.6; font-size: 8px; }
   .rail-date > span { font-size: 11px; }
   .rail-date > small { font-size: 9px; }
-  .bottom-split h2 { font-size: 12px; }
+  .bottom-split h2, .clipboard-card h2 { font-size: 12px; }
   .goal-summary-item strong, .pinned-note-body { font-size: 10px; }
   .task-name > button { font-size: 11px; }
 }
@@ -855,7 +863,7 @@ textarea.wrap-80 { max-width: calc(80ch + 5px); } /* + scrollbar, so 80 columns 
   .project-name { font-size: 11px; }
   .task-name > button { font-size: 12px; }
   .chart-canvas { height: 214px; }
-  .bottom-split h2 { font-size: 14px; }
+  .bottom-split h2, .clipboard-card h2 { font-size: 14px; }
   .goal-summary-item strong, .pinned-note-body { font-size: 11px; }
   .full-table .task-table td { height: 48px; }
 }
@@ -938,7 +946,7 @@ textarea.wrap-80 { max-width: calc(80ch + 5px); } /* + scrollbar, so 80 columns 
   .bottom-split { margin-top: 16px; padding-top: 21px; grid-template-columns: .95fr 1.05fr; }
   .goals-summary { padding-right: 18px; }
   .pinned-notes { padding-left: 18px; }
-  .bottom-split h2 { font-size: 12px; }
+  .bottom-split h2, .clipboard-card h2 { font-size: 12px; }
   .pinned-note-body, .goal-summary-item strong { font-size: 10px; }
   .pinned-note { gap: 6px; padding: 7px 0; }
   .pinned-note-icon .icon { width: 12px; }

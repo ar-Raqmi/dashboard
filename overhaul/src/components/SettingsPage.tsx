@@ -36,7 +36,7 @@ export function SettingsPage({ theme, setTheme, notify }: { theme: Theme; setThe
 
     <div className="settings-group"><span className="eyebrow">OVERVIEW WIDGETS</span>
       <p className="settings-description">Choose which sections appear on the Overview and in the side rail.</p>
-      {widgets.filter(w => ['tasks', 'goals', 'notes', 'calendar', 'verse', 'prayerTimes'].includes(w.type)).map(w => <Row key={w.type} title={w.label}><Toggle on={w.visible} label={w.label} onChange={() => void mutate('widgets:toggle', { type: w.type }, ['widgets']).catch(fail)}/></Row>)}
+      {widgets.filter(w => ['tasks', 'goals', 'notes', 'clipboard', 'calendar', 'verse', 'prayerTimes'].includes(w.type)).map(w => <Row key={w.type} title={w.label}><Toggle on={w.visible} label={w.label} onChange={() => void mutate('widgets:toggle', { type: w.type }, ['widgets']).catch(fail)}/></Row>)}
     </div>
 
     <PasswordGroup notify={notify}/>
