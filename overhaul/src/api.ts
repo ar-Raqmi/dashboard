@@ -73,6 +73,11 @@ export class ApiClient {
     return res.value;
   }
 
+  /** Streaming ZIP of files and folder trees, built server-side from R2. Authenticated by the session cookie like every other route. */
+  static zipUrl(ids: string[]) {
+    return `/api/files/zip?ids=${ids.map(encodeURIComponent).join(',')}`;
+  }
+
   static fileUrl(id: string, download = false) {
     return `/api/files/${encodeURIComponent(id)}/content${download ? '?download=1' : ''}`;
   }

@@ -53,6 +53,7 @@ const queries = (s: Services, user: AuthUser): Record<string, Handler> => ({
   'twoFactor:list': () => s.twoFactor.list(),
   'files:list': args => s.files.list(args),
   'files:stats': () => s.files.stats(),
+  'files:zipInfo': args => s.files.zipInfo(args),
   'content:verse': args => s.content.verse(args),
   'content:hadith': args => s.content.hadith(args),
   'content:prayer': args => s.content.prayer(args),
@@ -177,6 +178,9 @@ async function route(request: Request, env: Env): Promise<Response> {
     });
     return json({ value: id });
   }
+
+  // Authenticated and user-scoped like the rest: every id is checked against the session user inside the service.
+  if (path === '/files/zip' && method === 'GET') return s.files.zip((url.searchParams.get('ids') || '').split(',').filter(Boolean));
 
   const content = path.match(/^\/files\/([\w-]+)\/content$/);
   if (content && method === 'GET') return s.files.content(content[1], url.searchParams.get('download') === '1');

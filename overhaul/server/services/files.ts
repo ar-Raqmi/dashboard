@@ -1,4 +1,5 @@
 import { assert, bool, iso, nowIso, uuid } from '../db';
+import { streamZip, type ZipEntry } from '../zip';
 import { BaseService, reqStr } from './base';
 
 interface FileRow {
@@ -16,6 +17,12 @@ const categoryOf = (mime: string, name: string) => {
   if (/zip|gzip|tar|rar|7z/.test(mime)) return 'archive';
   if (/text|word|document|sheet|excel|presentation|powerpoint|json|csv/.test(mime)) return 'document';
   return 'other';
+};
+const MAX_ZIP_ROOTS = 200, MAX_ZIP_FILES = 1000;
+/** One archive path segment: no separators or characters Windows refuses, and never `.`/`..`. */
+const zipSegment = (name: string) => {
+  const safe = name.replace(/[\\/:*?"<>|\u0000-\u001f]/g, '_').trim();
+  return !safe || /^\.+$/.test(safe) ? '_' : safe;
 };
 const cleanName = (name: string) => name.replace(/[\\/\u0000-\u001f]/g, '_').trim().slice(0, 255);
 
@@ -101,6 +108,80 @@ export class FileService extends BaseService {
     headers.set('Cache-Control', 'private, max-age=300');
     headers.set('X-Content-Type-Options', 'nosniff');
     return new Response(object.body, { headers });
+  }
+
+  /** Resolves a selection (files and whole folder trees) into archive entries, validating ownership of every root. */
+  private async zipPlan(ids: unknown) {
+    assert(Array.isArray(ids) && ids.length > 0, 400, 'Nothing selected');
+    const roots = [...new Set(ids.map(String))];
+    assert(roots.length <= MAX_ZIP_ROOTS, 400, `Select at most ${MAX_ZIP_ROOTS} items to download at once`);
+    const used = new Set<string>(), entries: (ZipEntry & { key?: string; size: number })[] = [];
+    // Siblings with the same name get " (2)", " (3)" ... so nothing silently overwrites inside the archive.
+    const unique = (bare: string, dir: boolean) => {
+      const dot = dir ? -1 : bare.lastIndexOf('.'), slash = bare.lastIndexOf('/');
+      const stem = dot > slash + 1 ? bare.slice(0, dot) : bare, ext = dot > slash + 1 ? bare.slice(dot) : '';
+      for (let n = 1; ; n++) {
+        const candidate = `${n === 1 ? stem : `${stem} (${n})`}${ext}${dir ? '/' : ''}`;
+        if (!used.has(candidate.toLowerCase())) { used.add(candidate.toLowerCase()); return candidate; }
+      }
+    };
+    let files = 0, folders = 0, bytes = 0, skipped = 0;
+    for (const id of roots) {
+      const root = await this.owned<FileRow>('FileItem', id, 'File');
+      // One query per selected root; D1/R2 subrequests are a scarce budget on the edge.
+      const rows = await this.db.all<FileRow>(
+        `WITH RECURSIVE tree(id) AS (SELECT id FROM FileItem WHERE id = ? AND userId = ? UNION ALL SELECT f.id FROM FileItem f JOIN tree t ON f.parentId = t.id WHERE f.userId = ?)
+         SELECT * FROM FileItem WHERE id IN (SELECT id FROM tree)`, root.id, this.user.id, this.user.id);
+      const byId = new Map(rows.map(r => [r.id, r]));
+      const pathOf = (row: FileRow) => {
+        const parts: string[] = [];
+        for (let cur: FileRow | undefined = row, guard = 0; cur && guard < 100; guard++) { parts.unshift(zipSegment(cur.name)); cur = cur.id === root.id ? undefined : byId.get(cur.parentId ?? ''); }
+        return parts.join('/');
+      };
+      const hasChildren = new Set(rows.map(r => r.parentId));
+      const base = unique(pathOf(root), root.type === 'folder');
+      const rel = (row: FileRow) => base.replace(/\/$/, '') + pathOf(row).slice(pathOf(root).length);
+      for (const row of rows.sort((a, b) => pathOf(a).localeCompare(pathOf(b)))) {
+        if (row.type === 'folder') {
+          folders++;
+          // Non-empty folders appear implicitly through their files; only empty ones need an explicit directory entry.
+          if (row.id === root.id) { if (!hasChildren.has(row.id)) entries.push({ path: base, size: 0 }); }
+          else if (!hasChildren.has(row.id)) entries.push({ path: unique(rel(row), true), size: 0 });
+        } else if (row.r2Key) {
+          files++; bytes += row.size ?? 0;
+          entries.push({ path: row.id === root.id ? base : unique(rel(row), false), size: row.size ?? 0, key: row.r2Key, modified: Date.parse(row.updatedAt) || undefined });
+        } else skipped++;
+      }
+      assert(files <= MAX_ZIP_FILES, 400, `That selection holds more than ${MAX_ZIP_FILES} files. Download it in smaller parts.`);
+    }
+    const first = roots.length === 1 ? await this.owned<FileRow>('FileItem', roots[0], 'File') : null;
+    const name = first?.type === 'folder' ? `${zipSegment(first.name)}.zip` : `raqmi-files-${new Date().toISOString().slice(0, 10)}.zip`;
+    return { name, entries, files, folders, bytes, skipped };
+  }
+
+  /** Preflight for the client: validates the selection and reports what the archive will hold. */
+  async zipInfo(args: { ids?: unknown }) {
+    const { name, files, folders, bytes, skipped } = await this.zipPlan(args.ids);
+    assert(files + folders > 0, 400, 'Nothing in the selection can be downloaded');
+    return { name, files, folders, bytes, skipped };
+  }
+
+  /** Streams the selection as a ZIP, reading each object from R2 on the server so bytes never round-trip through the browser. */
+  async zip(ids: string[]) {
+    assert(this.env.BUCKET, 503, 'File storage (R2) is not bound to this deployment.');
+    const bucket = this.env.BUCKET;
+    const { name, entries } = await this.zipPlan(ids);
+    assert(entries.length > 0, 400, 'Nothing in the selection can be downloaded');
+    const body = streamZip(entries.map(({ path, modified, key }) => ({
+      path, modified,
+      open: key === undefined ? undefined : async () => (await bucket.get(key))?.body ?? null,
+    })));
+    return new Response(body, { headers: {
+      'Content-Type': 'application/zip',
+      'Content-Disposition': `attachment; filename="${name.replace(/[^\x20-\x7e]|["\\]/g, '_')}"; filename*=UTF-8''${encodeURIComponent(name)}`,
+      'Cache-Control': 'private, no-store',
+      'X-Content-Type-Options': 'nosniff',
+    } });
   }
 
   async rename(args: { id?: unknown; name?: unknown }) {
