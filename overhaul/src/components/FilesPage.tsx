@@ -4,6 +4,7 @@ import { ApiClient, ApiError } from '../api';
 import { useMarquee } from '../hooks/useMarquee';
 import { useStore, type FileView } from '../store';
 import { formatBytes, shortDate } from '../utils/date';
+import { makeThumbnail } from '../utils/thumbnail';
 import { Icon, type IconName } from './Icon';
 import { ConfirmModal, Modal } from './Modal';
 
@@ -90,8 +91,11 @@ export function FilesPage({ notify, uploadTrigger }: { notify: (message: string)
     let ok = 0;
     for (const file of files) {
       try {
-        await ApiClient.upload(file, starredOnly ? null : folderId);
+        const id = await ApiClient.upload(file, starredOnly ? null : folderId);
         ok++;
+        // Preview generation is best-effort: a file without one simply keeps the icon.
+        const thumb = await makeThumbnail(file);
+        if (thumb) await ApiClient.putThumbnail(id, thumb.blob, thumb).catch(() => undefined);
       } catch (err) {
         notify(`${file.name}: ${(err as Error).message}`);
       } finally {
@@ -253,7 +257,7 @@ export function FilesPage({ notify, uploadTrigger }: { notify: (message: string)
         const isFolder = item.type === 'folder', isSelected = selected.has(item.id);
         const meta = isFolder ? 'Folder' : `${item.mimeType || 'File'} · ${formatBytes(item.size)}${item.available ? '' : ' · Not in R2'}`;
         return <div className={`file-row ${isSelected ? 'selected-row' : ''}`} key={item.id} data-file-id={item.id} role="option" aria-selected={isSelected} onClick={e => clickRow(e, item)} onDoubleClick={e => { if (!(e.target as HTMLElement).closest('button, a')) open(item); }}>
-          <span style={{ color: isFolder ? 'var(--yellow)' : 'var(--muted)', flex: 'none' }}><Icon name={isFolder ? 'files' : 'file'} size={24}/></span>
+          <FileThumb item={item}/>
           <div className="file-name"><strong>{item.name}</strong><small>{meta}</small></div>
           <span>{shortDate(item.updatedAt)}</span>
           <button className="icon-button" title={item.starred ? 'Unstar' : 'Star'} aria-label={`${item.starred ? 'Unstar' : 'Star'} ${item.name}`} aria-pressed={item.starred} style={item.starred ? { color: 'var(--yellow)' } : undefined} onClick={() => act('files:toggleStar', { id: item.id }, item.starred ? 'Removed from starred' : 'Starred')}><Icon name="star" size={15}/></button>
@@ -283,6 +287,21 @@ export function FilesPage({ notify, uploadTrigger }: { notify: (message: string)
       <div className="modal-footer"><span/><div><button className="button primary" onClick={() => setReport(null)}>Done</button></div></div>
     </Modal>}
   </section>;
+}
+
+/** Largest image served straight from its content URL when it has no generated thumbnail. */
+const RAW_PREVIEW_LIMIT = 2 * 1024 * 1024;
+
+/** Fixed-size leading cell: folder icon, lazy image/video preview, or the generic file icon (also when the image fails to load). */
+function FileThumb({ item }: { item: FileView }) {
+  const [failed, setFailed] = useState(false);
+  const mime = item.mimeType || '';
+  const src = item.type === 'folder' || !item.available ? null
+    : item.thumbnail && (mime.startsWith('image/') || (mime.startsWith('video/') && item.duration)) ? ApiClient.thumbnailUrl(item.id)
+    : mime.startsWith('image/') && item.size <= RAW_PREVIEW_LIMIT ? ApiClient.fileUrl(item.id) : null;
+  useEffect(() => setFailed(false), [src]);
+  if (!src || failed) return <span className="file-thumb" style={{ color: item.type === 'folder' ? 'var(--yellow)' : 'var(--muted)' }}><Icon name={item.type === 'folder' ? 'files' : 'file'} size={24}/></span>;
+  return <span className={`file-thumb has-image ${mime.startsWith('video/') ? 'is-video' : ''}`}><img src={src} alt="" width={36} height={36} loading="lazy" decoding="async" draggable={false} onError={() => setFailed(true)}/></span>;
 }
 
 function ContextMenu({ x, y, entries, onClose }: { x: number; y: number; entries: MenuEntry[]; onClose: () => void }) {

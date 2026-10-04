@@ -31,7 +31,7 @@ export class FileService extends BaseService {
   private serialize(f: FileRow) {
     return {
       id: f.id, name: f.name, type: f.type, category: f.category, parentId: f.parentId, size: f.size ?? 0,
-      mimeType: f.mimeType, starred: bool(f.starred), storageSource: f.storageSource,
+      mimeType: f.mimeType, width: f.width, height: f.height, duration: f.duration, thumbnail: f.type === 'file' && !!f.thumbnailR2Key, starred: bool(f.starred), storageSource: f.storageSource,
       // Only R2-backed files can be served by this deployment.
       available: f.type === 'folder' || !!f.r2Key,
       createdAt: iso(f.createdAt), updatedAt: iso(f.updatedAt),
@@ -108,6 +108,32 @@ export class FileService extends BaseService {
     headers.set('Cache-Control', 'private, max-age=300');
     headers.set('X-Content-Type-Options', 'nosniff');
     return new Response(object.body, { headers });
+  }
+
+  /** Serves the small preview image generated for a file. */
+  async thumbnail(id: string) {
+    const file = await this.owned<FileRow>('FileItem', id, 'File');
+    assert(file.thumbnailR2Key, 404, 'This file has no thumbnail');
+    assert(this.env.BUCKET, 503, 'File storage (R2) is not bound to this deployment.');
+    const object = await this.env.BUCKET.get(file.thumbnailR2Key);
+    assert(object, 404, 'Thumbnail is missing from storage');
+    return new Response(object.body, { headers: { 'Content-Type': 'image/jpeg', 'Cache-Control': 'private, max-age=86400', 'X-Content-Type-Options': 'nosniff' } });
+  }
+
+  /** Stores a client-generated JPEG preview (and the source dimensions) for an uploaded image or video. */
+  async setThumbnail(id: string, body: ArrayBuffer, args: { width?: number; height?: number; duration?: number }) {
+    const file = await this.owned<FileRow>('FileItem', id, 'File');
+    assert(file.type === 'file' && /^(image|video)\//.test(file.mimeType || ''), 400, 'Only images and videos have thumbnails');
+    assert(body.byteLength > 0 && body.byteLength <= 512 * 1024, 400, 'Thumbnail must be under 512 KB');
+    assert(this.env.BUCKET, 503, 'File storage (R2) is not bound to this deployment.');
+    const key = `overhaul/${this.user.id}/${file.id}/thumbnail.jpg`;
+    await this.env.BUCKET.put(key, body, { httpMetadata: { contentType: 'image/jpeg' } });
+    const dim = (n?: number) => (n && Number.isFinite(n) && n > 0 ? Math.round(n) : undefined);
+    await this.db.update('FileItem', file.id, {
+      thumbnailR2Key: key, width: dim(args.width), height: dim(args.height),
+      duration: args.duration && Number.isFinite(args.duration) && args.duration > 0 ? args.duration : undefined,
+    });
+    return { success: true };
   }
 
   /** Resolves a selection (files and whole folder trees) into archive entries, validating ownership of every root. */

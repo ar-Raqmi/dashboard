@@ -182,6 +182,13 @@ async function route(request: Request, env: Env): Promise<Response> {
   // Authenticated and user-scoped like the rest: every id is checked against the session user inside the service.
   if (path === '/files/zip' && method === 'GET') return s.files.zip((url.searchParams.get('ids') || '').split(',').filter(Boolean));
 
+  const thumb = path.match(/^\/files\/([\w-]+)\/thumbnail$/);
+  if (thumb && method === 'GET') return s.files.thumbnail(thumb[1]);
+  if (thumb && method === 'PUT') {
+    const num = (key: string) => Number(url.searchParams.get(key)) || undefined;
+    return json({ value: await s.files.setThumbnail(thumb[1], await request.arrayBuffer(), { width: num('width'), height: num('height'), duration: num('duration') }) });
+  }
+
   const content = path.match(/^\/files\/([\w-]+)\/content$/);
   if (content && method === 'GET') return s.files.content(content[1], url.searchParams.get('download') === '1');
 

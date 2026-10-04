@@ -70,6 +70,7 @@ export type Theme = 'dark' | 'light';
 export interface Preferences { theme?: Theme; compact?: boolean; reducedMotion?: boolean; sidebarCollapsed?: boolean; notificationsReadAt?: string }
 export interface FileView {
   id: string; name: string; type: 'file' | 'folder'; category: string | null; parentId: string | null; size: number; mimeType: string | null;
+  width: number | null; height: number | null; duration: number | null; thumbnail: boolean;
   starred: boolean; storageSource: string | null; available: boolean; createdAt: string; updatedAt: string;
 }
 export interface TwoFactorAccount { id: string; accountName: string; category: string; icon: string | null; token: string | null; nextToken: string | null; undecryptable?: boolean }

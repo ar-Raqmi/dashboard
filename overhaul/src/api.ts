@@ -73,6 +73,17 @@ export class ApiClient {
     return res.value;
   }
 
+  /** Attaches a client-generated JPEG preview to an uploaded file. */
+  static async putThumbnail(id: string, blob: Blob, meta: { width: number; height: number; duration?: number }) {
+    const params = new URLSearchParams({ width: String(meta.width), height: String(meta.height) });
+    if (meta.duration) params.set('duration', String(meta.duration));
+    await request(`/api/files/${encodeURIComponent(id)}/thumbnail?${params}`, { method: 'PUT', headers: { 'Content-Type': 'image/jpeg' }, body: blob });
+  }
+
+  static thumbnailUrl(id: string) {
+    return `/api/files/${encodeURIComponent(id)}/thumbnail`;
+  }
+
   /** Streaming ZIP of files and folder trees, built server-side from R2. Authenticated by the session cookie like every other route. */
   static zipUrl(ids: string[]) {
     return `/api/files/zip?ids=${ids.map(encodeURIComponent).join(',')}`;
