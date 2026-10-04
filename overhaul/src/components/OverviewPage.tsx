@@ -1,8 +1,8 @@
-import { goalColor, useStore, type NoteView, type TaskView } from '../store';
+import { goalColor, useStore, type EventView, type NoteView, type TaskView } from '../store';
 import { shortDate } from '../utils/date';
 import { MiniAuthenticator } from './AuthenticatorView';
-import { FocusChart, type Metric, type Range, type Theme } from './FocusChart';
 import { Icon } from './Icon';
+import { MiniCalendar } from './MiniCalendar';
 import { TaskTable } from './TaskTable';
 import { OverviewVerse } from './Verse';
 
@@ -12,9 +12,10 @@ export const useWidgetVisible = () => {
   return (type: string) => widgets.find(w => w.type === type)?.visible ?? true;
 };
 
-export function OverviewPage({ theme, reducedMotion, refreshKey, selectedTaskId, onSelectTask, onAddTask, onOpenNote, onReport, onOpenAuthenticator, onAddAccount, navigate, notify }: {
-  theme: Theme; reducedMotion: boolean; refreshKey: number; selectedTaskId?: string;
-  onSelectTask: (task: TaskView) => void; onAddTask: () => void; onOpenNote: (note: NoteView) => void; onReport: (metric: Metric, range: Range) => void;
+export function OverviewPage({ selectedTaskId, onSelectTask, onAddTask, onOpenNote, onEvent, onOpenDay, onOpenAuthenticator, onAddAccount, navigate, notify }: {
+  selectedTaskId?: string;
+  onSelectTask: (task: TaskView) => void; onAddTask: () => void; onOpenNote: (note: NoteView) => void;
+  onEvent: (event: EventView) => void; onOpenDay: (date: string) => void;
   onOpenAuthenticator: () => void; onAddAccount: () => void;
   navigate: (page: 'Tasks' | 'Goals' | 'Notes') => void; notify: (message: string) => void;
 }) {
@@ -26,7 +27,7 @@ export function OverviewPage({ theme, reducedMotion, refreshKey, selectedTaskId,
       {visible('verse') && <div className="metric"><OverviewVerse/></div>}
       {visible('twoFactor') && <div className="metric"><MiniAuthenticator notify={notify} onOpen={onOpenAuthenticator} onAdd={onAddAccount}/></div>}
     </section>}
-    <FocusChart refreshKey={refreshKey} reducedMotion={reducedMotion} theme={theme} onReport={onReport}/>
+    <MiniCalendar onEvent={onEvent} onOpenDay={onOpenDay}/>
     {visible('tasks') && <TaskTable onSelect={onSelectTask} onAdd={onAddTask} projectFilter={null} selectedId={selectedTaskId} onViewAll={() => navigate('Tasks')} onNotice={notify}/>}
     {(visible('goals') || visible('notes')) && <div className="bottom-split">
       {visible('goals') && <section className="goals-summary"><div className="section-heading"><h2>Goals in motion</h2><button className="icon-button compact" title="View goals" aria-label="View goals" onClick={() => navigate('Goals')}><Icon name="upRight" size={15}/></button></div>{goals.map(goal => <button className="goal-summary-item" key={goal.id} onClick={() => navigate('Goals')} title={goal.milestones.length ? `${goal.milestones.filter(m => m.completed).length} of ${goal.milestones.length} milestones complete` : `${goal.progress}% complete`}><span><strong><i style={{ background: goalColor(goals, goal.id) }}/>{goal.title}</strong><small>{goal.progress}%</small></span><span className="goal-progress-track"><span style={{ width: `${goal.progress}%`, background: goalColor(goals, goal.id) }}/></span></button>)}{!goals.length && <p className="muted-note">Set a goal to see it move here.</p>}</section>}

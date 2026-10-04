@@ -1,9 +1,8 @@
 import { useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import { ApiClient } from '../api';
 import { useAuth } from '../auth';
-import { useStore, type SettingsView } from '../store';
+import { useStore, type SettingsView, type Theme } from '../store';
 import { downloadFile } from '../utils/date';
-import type { Theme } from './FocusChart';
 import { Icon } from './Icon';
 
 function Toggle({ on, label, onChange }: { on: boolean; label: string; onChange: (next: boolean) => void }) {

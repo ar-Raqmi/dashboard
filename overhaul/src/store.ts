@@ -58,7 +58,8 @@ export interface EventView extends Omit<CalendarEvent, 'userId' | 'allDay'> { al
 export type ClockView = Omit<Clock, 'userId'>;
 export type WidgetView = Omit<DashboardWidget, 'id' | 'userId'>;
 export type SettingsView = Omit<UserSettings, 'id' | 'userId' | 'profilePicture' | 'appLogo'> & { profilePicture: string; appLogo: string };
-export interface Preferences { theme?: 'dark' | 'light'; compact?: boolean; reducedMotion?: boolean; sidebarCollapsed?: boolean; notificationsReadAt?: string }
+export type Theme = 'dark' | 'light';
+export interface Preferences { theme?: Theme; compact?: boolean; reducedMotion?: boolean; sidebarCollapsed?: boolean; notificationsReadAt?: string }
 export interface FileView {
   id: string; name: string; type: 'file' | 'folder'; category: string | null; parentId: string | null; size: number; mimeType: string | null;
   starred: boolean; storageSource: string | null; available: boolean; createdAt: string; updatedAt: string;

@@ -5,7 +5,6 @@ import { CalendarPage } from './components/CalendarPage';
 import { EventDetailModal } from './components/CalendarView';
 import { EventList } from './components/EventList';
 import { FilesPage } from './components/FilesPage';
-import { ReportModal, type Metric, type Range, type Theme } from './components/FocusChart';
 import { GoalsPage } from './components/GoalsPage';
 import { NewGoalModal } from './components/GoalsView';
 import { BrandMark, Icon, type IconName } from './components/Icon';
@@ -20,7 +19,7 @@ import { SpiritualPage } from './components/SpiritualPage';
 import { TaskDetail } from './components/TaskDetail';
 import { TasksPage } from './components/TasksPage';
 import { Verse } from './components/Verse';
-import { goalColor, useStore, type EventView, type NoteView, type TaskView } from './store';
+import { goalColor, useStore, type EventView, type NoteView, type TaskView, type Theme } from './store';
 import { downloadFile, formatTime, parseDateKey, todayKey } from './utils/date';
 
 type Page = 'Overview' | 'Tasks' | 'Calendar' | 'Notes' | 'Files' | 'Spiritual' | 'Goals' | 'Authenticator' | 'Settings';
@@ -65,8 +64,8 @@ function Workspace() {
   const [selectedTask, setSelectedTask] = useState<string | null>(null), [projectFilter, setProjectFilter] = useState<string | null>(null);
   const [newTask, setNewTask] = useState(false), [newGoal, setNewGoal] = useState(false), [addingAccount, setAddingAccount] = useState(false);
   const [noteEditor, setNoteEditor] = useState<NoteView | 'new' | null>(null), [eventDetail, setEventDetail] = useState<EventView | null>(null);
-  const [report, setReport] = useState<{ metric: Metric; range: Range } | null>(null), [help, setHelp] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0), [refreshing, setRefreshing] = useState(false), [toast, setToast] = useState('');
+  const [calendarDate, setCalendarDate] = useState<string | null>(null), [help, setHelp] = useState(false);
+  const [refreshing, setRefreshing] = useState(false), [toast, setToast] = useState('');
   const [searchOpen, setSearchOpen] = useState(false), [search, setSearch] = useState(''), [searchIndex, setSearchIndex] = useState(0);
   const [notificationsOpen, setNotificationsOpen] = useState(false), [profileOpen, setProfileOpen] = useState(false), [workspaceOpen, setWorkspaceOpen] = useState(false);
   const [screenshotBusy, setScreenshotBusy] = useState(false), [theme, setThemeState] = useState<Theme>(readTheme);
@@ -93,7 +92,7 @@ function Workspace() {
 
   const notify = useCallback((message: string) => { setToast(message); if (toastTimer.current) clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(''), 3500); }, []);
   const fail = (err: unknown) => notify((err as Error).message);
-  function navigate(next: Page, project: string | null = null) { setPage(next); setProjectFilter(project); setSelectedTask(null); setMobileNav(false); setWorkspaceOpen(false); mainRef.current?.scrollTo({ top: 0, behavior: 'instant' }); }
+  function navigate(next: Page, project: string | null = null) { setPage(next); setProjectFilter(project); setCalendarDate(null); setSelectedTask(null); setMobileNav(false); setWorkspaceOpen(false); mainRef.current?.scrollTo({ top: 0, behavior: 'instant' }); }
   const setCollapsed = (v: boolean) => void store.updatePreferences({ sidebarCollapsed: v }).catch(fail);
   function setTheme(next: Theme) { setThemeState(next); void store.updatePreferences({ theme: next }).catch(() => undefined); }
 
@@ -101,7 +100,7 @@ function Workspace() {
     if (!quiet) setRefreshing(true);
     try {
       await Promise.all([useStore.getState().load(), useStore.getState().loadDaily()]);
-      if (!quiet) { setRefreshKey(k => k + 1); notify('Workspace refreshed'); }
+      if (!quiet) notify('Workspace refreshed');
     } catch (err) {
       if (!quiet) notify((err as Error).message);
     } finally {
@@ -241,9 +240,9 @@ function Workspace() {
           <div className={`content-grid ${activeTask ? 'has-task-detail' : ''}`}>
             <div className="primary-content" key={page + (projectFilter || '')}>
               {store.status === 'loading' ? <div className="chart-canvas is-loading" aria-label="Loading your workspace"><div className="chart-skeleton"><div/><div/><div/><div/></div></div> : <>
-                {page === 'Overview' && <OverviewPage theme={theme} reducedMotion={reducedMotion} refreshKey={refreshKey} selectedTaskId={selectedTask || undefined} onSelectTask={t => setSelectedTask(t.id)} onAddTask={() => setNewTask(true)} onOpenNote={setNoteEditor} onReport={(metric, range) => setReport({ metric, range })} onOpenAuthenticator={() => navigate('Authenticator')} onAddAccount={() => { navigate('Authenticator'); setAddingAccount(true); }} navigate={p => navigate(p)} notify={notify}/>}
+                {page === 'Overview' && <OverviewPage selectedTaskId={selectedTask || undefined} onSelectTask={t => setSelectedTask(t.id)} onAddTask={() => setNewTask(true)} onOpenNote={setNoteEditor} onEvent={setEventDetail} onOpenDay={date => { navigate('Calendar'); setCalendarDate(date); }} onOpenAuthenticator={() => navigate('Authenticator')} onAddAccount={() => { navigate('Authenticator'); setAddingAccount(true); }} navigate={p => navigate(p)} notify={notify}/>}
                 {page === 'Tasks' && <TasksPage projectFilter={projectFilter} selectedTaskId={selectedTask || undefined} onSelectTask={t => setSelectedTask(t.id)} onAddTask={() => setNewTask(true)} notify={notify}/>}
-                {page === 'Calendar' && <CalendarPage onEvent={setEventDetail}/>}
+                {page === 'Calendar' && <CalendarPage key={calendarDate || 'today'} onEvent={setEventDetail} initialDate={calendarDate || undefined}/>}
                 {page === 'Notes' && <NotesPage onOpenNote={setNoteEditor}/>}
                 {page === 'Goals' && <GoalsPage onOpenProject={id => navigate('Tasks', id)} notify={notify}/>}
                 {page === 'Spiritual' && <SpiritualPage onManageClocks={() => navigate('Settings')}/>}
@@ -269,8 +268,7 @@ function Workspace() {
     {newGoal && <NewGoalModal onClose={() => setNewGoal(false)} onCreated={message => { setNewGoal(false); notify(message); }}/>}
     {noteEditor && <NoteModal key={noteEditor === 'new' ? 'new' : noteEditor.id} note={noteEditor === 'new' ? null : noteEditor} onClose={() => setNoteEditor(null)} notify={notify} onSaved={() => { setNoteEditor(null); notify('Note saved'); }} onDelete={note => setConfirmDelete({ type: 'note', item: note })}/>}
     {eventDetail && <EventDetailModal event={eventDetail} onClose={() => setEventDetail(null)} notify={notify}/>}
-    {report && <ReportModal metric={report.metric} range={report.range} onClose={() => setReport(null)} notify={notify}/>}
-    {help && <Modal title="A calmer place to get things done" onClose={() => setHelp(false)}><div className="form-body"><p className="help-intro">Raqmi keeps your tasks, goals, notes, calendar, files, and one-time codes in one calm place. Everything is saved to your account as you go.</p><h3 className="help-heading">A few helpful shortcuts</h3><div className="shortcut-list"><div><span>Search your workspace</span><kbd>Ctrl / &#8984; K</kbd></div><div><span>Collapse or expand navigation</span><kbd>Ctrl / &#8984; B</kbd></div><div><span>Create a new task</span><kbd>N</kbd></div><div><span>Capture a note</span><kbd>Q</kbd></div><div><span>Search from anywhere</span><kbd>/</kbd></div><div><span>Close a dialog</span><kbd>Esc</kbd></div><div><span>Inspect a focused chart</span><kbd>&larr; &rarr;</kbd></div></div><p className="help-storage">Prayer times come from {prayer?.source || 'your configured provider'}; always consult your local mosque for verified times.</p></div><div className="modal-footer"><span>Everforest &middot; Inter &middot; JetBrains Mono</span><button className="button primary" onClick={() => setHelp(false)}>Back to work</button></div></Modal>}
+    {help && <Modal title="A calmer place to get things done" onClose={() => setHelp(false)}><div className="form-body"><p className="help-intro">Raqmi keeps your tasks, goals, notes, calendar, files, and one-time codes in one calm place. Everything is saved to your account as you go.</p><h3 className="help-heading">A few helpful shortcuts</h3><div className="shortcut-list"><div><span>Search your workspace</span><kbd>Ctrl / &#8984; K</kbd></div><div><span>Collapse or expand navigation</span><kbd>Ctrl / &#8984; B</kbd></div><div><span>Create a new task</span><kbd>N</kbd></div><div><span>Capture a note</span><kbd>Q</kbd></div><div><span>Search from anywhere</span><kbd>/</kbd></div><div><span>Close a dialog</span><kbd>Esc</kbd></div></div><p className="help-storage">Prayer times come from {prayer?.source || 'your configured provider'}; always consult your local mosque for verified times.</p></div><div className="modal-footer"><span>Everforest &middot; Inter &middot; JetBrains Mono</span><button className="button primary" onClick={() => setHelp(false)}>Back to work</button></div></Modal>}
     {searchOpen && <Modal title="Search workspace" onClose={() => setSearchOpen(false)} className="search-modal"><div className="command-input"><Icon name="search" size={20}/><input autoFocus aria-label="Search tasks, notes, goals, events, and pages" placeholder="Find a task, note, or page..." value={search} onChange={e => { setSearch(e.target.value); setSearchIndex(0); }} onKeyDown={e => { if (e.key === 'ArrowDown') { e.preventDefault(); setSearchIndex(i => Math.max(0, Math.min(i + 1, searchResults.length - 1))); } if (e.key === 'ArrowUp') { e.preventDefault(); setSearchIndex(i => Math.max(i - 1, 0)); } if (e.key === 'Enter' && searchResults[searchIndex]) { searchResults[searchIndex].action(); setSearchOpen(false); } }}/><button className="search-close-button" onClick={() => setSearchOpen(false)} aria-label="Close search"><kbd>Esc</kbd></button></div><div className="command-results"><span className="menu-label">{search ? `${searchResults.length} RESULTS` : 'QUICK ACCESS'}</span>{searchResults.map((result, index) => <button key={result.id} className={`command-result ${index === searchIndex ? 'selected' : ''}`} onMouseEnter={() => setSearchIndex(index)} onClick={() => { result.action(); setSearchOpen(false); }}><Icon name={result.icon} size={17}/><span><strong>{result.title}</strong><small>{result.kind}</small></span><Icon name="right" size={14}/></button>)}{!searchResults.length && <div className="empty-state compact-empty"><p>No matches for &ldquo;{search}&rdquo;.</p></div>}</div><div className="command-footer"><span><kbd>&uarr;</kbd><kbd>&darr;</kbd> to navigate</span><span><kbd>Enter</kbd> to open</span><span>Searches your loaded workspace</span></div></Modal>}
     {confirmDelete && <ConfirmModal title={`Delete this ${confirmDelete.type}?`} message={`"${confirmDelete.item.title}" will be permanently removed. This action cannot be undone.`} cancelLabel={`Keep ${confirmDelete.type}`} onClose={() => setConfirmDelete(null)} onConfirm={() => {
       const target = confirmDelete;

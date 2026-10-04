@@ -11,7 +11,7 @@ export default defineConfig({
   resolve: { alias: { '@': path.resolve(__dirname, 'src') } },
   build: {
     outDir: 'dist',
-    rollupOptions: { output: { manualChunks: { chart: ['chart.js'], markdown: ['marked', 'dompurify'] } } },
+    rollupOptions: { output: { manualChunks: { markdown: ['marked', 'dompurify'] } } },
   },
   // `wrangler pages dev` serves the functions on 8788; proxy API calls there during `vite` dev.
   server: { proxy: { '/api': 'http://localhost:8788' } },

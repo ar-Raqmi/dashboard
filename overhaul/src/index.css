@@ -173,26 +173,35 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
 .select-wrap > .icon:last-child { position: absolute; right: 6px; pointer-events: none; }
 .select-wrap select option { background: var(--bg2); color: var(--fg); }
 .select-wrap:focus-within { outline: 1px solid var(--subtle); }
-.chart-toolbar { display: flex; justify-content: space-between; align-items: center; margin: 12px 22px 0; height: 32px; gap: 8px; border-bottom: 1px solid var(--border); }
-.chart-tabs { display: flex; height: 100%; gap: 22px; }
-.chart-tabs button { font-size: 11px; color: var(--muted); height: 100%; position: relative; padding-bottom: 8px; white-space: nowrap; }
-.chart-tabs button:hover, .chart-tabs button.active { color: var(--fg); }
-.chart-tabs button.active:after { content: ''; height: 1.5px; background: var(--fg); position: absolute; bottom: -1px; left: 0; right: 0; border-radius: 1px; }
-.chart-legend { display: flex; align-items: center; gap: 15px; font-size: 10px; color: var(--subtle); padding-bottom: 8px; }
-.chart-legend > span, .chart-legend > button { display: inline-flex; align-items: center; gap: 6px; }
-.legend-line { width: 13px; height: 2px; display: inline-block; border-radius: 2px; }
-.legend-line.current { background: var(--green); }
-.legend-line.previous { width: 14px; border-bottom: 2px dashed var(--muted); }
-.chart-legend > button { transition: opacity .15s; }
-.chart-legend > button.muted { opacity: .35; }
 .chart-canvas { height: 172px; margin: 7px 17px 0 9px; position: relative; }
-.chart-canvas canvas { width: 100% !important; height: 100% !important; }
-.chart-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; border-top: 1px solid var(--border); padding: 10px 22px; }
-.chart-foot > span { display: flex; align-items: center; font-size: 10px; gap: 5px; }
-.chart-foot > span > .icon { color: var(--green); }
-.chart-foot strong { font-size: 10px; font-weight: 450; color: var(--green); }
-.foot-comparison { color: var(--muted); margin-left: -1px; }
-.chart-foot .text-button { font-size: 10px; }
+.mini-calendar-body { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: 26px; padding: 14px 22px 4px; }
+.mini-calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); align-content: start; }
+.mini-calendar-grid > .calendar-weekday { padding: 0 0 8px; text-align: center; border-bottom: 0; }
+.mini-day { height: 36px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border-radius: 6px; color: var(--subtle); transition: background .15s; }
+.mini-day > span:first-child { display: inline-flex; width: 22px; height: 20px; align-items: center; justify-content: center; font-family: var(--mono); font-size: 11px; border-radius: 5px; }
+.mini-day:hover, .mini-day.selected { background: var(--bg0); }
+.mini-day.selected > span:first-child { color: var(--fg); }
+.mini-day.today > span:first-child { background: var(--fg); color: var(--bg-dim); }
+.mini-day.outside { color: var(--muted); opacity: .45; }
+.mini-day-marks { display: flex; gap: 3px; height: 4px; }
+.event-mark, .task-mark { display: inline-block; width: 4px; height: 4px; flex: none; }
+.event-mark { background: var(--blue); border-radius: 50%; }
+.task-mark { background: var(--yellow); border-radius: 1px; transform: rotate(45deg); }
+.day-agenda.mini-agenda { margin-top: 0; padding-top: 0; border-top: 0; min-width: 0; }
+.mini-agenda-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.mini-agenda-heading h3 { font-size: 13px; }
+.mini-agenda-heading .text-button { font-size: 10px; }
+.mini-agenda .agenda-event { gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.mini-agenda .agenda-event > time { font-size: 11px; min-width: 58px; }
+.mini-agenda .agenda-event strong { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mini-agenda .agenda-event > span { min-width: 0; }
+.mini-agenda > p { font-size: 11px; }
+.mini-agenda-more { font-size: 10px; margin-top: 8px; }
+.mini-agenda > .mini-agenda-tasks { color: var(--subtle); line-height: 1.6; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.mini-agenda-tasks > .task-mark { margin-right: 7px; vertical-align: 1px; }
+.mini-calendar-legend { display: flex; align-items: center; gap: 15px; border-top: 1px solid var(--border); padding: 10px 22px; margin-top: 12px; font-size: 10px; color: var(--muted); }
+.mini-calendar-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.mini-calendar-legend > .mini-calendar-hint { margin-left: auto; }
 .chart-skeleton { position: absolute; inset: 15px 4px 29px 30px; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
 .chart-skeleton > div { height: 1px; background: var(--border); width: 100%; }
 .chart-skeleton:after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(211,198,170,.06), transparent); animation: shimmer 1.1s ease-in-out infinite; }
@@ -417,13 +426,6 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
 .event-meta > span { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--subtle); }
 .event-meta .icon { color: var(--muted); }
 .event-modal-body > p { font-size: 13px; line-height: 1.9; color: var(--subtle); }
-.report-intro { font-size: 12px; line-height: 1.8; color: var(--subtle); margin-bottom: 18px; }
-.report-table-scroll { max-height: 400px; overflow: auto; }
-.report-table { border-collapse: collapse; width: 100%; text-align: left; font-size: 12px; }
-.report-table th { color: var(--muted); font-size: 11px; font-weight: 400; padding: 10px; border-bottom: 1px solid var(--border); }
-.report-table td { padding: 12px 10px; border-bottom: 1px solid var(--border); color: var(--subtle); }
-.report-table td:not(:first-child) { font-family: var(--mono); font-size: 11px; }
-.report-table td:nth-child(2) { color: var(--green); }
 .settings-body { padding: 24px; }
 .settings-group + .settings-group { padding-top: 25px; margin-top: 15px; border-top: 1px solid var(--border); }
 .setting-row { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 20px 0 5px; }
@@ -630,10 +632,8 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
   .overview-anchors { margin-bottom: 29px; }
   .chart-canvas { height: 220px; }
   .panel-heading { padding: 24px 25px 0; }
-  .chart-toolbar { margin: 19px 25px 0; }
-  .chart-tabs button, .chart-legend { font-size: 12px; }
-  .chart-foot { padding: 15px 25px; }
-  .chart-foot > span, .chart-foot strong, .chart-foot .text-button { font-size: 12px; }
+  .mini-calendar-body { padding: 16px 25px 4px; gap: 32px; }
+  .mini-calendar-legend { padding: 12px 25px; font-size: 11px; }
   .task-section { margin-top: 30px; }
   .task-table td { height: 50px; }
   .task-table th { font-size: 12px; height: 38px; }
@@ -687,11 +687,9 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
   .project-name { font-size: 10px; gap: 5px; }
   .priority { font-size: 9px; gap: 5px; }
   .due-date { font-size: 10px; }
-  .chart-tabs { gap: 18px; }
-  .chart-legend { gap: 12px; font-size: 9px; }
-  .chart-tabs button { font-size: 10px; }
-  .chart-toolbar { margin-left: 19px; margin-right: 19px; }
   .panel-heading { padding-left: 19px; padding-right: 19px; }
+  .mini-calendar-body { padding-left: 19px; padding-right: 19px; gap: 20px; }
+  .mini-calendar-legend { padding-left: 19px; padding-right: 19px; }
   .bottom-split { grid-template-columns: .85fr 1.15fr; }
   .goals-summary { padding-right: 19px; }
   .pinned-notes { padding-left: 19px; }
@@ -709,10 +707,6 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
   .task-table th:nth-child(5) { width: 36px; }
   .priority > span:last-child { display: none; }
   .task-tabs { gap: 20px; }
-  .chart-legend { gap: 8px; font-size: 8px; }
-  .chart-tabs { gap: 13px; }
-  .chart-tabs button { font-size: 9px; }
-  .chart-foot .foot-comparison { display: none; }
   .next-prayer-time { font-size: 21px; }
   .prayer-name { gap: 5px; }
   .prayer-disclaimer { white-space: normal; line-height: 1.6; font-size: 8px; }
@@ -765,11 +759,7 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
   .priority { font-size: 10px; }
   .project-name { font-size: 11px; }
   .task-name > button { font-size: 12px; }
-  .chart-tabs button { font-size: 11px; }
-  .chart-legend { font-size: 10px; gap: 14px; }
   .chart-canvas { height: 214px; }
-  .chart-foot .foot-comparison { display: inline; }
-  .chart-foot > span, .chart-foot strong, .chart-foot .text-button { font-size: 10px; }
   .bottom-split h2 { font-size: 14px; }
   .goal-summary-item strong, .pinned-note > span { font-size: 11px; }
   .full-table .task-table td { height: 48px; }
@@ -819,21 +809,15 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
   .overview-anchors { margin-bottom: 23px; }
   .metric { padding: 0 13px; }
   .panel-heading { padding: 18px 15px 0; }
+  .mini-calendar-body { grid-template-columns: minmax(0, 1fr); padding: 12px 15px 4px; gap: 18px; }
+  .mini-calendar-legend { padding: 10px 15px; }
+  .mini-calendar-hint { display: none; }
   .panel-heading h2 { font-size: 15px; }
   .panel-heading p { font-size: 10px; }
   .select-wrap { height: 27px; padding-left: 7px; }
   .select-wrap > .icon:first-child { display: none; }
   .select-wrap select { font-size: 10px; }
-  .chart-toolbar { margin: 15px 15px 0; }
-  .chart-tabs { gap: 13px; }
-  .chart-tabs button { font-size: 10px; }
-  .chart-legend { gap: 8px; font-size: 8px; }
-  .legend-line { width: 8px; }
-  .legend-line.previous { width: 9px; }
   .chart-canvas { height: 185px; margin-right: 10px; margin-left: 3px; }
-  .chart-foot { padding: 12px 15px; }
-  .chart-foot .foot-comparison { display: none; }
-  .chart-foot > span, .chart-foot strong, .chart-foot .text-button { font-size: 10px; }
   .task-section { margin-top: 24px; }
   .section-heading h2 { font-size: 15px; }
   .overdue-count { font-size: 9px; margin-left: 2px; }
@@ -942,8 +926,6 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
 @media (max-width: 380px) {
   .page-content { padding-left: 14px; padding-right: 14px; }
   .metric { padding: 0 9px; }
-  .chart-legend { font-size: 7px; gap: 5px; }
-  .chart-tabs button { font-size: 9px; }
   .table-scroll { margin-right: -4px; }
   .context-rail { column-gap: 19px; }
   .next-prayer-time { font-size: 20px; }
@@ -998,8 +980,8 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
 :root[data-theme='light'] .danger-action:hover { background: #E24B48; }
 :root[data-theme='light'] .toggle-switch.on > span { background: var(--bg-dim); }
 :root[data-theme='light'] ::-webkit-scrollbar-thumb { background: var(--bg4); }
-:root[data-theme='light'] .chart-foot > span > .icon, :root[data-theme='light'] .chart-foot strong, :root[data-theme='light'] .prayer-countdown, :root[data-theme='light'] .prayer-row.next, :root[data-theme='light'] .prayer-row.next time > span, :root[data-theme='light'] .live-label, :root[data-theme='light'] .auth-code, :root[data-theme='light'] .goal-progress-meta > span:last-child, :root[data-theme='light'] .toast > .icon { color: #6B7B00; }
+:root[data-theme='light'] .prayer-countdown, :root[data-theme='light'] .prayer-row.next, :root[data-theme='light'] .prayer-row.next time > span, :root[data-theme='light'] .live-label, :root[data-theme='light'] .auth-code, :root[data-theme='light'] .goal-progress-meta > span:last-child, :root[data-theme='light'] .toast > .icon { color: #6B7B00; }
 :root[data-theme='light'] .overdue-count, :root[data-theme='light'] .due-date.overdue, :root[data-theme='light'] .danger-button, :root[data-theme='light'] .form-error { color: #E04744; }
 :root[data-theme='light'] .agenda-event > time, :root[data-theme='light'] .daily-verse > a:hover { color: #2E7EA8; }
 :root[data-theme='light'] .notification-icon.danger { color: #E04744; }
-:root[data-theme='light'] .legend-line.current, :root[data-theme='light'] .prayer-progress > i { background: #7B8D06; }
+:root[data-theme='light'] .prayer-progress > i { background: #7B8D06; }

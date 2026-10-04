@@ -8,10 +8,10 @@ import { REPEAT_OPTIONS, repeatLabel } from './NewTaskModal';
 const EVENT_COLORS = ['#A7C080', '#7FBBB3', '#DBBC7F', '#E69875', '#E67E80', '#D699B6', '#83C092'];
 const pad = (n: number) => String(n).padStart(2, '0');
 
-export function CalendarView({ onEvent }: { onEvent: (event: EventView) => void }) {
+export function CalendarView({ onEvent, initialDate }: { onEvent: (event: EventView) => void; initialDate?: string }) {
   const events = useStore(s => s.events);
-  const today = todayKey(), now = parseDateKey(today);
-  const [month, setMonth] = useState(now.getMonth()), [year, setYear] = useState(now.getFullYear()), [selectedDay, setSelectedDay] = useState(now.getDate());
+  const today = todayKey(), now = parseDateKey(today), start = parseDateKey(initialDate || today);
+  const [month, setMonth] = useState(start.getMonth()), [year, setYear] = useState(start.getFullYear()), [selectedDay, setSelectedDay] = useState(start.getDate());
   const [creating, setCreating] = useState(false);
   const first = (new Date(year, month, 1).getDay() + 6) % 7, days = new Date(year, month + 1, 0).getDate();
   const label = new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
