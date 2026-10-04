@@ -42,7 +42,7 @@ export function SettingsPage({ theme, setTheme, notify }: { theme: Theme; setThe
     <PasswordGroup notify={notify}/>
 
     <div className="settings-group"><span className="eyebrow">YOUR DATA</span>
-      <p className="settings-description">Your workspace is stored in your Cloudflare D1 database; files live in R2. Export a JSON copy of tasks, goals, notes, and events at any time.</p>
+      <p className="settings-description">Your workspace is stored in your Cloudflare D1 database; files live in R2. Export a JSON copy of tasks, projects, notes, and events at any time.</p>
       <div className="settings-data-actions"><button className="button" onClick={() => { const s = useStore.getState(); downloadFile(JSON.stringify({ version: 2, exportedAt: new Date().toISOString(), tasks: s.tasks, goals: s.goals, notes: s.notes, events: s.events, clocks: s.clocks }, null, 2), 'raqmi-workspace.json', 'application/json'); notify('Workspace exported'); }}><Icon name="download" size={14}/>Export JSON</button><button className="button" onClick={() => void logout()}><Icon name="logout" size={14}/>Sign out</button></div>
     </div>
   </div>;

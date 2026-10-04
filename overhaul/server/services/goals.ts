@@ -22,7 +22,7 @@ export class GoalService extends BaseService {
   }
 
   async create(args: { title?: unknown; milestones?: unknown }) {
-    const title = reqStr(args.title, 'Goal name', 200);
+    const title = reqStr(args.title, 'Project name', 200);
     const labels = Array.isArray(args.milestones) ? args.milestones.map(m => String(m).trim()).filter(Boolean).slice(0, 100) : [];
     const max = await this.db.first<{ m: number | null }>('SELECT MAX("order") m FROM Goal WHERE userId = ?', this.user.id);
     const id = uuid();
@@ -33,14 +33,14 @@ export class GoalService extends BaseService {
     return id;
   }
 
-  /** Renames a goal; `progress` is only settable for goals without milestones. */
+  /** Renames a project; `progress` is only settable for goals without milestones. */
   async update(args: { id?: unknown; title?: unknown; progress?: unknown }) {
-    const goal = await this.owned<GoalRow>('Goal', args.id, 'Goal');
+    const goal = await this.owned<GoalRow>('Goal', args.id, 'Project');
     const patch: Record<string, unknown> = {};
-    if (args.title !== undefined) patch.title = reqStr(args.title, 'Goal name', 200);
+    if (args.title !== undefined) patch.title = reqStr(args.title, 'Project name', 200);
     if (args.progress !== undefined) {
       const count = await this.db.first<{ c: number }>('SELECT COUNT(*) c FROM Milestone WHERE goalId = ?', goal.id);
-      assert(!count?.c, 400, 'Progress follows milestones for this goal');
+      assert(!count?.c, 400, 'Progress follows milestones for this project');
       patch.progress = Math.max(0, Math.min(100, Math.round(Number(args.progress) || 0)));
     }
     await this.db.update('Goal', goal.id, patch);
@@ -48,7 +48,7 @@ export class GoalService extends BaseService {
   }
 
   async remove(args: { id?: unknown }) {
-    const goal = await this.owned<GoalRow>('Goal', args.id, 'Goal');
+    const goal = await this.owned<GoalRow>('Goal', args.id, 'Project');
     await this.db.batch([
       { sql: 'DELETE FROM Milestone WHERE goalId = ?', params: [goal.id] },
       { sql: 'DELETE FROM Goal WHERE id = ?', params: [goal.id] },
@@ -58,13 +58,13 @@ export class GoalService extends BaseService {
   }
 
   async reorder(args: { ids?: unknown }) {
-    assert(Array.isArray(args.ids), 400, 'Missing goal order');
+    assert(Array.isArray(args.ids), 400, 'Missing project order');
     await this.db.batch(args.ids.map((id, i) => ({ sql: 'UPDATE Goal SET "order" = ? WHERE id = ? AND userId = ?', params: [i, String(id), this.user.id] })));
     return { success: true };
   }
 
   async addMilestone(args: { goalId?: unknown; label?: unknown }) {
-    const goal = await this.owned<GoalRow>('Goal', args.goalId, 'Goal');
+    const goal = await this.owned<GoalRow>('Goal', args.goalId, 'Project');
     const max = await this.db.first<{ m: number | null }>('SELECT MAX("order") m FROM Milestone WHERE goalId = ?', goal.id);
     await this.db.run('INSERT INTO Milestone (id, goalId, label, completed, "order") VALUES (?, ?, ?, 0, ?)', uuid(), goal.id, reqStr(args.label, 'Milestone', 300), (max?.m ?? -1) + 1);
     return this.recalculate(goal.id);

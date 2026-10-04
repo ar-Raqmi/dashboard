@@ -11,7 +11,7 @@ export function GoalsView({ onOpenProject, notify }: { onOpenProject: (goalId: s
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const fail = (err: unknown) => notify((err as Error).message);
 
-  if (!goals.length) return <div className="goals-view"><div className="empty-state"><Icon name="flag" size={36}/><h3>Small steps start here</h3><p>Create a goal with a few milestones. Goals also act as projects you can file tasks under.</p></div></div>;
+  if (!goals.length) return <div className="goals-view"><div className="empty-state"><Icon name="flag" size={36}/><h3>Small steps start here</h3><p>Create a project with a few milestones, then file tasks under it.</p></div></div>;
 
   function addMilestone(e: FormEvent, goal: GoalView) {
     e.preventDefault();
@@ -34,10 +34,10 @@ export function GoalsView({ onOpenProject, notify }: { onOpenProject: (goalId: s
     return <section key={goal.id} className="goal-detail">
       <div className="goal-detail-heading"><div>
         <div className="goal-project-label"><i style={{ background: color }}/><span>PROJECT</span>
-          <span className="ml-auto flex gap-1"><button className="icon-button compact" title="Move up" aria-label={`Move ${goal.title} up`} disabled={index === 0} onClick={() => move(goal, -1)}><span className="inline-flex rotate-180"><Icon name="down" size={13}/></span></button><button className="icon-button compact" title="Move down" aria-label={`Move ${goal.title} down`} disabled={index === goals.length - 1} onClick={() => move(goal, 1)}><Icon name="down" size={13}/></button><button className="icon-button compact" title="Rename goal" aria-label={`Rename ${goal.title}`} onClick={() => setRenaming(goal.id)}><Icon name="pen" size={13}/></button><button className="icon-button compact danger-button" title="Delete goal" aria-label={`Delete ${goal.title}`} onClick={() => setDeleting(goal)}><Icon name="trash" size={13}/></button></span>
+          <span className="ml-auto flex gap-1"><button className="icon-button compact" title="Move up" aria-label={`Move ${goal.title} up`} disabled={index === 0} onClick={() => move(goal, -1)}><span className="inline-flex rotate-180"><Icon name="down" size={13}/></span></button><button className="icon-button compact" title="Move down" aria-label={`Move ${goal.title} down`} disabled={index === goals.length - 1} onClick={() => move(goal, 1)}><Icon name="down" size={13}/></button><button className="icon-button compact" title="Rename project" aria-label={`Rename ${goal.title}`} onClick={() => setRenaming(goal.id)}><Icon name="pen" size={13}/></button><button className="icon-button compact danger-button" title="Delete project" aria-label={`Delete ${goal.title}`} onClick={() => setDeleting(goal)}><Icon name="trash" size={13}/></button></span>
         </div>
         {renaming === goal.id
-          ? <input className="note-title-input" aria-label="Goal name" autoFocus defaultValue={goal.title} maxLength={200} onBlur={e => { setRenaming(null); const v = e.target.value.trim(); if (v && v !== goal.title) void mutate('goals:update', { id: goal.id, title: v }, ['goals']).catch(fail); }} onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') setRenaming(null); }}/>
+          ? <input className="note-title-input" aria-label="Project name" autoFocus defaultValue={goal.title} maxLength={200} onBlur={e => { setRenaming(null); const v = e.target.value.trim(); if (v && v !== goal.title) void mutate('goals:update', { id: goal.id, title: v }, ['goals']).catch(fail); }} onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') setRenaming(null); }}/>
           : <h2>{goal.title}</h2>}
         <p><button className="text-button" onClick={() => onOpenProject(goal.id)}>{openTasks ? `${openTasks} open task${openTasks === 1 ? '' : 's'}` : 'No open tasks'}<Icon name="arrow" size={12}/></button></p>
       </div><span className="goal-big-percentage">{goal.progress}<small>%</small></span></div>
@@ -51,7 +51,7 @@ export function GoalsView({ onOpenProject, notify }: { onOpenProject: (goalId: s
       <form className="inline-search mt-3" onSubmit={e => addMilestone(e, goal)}><Icon name="plus" size={14}/><input aria-label={`Add a milestone to ${goal.title}`} placeholder="Add a milestone..." maxLength={300} value={drafts[goal.id] || ''} onChange={e => setDrafts(d => ({ ...d, [goal.id]: e.target.value }))}/></form>
     </section>;
   })}
-    {deleting && <ConfirmModal title="Delete this goal?" message={`"${deleting.title}" and its milestones will be removed. Tasks filed under it stay, without a project.`} onClose={() => setDeleting(null)} onConfirm={() => { const goal = deleting; setDeleting(null); void mutate('goals:remove', { id: goal.id }, ['goals', 'tasks']).then(() => notify('Goal deleted')).catch(fail); }}/>}
+    {deleting && <ConfirmModal title="Delete this project?" message={`"${deleting.title}" and its milestones will be removed. Tasks filed under it stay, without a project.`} onClose={() => setDeleting(null)} onConfirm={() => { const goal = deleting; setDeleting(null); void mutate('goals:remove', { id: goal.id }, ['goals', 'tasks']).then(() => notify('Project deleted')).catch(fail); }}/>}
   </div>;
 }
 
@@ -64,15 +64,15 @@ export function NewGoalModal({ onClose, onCreated }: { onClose: () => void; onCr
     setBusy(true);
     try {
       await mutate('goals:create', { title: title.trim(), milestones: milestones.split('\n').map(s => s.trim()).filter(Boolean) }, ['goals']);
-      onCreated('Goal created');
+      onCreated('Project created');
     } catch (err) {
       setError((err as Error).message);
       setBusy(false);
     }
   }
-  return <Modal title="Create a goal" onClose={onClose}><form onSubmit={submit}><div className="form-body">
-    <label className="form-label">Goal name<input autoFocus required maxLength={200} placeholder="What are you working toward?" value={title} onChange={e => setTitle(e.target.value)}/></label>
+  return <Modal title="Create a project" onClose={onClose}><form onSubmit={submit}><div className="form-body">
+    <label className="form-label">Project name<input autoFocus required maxLength={200} placeholder="What are you working toward?" value={title} onChange={e => setTitle(e.target.value)}/></label>
     <label className="form-label">Milestones <span>(one per line, optional)</span><textarea rows={5} placeholder={'First step\nSecond step'} value={milestones} onChange={e => setMilestones(e.target.value)}/></label>
     {error && <p className="form-error" role="alert">{error}</p>}
-  </div><div className="modal-footer"><span>Goals also act as projects</span><div><button type="button" className="button" onClick={onClose}>Cancel</button><button className="button primary" type="submit" disabled={busy}><Icon name="plus" size={15}/>{busy ? 'Creating...' : 'Create goal'}</button></div></div></form></Modal>;
+  </div><div className="modal-footer"><span>File tasks under it later</span><div><button type="button" className="button" onClick={onClose}>Cancel</button><button className="button primary" type="submit" disabled={busy}><Icon name="plus" size={15}/>{busy ? 'Creating...' : 'Create project'}</button></div></div></form></Modal>;
 }

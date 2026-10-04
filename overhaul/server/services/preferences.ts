@@ -57,7 +57,7 @@ const DEFAULT_WIDGETS = [
   { type: 'calendar', label: 'Calendar', icon: 'calendar_month' },
   { type: 'notes', label: 'Quick Notes', icon: 'sticky_note_2' },
   { type: 'verse', label: 'Daily Verse', icon: 'auto_stories' },
-  { type: 'goals', label: 'Goals', icon: 'flag' },
+  { type: 'goals', label: 'Projects', icon: 'flag' },
   { type: 'clock', label: 'World Clock', icon: 'schedule' },
   { type: 'files', label: 'Files', icon: 'folder' },
   { type: 'clipboard', label: 'Clipboard', icon: 'content_paste' },
@@ -77,7 +77,8 @@ export class WidgetService extends BaseService {
     }
     const order = DEFAULT_WIDGETS.map(w => w.type);
     return rows
-      .map(r => ({ type: r.type, label: r.label, icon: r.icon, visible: !!r.visible }))
+      // Labels come from the defaults so renames (Goals -> Projects) reach rows seeded under the old name.
+      .map(r => ({ type: r.type, label: DEFAULT_WIDGETS.find(w => w.type === r.type)?.label ?? r.label, icon: r.icon, visible: !!r.visible }))
       .sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type));
   }
 
