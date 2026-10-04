@@ -72,7 +72,7 @@ export interface FileView {
   id: string; name: string; type: 'file' | 'folder'; category: string | null; parentId: string | null; size: number; mimeType: string | null;
   starred: boolean; storageSource: string | null; available: boolean; createdAt: string; updatedAt: string;
 }
-export interface TwoFactorAccount { id: string; accountName: string; category: string; icon: string | null; token: string | null; nextToken: string | null }
+export interface TwoFactorAccount { id: string; accountName: string; category: string; icon: string | null; token: string | null; nextToken: string | null; undecryptable?: boolean }
 export interface TwoFactorList { locked: boolean; period: number; generatedAt: number; accounts: TwoFactorAccount[] }
 export interface PrayerDay {
   source: string; location: string; timezone: string;

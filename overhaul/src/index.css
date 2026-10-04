@@ -614,6 +614,7 @@ textarea.wrap-80 { max-width: calc(80ch + 5px); } /* + scrollbar, so 80 columns 
 .auth-code > .icon { color: var(--muted); opacity: 0; }
 .auth-code:hover > .icon { opacity: 1; }
 .code-timer { color: var(--muted); font-family: var(--mono); font-size: 12px; }
+.auth-undecryptable { margin: 8px 0 0; color: var(--red); font-size: 12px; }
 .form-error { color: var(--red); font-size: 12px; line-height: 1.6; margin-top: 13px; }
 .compact-density .task-table td { height: 35px; }
 .compact-density .full-table .task-table td { height: 39px; }

@@ -48,18 +48,32 @@ export class TwoFactorService extends BaseService {
     return this.env.JWT_SECRET || null;
   }
 
+  /**
+   * The plaintext secret, or null unless it genuinely decrypted to Base32. Unlike the legacy
+   * decryptText, a failure never falls back to the ciphertext, which would yield plausible but
+   * wrong codes. Neither the ciphertext nor the plaintext is ever logged.
+   */
+  private async reveal(ciphertext: string) {
+    try {
+      const secret = cleanSecret(await decrypt(ciphertext, this.key!));
+      return isBase32(secret) ? secret : null;
+    } catch {
+      return null;
+    }
+  }
+
   async list() {
     const rows = await this.db.all<SecretRow>('SELECT * FROM TwoFactorSecret WHERE userId = ? ORDER BY createdAt DESC', this.user.id);
     const now = Date.now();
+    // Each row settles on its own: a row that fails to decrypt is flagged, never fatal to the list.
     const accounts = await Promise.all(rows.map(async r => {
-      let token: string | null = null, nextToken: string | null = null;
+      let token: string | null = null, nextToken: string | null = null, undecryptable = false;
       if (this.key) {
-        try {
-          const secret = cleanSecret(await decrypt(r.secret, this.key));
-          [token, nextToken] = await Promise.all([totp(secret, now), totp(secret, now + 30000)]);
-        } catch { /* left null: shown as unavailable */ }
+        const secret = await this.reveal(r.secret);
+        if (secret) [token, nextToken] = await Promise.all([totp(secret, now), totp(secret, now + 30000)]);
+        else undecryptable = true;
       }
-      return { id: r.id, accountName: r.accountName, category: r.category || 'Other', icon: r.icon, token, nextToken };
+      return { id: r.id, accountName: r.accountName, category: r.category || 'Other', icon: r.icon, token, nextToken, undecryptable };
     }));
     return { locked: !this.key, period: 30, generatedAt: now, accounts };
   }

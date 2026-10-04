@@ -6,4 +6,7 @@
 
 # Must match the JWT_SECRET secret on the ar-raqmi Pages project; it decrypts the
 # stored 2FA secrets, so a different value leaves Authenticator codes unavailable.
+# The deployed overhaul is a *preview* branch, and Pages preview secrets are separate
+# from production, so it also needs:
+#   npx wrangler pages secret put JWT_SECRET --project-name=ar-raqmi --env=preview
 JWT_SECRET=replace-with-the-production-jwt-secret
