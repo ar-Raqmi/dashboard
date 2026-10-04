@@ -249,7 +249,9 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
 .task-checkbox.checked { background: var(--green); border-color: var(--green); color: var(--bg-dim); }
 .table-check { width: 13px; height: 13px; border: 1px solid rgba(255,255,255,.16); border-radius: 3px; display: flex; align-items: center; justify-content: center; opacity: .65; }
 .table-check:hover { border-color: var(--fg); opacity: 1; }
-.task-name > button { display: block; text-align: left; width: 100%; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg); font-size: 14px; font-weight: 400; }
+.task-name > button { display: flex; align-items: center; gap: 6px; text-align: left; width: 100%; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg); font-size: 14px; font-weight: 400; }
+.task-name .task-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.task-name .sort-hint { opacity: .55; }
 .completed-row .task-name > button { text-decoration: line-through; color: var(--muted); }
 .due-date { font-size: 12px; color: var(--muted); white-space: nowrap; }
 .due-date.overdue { color: var(--red); }
