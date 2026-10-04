@@ -144,26 +144,27 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
 .refresh-button.refreshing > .icon { animation: spin .65s ease-in-out infinite; }
 .content-grid { display: grid; grid-template-columns: minmax(0, 1fr) 264px; column-gap: 28px; }
 .primary-content { min-width: 0; animation: content-appear .35s ease-out both; }
-.metrics-row { display: grid; grid-template-columns: 1.06fr 1.06fr .9fr; margin: 1px 0 24px; }
+.overview-anchors { display: grid; grid-template-columns: 1.15fr .85fr; margin: 1px 0 24px; }
+.overview-anchors > :only-child { grid-column: 1 / -1; }
+.daily-verse.overview-verse { grid-column: auto; margin: 0; padding-top: 0; border-top: 0; display: flex; flex-direction: column; }
+.daily-verse.overview-verse blockquote { margin: 14px 0 16px; color: var(--fg); font-size: 14px; line-height: 1.9; max-width: 560px; }
+.daily-verse.overview-verse > a { justify-content: flex-start; gap: 8px; margin-top: auto; font-size: 11px; }
+.overview-verse > a > span { color: var(--muted); }
+.overview-verse > a > span:before { content: '/'; margin-right: 8px; opacity: .6; }
+.mini-auth > .section-heading { min-height: 20px; margin-bottom: 4px; }
+.mini-auth h2 { font-size: 14px; }
+.mini-auth .auth-account { gap: 12px; padding: 10px 0; }
+.mini-auth .auth-account:last-of-type { border-bottom: 0; }
+.mini-auth .auth-account strong { display: block; color: var(--subtle); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mini-auth .auth-code { font-size: 19px; gap: 10px; margin-top: 4px; }
+.mini-auth .auth-code:disabled { color: var(--muted); }
+.mini-auth .code-timer { font-size: 11px; }
+.mini-auth .muted-note strong { display: block; color: var(--subtle); font-weight: 450; margin-bottom: 3px; }
+.mini-auth-empty { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.mini-auth-more { font-size: 10px; margin-top: 6px; }
 .metric { min-width: 0; padding: 0 24px; border-left: 1px solid var(--border); }
 .metric:first-child { border-left: 0; padding-left: 0; }
 .metric:last-child { padding-right: 0; }
-.metric-label { display: flex; align-items: center; justify-content: space-between; font-size: 13px; line-height: 1.4; font-weight: 510; color: var(--subtle); gap: 8px; }
-.metric-label .icon { color: var(--muted); opacity: .8; }
-.metric-number { font-family: var(--mono); font-size: 32px; font-weight: 400; letter-spacing: -.7px; line-height: 1; margin-top: 14px; height: 36px; display: flex; align-items: baseline; white-space: nowrap; position: relative; }
-.metric-number > span { font-size: 18px; letter-spacing: -.8px; color: var(--muted); margin-left: 7px; }
-.primary-metric .metric-number { font-size: 38px; }
-.metric-number .percentage-symbol { font-size: 25px; margin-left: 2px; color: var(--subtle); }
-.metric-number > .number-group { font-size: 30px; color: var(--fg); margin-left: 0; letter-spacing: -1.3px; display: inline-flex; align-items: baseline; }
-.number-group > span { font-size: 18px; color: var(--muted); margin: 0 7px 0 2px; }
-.number-group > span:last-child { margin-right: 0; }
-.metric-change { font-size: 11px; line-height: 1.4; display: flex; align-items: center; gap: 4px; color: var(--green); margin-top: 10px; white-space: nowrap; }
-.metric-change strong { font-weight: 450; font-family: var(--mono); font-size: 10px; }
-.metric-change > span:not(.tiny-dot) { color: var(--muted); margin-left: 3px; }
-.neutral-change { gap: 5px; }
-.neutral-change strong { color: var(--subtle); font-family: inherit; font-size: 11px; }
-.sparkline { width: 65px; height: 29px; margin-left: auto; position: absolute; bottom: 1px; right: -2px; opacity: .85; }
-.metric-ring { position: absolute; right: 0; bottom: 2px; width: 35px; height: 35px; }
 .focus-panel { border: 1px solid var(--border); background: var(--bg1); border-radius: 10px; box-shadow: inset 0 1px 0 rgba(255,255,255,.04); overflow: hidden; }
 .panel-heading { display: flex; justify-content: space-between; align-items: flex-start; padding: 18px 22px 0; gap: 15px; }
 .panel-heading p { font-size: 11px; color: var(--muted); margin-top: 5px; }
@@ -603,8 +604,6 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
   .sidebar { padding: 0 17px; }
   .nav-item.active:before { left: -17px; }
   .metric { padding: 0 28px; }
-  .metric-number > .number-group { font-size: 32px; }
-  .sparkline { width: 77px; }
   .chart-canvas { height: 190px; }
   .task-table td { height: 47px; }
   .task-name > button { font-size: 14px; }
@@ -628,11 +627,7 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
   .context-rail { padding-left: 35px; }
   .page-content { padding-top: 38px; }
   .page-heading { margin-bottom: 36px; }
-  .metrics-row { margin-bottom: 29px; }
-  .metric-number { font-size: 36px; height: 42px; }
-  .primary-metric .metric-number { font-size: 42px; }
-  .metric-change { margin-top: 16px; font-size: 12px; }
-  .metric-change strong { font-size: 11px; }
+  .overview-anchors { margin-bottom: 29px; }
   .chart-canvas { height: 220px; }
   .panel-heading { padding: 24px 25px 0; }
   .chart-toolbar { margin: 19px 25px 0; }
@@ -677,14 +672,6 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
   .sample-date { font-size: 10px; }
   .page-heading-actions { gap: 7px; }
   .metric { padding: 0 19px; }
-  .metric-label { font-size: 11px; }
-  .metric-number { font-size: 30px; }
-  .primary-metric .metric-number { font-size: 35px; }
-  .sparkline { width: 45px; }
-  .focus-number .sparkline { display: none; }
-  .metric-number > .number-group { font-size: 28px; }
-  .metric-ring { width: 30px; height: 30px; }
-  .metric-change { font-size: 10px; }
   .next-prayer-time { font-size: 23px; }
   .prayer-name { font-size: 23px; gap: 6px; }
   .prayer-countdown { font-size: 8px; }
@@ -717,13 +704,6 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
   .context-rail { padding-left: 19px; }
   .sample-date { display: none; }
   .metric { padding: 0 15px; }
-  .sparkline { display: none; }
-  .metric-number > .number-group { font-size: 25px; }
-  .number-group > span { font-size: 14px; margin-right: 4px; }
-  .metric-ring { width: 25px; height: 25px; bottom: 5px; }
-  .metric-change { font-size: 8px; gap: 3px; }
-  .metric-change strong { font-size: 9px; }
-  .metric-change > span:not(.tiny-dot) { margin-left: 0; }
   .task-table th:nth-child(3) { width: 103px; }
   .task-table th:nth-child(4) { width: 67px; }
   .task-table th:nth-child(5) { width: 36px; }
@@ -755,7 +735,6 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
   .workspace-menu { left: 45px; }
   .content-grid { grid-template-columns: minmax(0, 1fr) 234px; gap: 24px; }
   .context-rail { padding-left: 21px; }
-  .metric-number > .number-group { font-size: 27px; }
   .task-table th:nth-child(3) { width: 103px; }
   .task-table th:nth-child(4) { width: 70px; }
   .task-table th:nth-child(5) { width: 37px; }
@@ -767,6 +746,9 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
   .prayer-countdown { font-size: 9px; }
 }
 @media (max-width: 800px) {
+  .overview-anchors { grid-template-columns: minmax(0, 1fr); }
+  .overview-anchors > .metric { padding: 0; }
+  .overview-anchors > .metric + .metric { border-left: 0; border-top: 1px solid var(--border); margin-top: 20px; padding-top: 18px; }
   .content-grid { grid-template-columns: minmax(0, 1fr); }
   .context-rail { border-left: 0; padding-left: 0; border-top: 1px solid var(--border); padding-top: 24px; margin-top: 27px; display: grid; grid-template-columns: 1fr 1fr; gap: 0 32px; }
   .context-rail > .rail-date { grid-column: 1 / -1; margin-bottom: 24px; padding-bottom: 20px; }
@@ -776,11 +758,6 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
   .daily-verse blockquote { font-size: 13px; }
   .rail-bottom-note { display: none; }
   .context-rail.detail-rail { display: block; position: fixed; right: 0; top: 64px; bottom: 0; width: 310px; z-index: 40; border-left: 1px solid var(--border); border-top: 0; padding: 24px; margin-top: 0; background: var(--bg0); overflow-y: auto; box-shadow: -20px 0 50px rgba(0,0,0,.2); }
-  .metric-number > .number-group { font-size: 28px; }
-  .sparkline { display: block; width: 49px; }
-  .metric-ring { width: 33px; height: 33px; bottom: 2px; }
-  .metric-change, .metric-change strong { font-size: 10px; }
-  .metric-label { font-size: 12px; }
   .task-table th:nth-child(3) { width: 121px; }
   .task-table th:nth-child(4) { width: 85px; }
   .task-table th:nth-child(5) { width: 78px; }
@@ -839,22 +816,8 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
   .page-heading-actions .refresh-button { display: none; }
   .page-heading-actions .button { height: 31px; padding: 0 10px; font-size: 11px; }
   .page-heading-actions .button > .icon { width: 13px; height: 13px; }
-  .metrics-row { margin-bottom: 23px; grid-template-columns: 1fr 1.04fr .84fr; }
+  .overview-anchors { margin-bottom: 23px; }
   .metric { padding: 0 13px; }
-  .metric-label { font-size: 10px; white-space: nowrap; }
-  .metric-label > .icon { display: none; }
-  .metric-number, .primary-metric .metric-number { font-size: 31px; margin-top: 14px; height: 31px; }
-  .metric-number > span { font-size: 14px; margin-left: 5px; }
-  .metric-number > .number-group { font-size: 24px; }
-  .number-group > span { font-size: 13px; margin-left: 2px; margin-right: 4px; }
-  .metric-number .percentage-symbol { font-size: 21px; }
-  .sparkline, .metric-ring { display: none; }
-  .metric-change { font-size: 8px; gap: 3px; margin-top: 9px; }
-  .metric-change strong { font-size: 9px; }
-  .metric-change > .icon { width: 10px; height: 10px; }
-  .metric-change > span:not(.tiny-dot) { letter-spacing: -.2px; }
-  .metric-change.neutral-change { gap: 4px; }
-  .metric-change.neutral-change strong { font-size: 9px; }
   .panel-heading { padding: 18px 15px 0; }
   .panel-heading h2 { font-size: 15px; }
   .panel-heading p { font-size: 10px; }
@@ -979,8 +942,6 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
 @media (max-width: 380px) {
   .page-content { padding-left: 14px; padding-right: 14px; }
   .metric { padding: 0 9px; }
-  .metric-label { font-size: 9px; }
-  .metric-change > span:not(.tiny-dot) { font-size: 7px; }
   .chart-legend { font-size: 7px; gap: 5px; }
   .chart-tabs button { font-size: 9px; }
   .table-scroll { margin-right: -4px; }
@@ -1037,9 +998,8 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
 :root[data-theme='light'] .danger-action:hover { background: #E24B48; }
 :root[data-theme='light'] .toggle-switch.on > span { background: var(--bg-dim); }
 :root[data-theme='light'] ::-webkit-scrollbar-thumb { background: var(--bg4); }
-:root[data-theme='light'] .metric-change, :root[data-theme='light'] .metric-change > .icon, :root[data-theme='light'] .chart-foot > span > .icon, :root[data-theme='light'] .chart-foot strong, :root[data-theme='light'] .prayer-countdown, :root[data-theme='light'] .prayer-row.next, :root[data-theme='light'] .prayer-row.next time > span, :root[data-theme='light'] .live-label, :root[data-theme='light'] .auth-code, :root[data-theme='light'] .goal-progress-meta > span:last-child, :root[data-theme='light'] .toast > .icon { color: #6B7B00; }
+:root[data-theme='light'] .chart-foot > span > .icon, :root[data-theme='light'] .chart-foot strong, :root[data-theme='light'] .prayer-countdown, :root[data-theme='light'] .prayer-row.next, :root[data-theme='light'] .prayer-row.next time > span, :root[data-theme='light'] .live-label, :root[data-theme='light'] .auth-code, :root[data-theme='light'] .goal-progress-meta > span:last-child, :root[data-theme='light'] .toast > .icon { color: #6B7B00; }
 :root[data-theme='light'] .overdue-count, :root[data-theme='light'] .due-date.overdue, :root[data-theme='light'] .danger-button, :root[data-theme='light'] .form-error { color: #E04744; }
 :root[data-theme='light'] .agenda-event > time, :root[data-theme='light'] .daily-verse > a:hover { color: #2E7EA8; }
 :root[data-theme='light'] .notification-icon.danger { color: #E04744; }
 :root[data-theme='light'] .legend-line.current, :root[data-theme='light'] .prayer-progress > i { background: #7B8D06; }
-:root[data-theme='light'] .sparkline polyline { stroke: #7B8D06; }

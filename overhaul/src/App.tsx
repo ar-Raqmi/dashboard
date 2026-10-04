@@ -241,7 +241,7 @@ function Workspace() {
           <div className={`content-grid ${activeTask ? 'has-task-detail' : ''}`}>
             <div className="primary-content" key={page + (projectFilter || '')}>
               {store.status === 'loading' ? <div className="chart-canvas is-loading" aria-label="Loading your workspace"><div className="chart-skeleton"><div/><div/><div/><div/></div></div> : <>
-                {page === 'Overview' && <OverviewPage theme={theme} reducedMotion={reducedMotion} refreshKey={refreshKey} selectedTaskId={selectedTask || undefined} onSelectTask={t => setSelectedTask(t.id)} onAddTask={() => setNewTask(true)} onOpenNote={setNoteEditor} onReport={(metric, range) => setReport({ metric, range })} navigate={p => navigate(p)} notify={notify}/>}
+                {page === 'Overview' && <OverviewPage theme={theme} reducedMotion={reducedMotion} refreshKey={refreshKey} selectedTaskId={selectedTask || undefined} onSelectTask={t => setSelectedTask(t.id)} onAddTask={() => setNewTask(true)} onOpenNote={setNoteEditor} onReport={(metric, range) => setReport({ metric, range })} onOpenAuthenticator={() => navigate('Authenticator')} onAddAccount={() => { navigate('Authenticator'); setAddingAccount(true); }} navigate={p => navigate(p)} notify={notify}/>}
                 {page === 'Tasks' && <TasksPage projectFilter={projectFilter} selectedTaskId={selectedTask || undefined} onSelectTask={t => setSelectedTask(t.id)} onAddTask={() => setNewTask(true)} notify={notify}/>}
                 {page === 'Calendar' && <CalendarPage onEvent={setEventDetail}/>}
                 {page === 'Notes' && <NotesPage onOpenNote={setNoteEditor}/>}
@@ -257,7 +257,7 @@ function Workspace() {
               : <><div className="rail-date"><span><Icon name="sun" size={15}/>A {new Date().toLocaleDateString('en-US', { weekday: 'long' })} in {new Date().toLocaleDateString('en-US', { month: 'long' })}</span>{hijri && <small>{hijri}</small>}</div>
                 {page !== 'Spiritual' && widgetVisible('prayerTimes') && <PrayerTimes/>}
                 {widgetVisible('calendar') && <EventList onEvent={setEventDetail} onCalendar={() => navigate('Calendar')}/>}
-                {page !== 'Spiritual' && widgetVisible('verse') && <Verse/>}
+                {page !== 'Spiritual' && page !== 'Overview' && widgetVisible('verse') && <Verse/>}
                 <div className="rail-bottom-note"><span className="tiny-dot"/>A little progress, every day.</div></>}</aside>
           </div>
           <footer className="workspace-footer"><span><i className={`tiny-dot ${store.status === 'error' ? 'warning-dot' : ''}`}/>{saving > 0 ? 'Saving changes...' : store.status === 'error' ? 'Not connected to the server' : 'All changes saved'}</span><span>Made for a more intentional day<span className="footer-divider">/</span><span className="footer-brand">raqmi.</span></span></footer>
