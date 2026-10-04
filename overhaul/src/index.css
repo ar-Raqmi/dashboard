@@ -279,11 +279,20 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
 .goal-summary-item:hover strong { color: var(--fg); }
 .goal-progress-track { display: block; width: 100%; height: 3px; background: var(--bg1); border-radius: 3px; overflow: hidden; }
 .goal-progress-track > span { display: block; height: 100%; border-radius: inherit; transition: width .5s ease; }
-.pinned-note { width: 100%; display: flex; align-items: center; text-align: left; gap: 9px; height: 33px; }
-.pinned-note > .icon { color: var(--muted); }
-.pinned-note > span { font-size: 11px; color: var(--subtle); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pinned-note > small { font-size: 9px; color: var(--muted); white-space: nowrap; }
-.pinned-note:hover > span { color: var(--fg); }
+.pinned-note { width: 100%; display: flex; align-items: flex-start; text-align: left; gap: 9px; padding: 8px 0; }
+.pinned-note-icon { display: flex; flex: none; padding-top: 2px; }
+.pinned-note-body { font-size: 11px; color: var(--subtle); flex: 1; min-width: 0; }
+.pinned-note-title { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pinned-note > small { font-size: 9px; color: var(--muted); white-space: nowrap; padding-top: 2px; }
+.pinned-note:hover .pinned-note-title { color: var(--fg); }
+/* A two-line summary: same renderer and measure as the reader, with block spacing and decoration stripped so the clamp counts lines of text. */
+.markdown-body.pinned-note-preview { margin-top: 3px; font-size: .92em; line-height: 1.6; color: var(--muted); overflow: hidden; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; pointer-events: none; }
+.markdown-body.pinned-note-preview * { margin-top: 0; margin-bottom: 0; }
+.markdown-body.pinned-note-preview :is(h1, h2, h3, h4, h5, h6) { font-size: inherit; font-weight: 500; margin: 0; border: 0; padding: 0; }
+.markdown-body.pinned-note-preview :is(ul, ol) { padding-left: 1.3em; }
+.markdown-body.pinned-note-preview :is(pre, code) { white-space: normal; font-size: inherit; background: none; border: 0; padding: 0; }
+.markdown-body.pinned-note-preview blockquote { border: 0; padding: 0; margin: 0; }
+.markdown-body.pinned-note-preview :is(img, hr, table, .heading-anchor, .footnotes) { display: none; }
 .muted-note { font-size: 11px; color: var(--muted); padding: 9px 0; }
 .context-rail { border-left: 1px solid var(--border); padding-left: 25px; min-width: 0; align-self: stretch; }
 .rail-date { border-bottom: 1px solid var(--border); padding: 2px 0 21px; margin-bottom: 24px; }
@@ -705,7 +714,7 @@ textarea.wrap-80 { max-width: calc(80ch + 5px); } /* + scrollbar, so 80 columns 
   .event-copy > small { font-size: 10px; }
   .event-item { padding: 14px 0; }
   .daily-verse blockquote { font-size: 13px; }
-  .pinned-note > span { font-size: 12px; }
+  .pinned-note-body { font-size: 12px; }
 }
 @media (min-width: 1850px) {
   :root { --sidebar-width: 250px; }
@@ -796,7 +805,7 @@ textarea.wrap-80 { max-width: calc(80ch + 5px); } /* + scrollbar, so 80 columns 
   .rail-date > span { font-size: 11px; }
   .rail-date > small { font-size: 9px; }
   .bottom-split h2 { font-size: 12px; }
-  .goal-summary-item strong, .pinned-note > span { font-size: 10px; }
+  .goal-summary-item strong, .pinned-note-body { font-size: 10px; }
   .task-name > button { font-size: 11px; }
 }
 @media (max-width: 960px) {
@@ -847,7 +856,7 @@ textarea.wrap-80 { max-width: calc(80ch + 5px); } /* + scrollbar, so 80 columns 
   .task-name > button { font-size: 12px; }
   .chart-canvas { height: 214px; }
   .bottom-split h2 { font-size: 14px; }
-  .goal-summary-item strong, .pinned-note > span { font-size: 11px; }
+  .goal-summary-item strong, .pinned-note-body { font-size: 11px; }
   .full-table .task-table td { height: 48px; }
 }
 @media (max-width: 620px) {
@@ -930,9 +939,9 @@ textarea.wrap-80 { max-width: calc(80ch + 5px); } /* + scrollbar, so 80 columns 
   .goals-summary { padding-right: 18px; }
   .pinned-notes { padding-left: 18px; }
   .bottom-split h2 { font-size: 12px; }
-  .pinned-note > span, .goal-summary-item strong { font-size: 10px; }
-  .pinned-note { gap: 6px; height: 31px; }
-  .pinned-note > .icon { width: 12px; }
+  .pinned-note-body, .goal-summary-item strong { font-size: 10px; }
+  .pinned-note { gap: 6px; padding: 7px 0; }
+  .pinned-note-icon .icon { width: 12px; }
   .context-rail { gap: 0 24px; }
   .rail-date > span { font-size: 11px; }
   .rail-date > small { font-size: 9px; }
