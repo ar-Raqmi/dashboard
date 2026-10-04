@@ -26,7 +26,7 @@ import { downloadFile, formatTime, parseDateKey, todayKey } from './utils/date';
 type Page = 'Overview' | 'Tasks' | 'Calendar' | 'Notes' | 'Files' | 'Spiritual' | 'Goals' | 'Authenticator' | 'Settings';
 
 const navItems: { name: Page; icon: IconName }[] = [{ name: 'Overview', icon: 'overview' }, { name: 'Tasks', icon: 'tasks' }, { name: 'Calendar', icon: 'calendar' }, { name: 'Notes', icon: 'notes' }, { name: 'Files', icon: 'files' }];
-const personalItems: { name: Page; icon: IconName }[] = [{ name: 'Goals', icon: 'flag' }, { name: 'Spiritual', icon: 'book' }, { name: 'Authenticator', icon: 'shield' }];
+const personalItems: { name: Page; icon: IconName }[] = [{ name: 'Spiritual', icon: 'book' }, { name: 'Authenticator', icon: 'shield' }];
 const projectIcons: IconName[] = ['target', 'bolt', 'book'];
 const pageDescriptions: Record<Page, string> = { Overview: 'A little clarity for the day ahead.', Tasks: 'Your priorities, all in one place.', Calendar: 'Your commitments, with room to breathe.', Notes: 'A place for the thoughts worth keeping.', Files: 'The documents behind your work.', Spiritual: 'Stay grounded in your daily rhythm.', Goals: 'Small steps. Meaningful progress.', Authenticator: 'A quiet place for your one-time codes.', Settings: 'Make the workspace your own.' };
 
@@ -183,7 +183,7 @@ function Workspace() {
     ...notes.map(n => ({ id: `note:${n.id}`, title: n.title, kind: 'Note', icon: 'notes' as IconName, action: () => setNoteEditor(n) })),
     ...goals.map(g => ({ id: `goal:${g.id}`, title: g.title, kind: `Goal / ${g.progress}%`, icon: 'flag' as IconName, action: () => navigate('Goals') })),
     ...events.filter(e => e.date >= today).slice(0, 50).map(e => ({ id: `event:${e.id}:${e.date}`, title: e.title, kind: `Event / ${parseDateKey(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`, icon: 'calendar' as IconName, action: () => setEventDetail(e) })),
-    ...[...navItems, ...personalItems, { name: 'Settings' as Page, icon: 'settings' as IconName }].map(n => ({ id: n.name, title: n.name, kind: 'Navigate', icon: n.icon, action: () => navigate(n.name) })),
+    ...[...navItems, ...personalItems, { name: 'Goals' as Page, icon: 'flag' as IconName }, { name: 'Settings' as Page, icon: 'settings' as IconName }].map(n => ({ id: n.name, title: n.name, kind: 'Navigate', icon: n.icon, action: () => navigate(n.name) })),
   ].filter(item => !search || `${item.title} ${item.kind}`.toLowerCase().includes(search.toLowerCase())).slice(0, 9);
 
   const primaryAction = page === 'Notes' ? <button className="button primary" onClick={() => setNoteEditor('new')}><Icon name="plus" size={15}/>New note</button>
