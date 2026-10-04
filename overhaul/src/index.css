@@ -416,6 +416,34 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
 .note-modal { width: 600px; }
 .note-title-input { width: 100%; border: 0; background: transparent; padding: 0 0 16px; font-size: 19px; font-weight: 510; border-bottom: 1px solid var(--border); border-radius: 0; }
 .note-editor { margin-top: 14px; padding: 8px 0; border: 0; width: 100%; font-size: 13px; color: var(--subtle); background: transparent; resize: vertical; min-height: 230px; line-height: 1.9; }
+.note-modal.wrap-80 { width: 720px; }
+.note-modal:not(.wrap-80) { width: 900px; }
+.note-source { font-family: var(--mono); font-size: 12.5px; line-height: 1.8; }
+.note-preview { overflow-y: auto; min-height: 260px; max-height: 60dvh; }
+.note-source.wrap-80, .note-preview.wrap-80 { display: block; margin-left: auto; margin-right: auto; }
+/* Markdown notes: soft wrap is layout only. The stored source is never rewritten. */
+.markdown-body { overflow-wrap: anywhere; word-break: normal; }
+.markdown-body.wrap-80 { max-width: 80ch; }
+textarea.wrap-80 { max-width: calc(80ch + 5px); } /* + scrollbar, so 80 columns of text still fit */
+.markdown-body > :first-child { margin-top: 0; }
+.markdown-body :is(p, ul, ol, blockquote, pre, table) { margin: 0 0 .9em; }
+.markdown-body :is(h1, h2, h3, h4, h5, h6) { color: var(--fg); font-weight: 590; line-height: 1.4; margin: 1.2em 0 .5em; }
+.markdown-body h1 { font-size: 17px; } .markdown-body h2 { font-size: 15px; } .markdown-body :is(h3, h4, h5, h6) { font-size: 13px; }
+.markdown-body :is(ul, ol) { padding-left: 1.4em; } .markdown-body ul { list-style: disc; } .markdown-body ol { list-style: decimal; }
+.markdown-body li > :is(ul, ol) { margin: 0; }
+.markdown-body strong { color: var(--fg); font-weight: 590; }
+.markdown-body a { color: var(--blue); text-decoration: underline; text-underline-offset: 2px; text-decoration-color: rgba(127,187,179,.35); }
+.markdown-body blockquote { border-left: 2px solid var(--bg4); padding-left: 12px; color: var(--muted); }
+.markdown-body hr { border: 0; border-top: 1px solid var(--border); margin: 1.2em 0; }
+.markdown-body img { max-width: 100%; border-radius: 6px; }
+.markdown-body code { font-family: var(--mono); font-size: .92em; background: var(--bg1); border-radius: 4px; padding: 1px 4px; }
+/* Whitespace-significant blocks are exempt from the wrap: they scroll instead. */
+.markdown-body pre { background: var(--bg1); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; overflow-x: auto; white-space: pre; overflow-wrap: normal; line-height: 1.6; }
+.markdown-body pre code { background: none; padding: 0; font-size: 12px; }
+.markdown-body table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; }
+.markdown-body :is(th, td) { border: 1px solid var(--border); padding: 4px 10px; white-space: nowrap; text-align: left; }
+.markdown-body th { color: var(--fg); font-weight: 590; background: var(--bg1); }
+.note-list-preview pre, .note-list-preview table { overflow: hidden; }
 .note-title-input:focus, .note-editor:focus { outline: 0; }
 .note-tools { display: flex; align-items: center; gap: 7px; margin-top: 15px; }
 .note-tools > .icon-button:first-of-type { margin-left: auto; }
@@ -502,10 +530,13 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
 .note-list-item { display: flex; align-items: flex-start; gap: 17px; padding: 23px 10px 23px 0; border-top: 1px solid var(--border); width: 100%; text-align: left; transition: padding .2s, background .2s; }
 .note-list-item > .icon:first-child { color: var(--muted); margin-top: 3px; }
 .note-list-item > span { flex: 1; min-width: 0; }
-.note-list-item strong { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 510; }
-.note-list-item strong > .icon { color: var(--muted); }
-.note-list-item p { color: var(--subtle); font-size: 12px; margin-top: 9px; line-height: 1.7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.note-list-item small { display: block; color: var(--muted); font-size: 10px; margin-top: 13px; }
+.note-list-item > span > strong { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 510; }
+.note-list-item > span > strong > .icon { color: var(--muted); }
+.note-list-item > span > small { display: block; color: var(--muted); font-size: 10px; margin-top: 13px; }
+.note-list-preview { color: var(--subtle); font-size: 12px; margin-top: 9px; line-height: 1.7; max-height: 6.8em; overflow: hidden; -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent); pointer-events: none; }
+.note-list-preview :is(h1, h2, h3, h4, h5, h6) { font-size: 12px; margin: 0; }
+.note-list-preview > * + * { margin-top: 4px; }
+.note-list-preview img, .note-list-preview hr { display: none; }
 .note-list-item > .icon:last-child { align-self: center; color: var(--muted); opacity: 0; }
 .note-list-item:hover { padding-left: 10px; background: rgba(255,255,255,.015); }
 .note-list-item:hover > .icon:last-child { opacity: 1; }
@@ -906,7 +937,7 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
   .goal-detail-heading p { font-size: 11px; }
   .goal-big-percentage { font-size: 32px; }
   .note-list-item { gap: 12px; }
-  .note-list-item strong { font-size: 13px; }
+  .note-list-item > span > strong { font-size: 13px; }
   .inline-search > input { width: 104px; }
   .expanded-prayer .prayer-name { flex-direction: row; align-items: baseline; }
   .expanded-prayer .next-prayer-time { padding-bottom: 0; }
