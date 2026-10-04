@@ -11,13 +11,22 @@ export class GoalService extends BaseService {
       this.db.all<GoalRow>('SELECT id, title, progress, "order", createdAt FROM Goal WHERE userId = ? ORDER BY "order" ASC, createdAt ASC', this.user.id),
       this.db.all<MilestoneRow>('SELECT m.* FROM Milestone m JOIN Goal g ON g.id = m.goalId WHERE g.userId = ? ORDER BY m."order" ASC', this.user.id),
     ]);
-    return goals.map(g => ({
+    const rows = goals.map(g => {
+      const own = milestones.filter(m => m.goalId === g.id);
+      // With milestones the percentage is derived from them; without, the stored value is a manual slider.
+      const progress = own.length ? Math.round((own.filter(m => bool(m.completed)).length / own.length) * 100) : Math.max(0, Math.min(100, g.progress || 0));
+      return { g, own, progress };
+    });
+    // Heal stored values that drifted from the milestone counts so every reader agrees.
+    const drifted = rows.filter(r => r.own.length && r.progress !== r.g.progress);
+    if (drifted.length) await this.db.batch(drifted.map(r => ({ sql: 'UPDATE Goal SET progress = ? WHERE id = ?', params: [r.progress, r.g.id] })));
+    return rows.map(({ g, own, progress }) => ({
       id: g.id,
       title: g.title,
-      progress: g.progress,
+      progress,
       order: g.order ?? 0,
       createdAt: iso(g.createdAt),
-      milestones: milestones.filter(m => m.goalId === g.id).map(m => ({ id: m.id, label: m.label, completed: bool(m.completed), order: m.order })),
+      milestones: own.map(m => ({ id: m.id, label: m.label, completed: bool(m.completed), order: m.order })),
     }));
   }
 
