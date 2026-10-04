@@ -1,0 +1,9 @@
+# Local secrets for `wrangler pages dev`. Copy this file to `.dev.vars` (gitignored)
+# and replace the placeholder with the real value. Never commit `.dev.vars`.
+#
+# DB (D1) and BUCKET (R2) are bindings declared in wrangler.toml, not env vars,
+# so they do not belong here.
+
+# Must match the JWT_SECRET secret on the ar-raqmi Pages project; it decrypts the
+# stored 2FA secrets, so a different value leaves Authenticator codes unavailable.
+JWT_SECRET=replace-with-the-production-jwt-secret
