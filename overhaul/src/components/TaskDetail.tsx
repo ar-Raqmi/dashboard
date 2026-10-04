@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useStore, type Priority, type TaskStatus, type TaskView } from '../store';
 import { shortDate } from '../utils/date';
+import { initialsOf } from '../utils/text';
 import { Icon } from './Icon';
 import { repeatLabel } from './NewTaskModal';
 
@@ -13,7 +14,7 @@ export function TaskDetail({ task, onClose, onDelete, onNotice }: { task: TaskVi
   const fail = (err: unknown) => onNotice((err as Error).message);
   const update = (patch: Parameters<typeof updateTask>[1]) => void updateTask(task.id, patch).catch(fail);
   const done = task.status === 'completed';
-  const initials = profileName.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]?.toUpperCase()).join('') || '·';
+  const initials = initialsOf(profileName);
 
   return <section className="task-detail"><div className="detail-overline"><span>{task.isRecurring ? 'REPEATING TASK' : 'TASK'}</span><button className="icon-button compact" onClick={onClose} title="Close task details" aria-label="Close task details"><Icon name="close" size={16}/></button></div>
     {editingTitle
@@ -26,7 +27,7 @@ export function TaskDetail({ task, onClose, onDelete, onNotice }: { task: TaskVi
       <label><span>{task.isRecurring ? 'Next date' : 'Due date'}</span><input aria-label="Task due date" type="date" value={task.dueDate || ''} disabled={task.isRecurring} onChange={e => update({ dueDate: e.target.value || null })}/></label>
     </div>
     {task.rrule && <div className="detail-fields"><label><span>Repeat</span><span className="flex items-center justify-between gap-2"><span>{repeatLabel(task.rrule)}</span><button className="text-button" onClick={() => void mutate('tasks:update', { id: task.id, clearRecurrence: true }, ['tasks']).then(() => onNotice('Task no longer repeats')).catch(fail)}>Stop repeating</button></span></label></div>}
-    <label className="description-label">Description<textarea key={task.id} defaultValue={task.description} onBlur={e => { if (e.target.value !== task.description) update({ description: e.target.value }); }} placeholder="Add a little context..." rows={7}/></label>
+    <label className="description-label">Description<textarea key={task.id} defaultValue={task.description} onBlur={e => { if (e.target.value !== task.description) update({ description: e.target.value }); }} placeholder="Add a little context..." rows={4}/></label>
     <div className="detail-activity"><h3>Activity</h3><div><span className="avatar mini-avatar">{initials}</span><p>Added to your workspace<small>Created {shortDate(task.createdAt)}{task.isRecurring ? ` · ${repeatLabel(task.rrule)}` : ''}</small></p></div></div>
     <button className="text-button danger-button" onClick={() => onDelete(task)}><Icon name="trash" size={14}/>Delete task</button></section>;
 }

@@ -21,6 +21,7 @@ import { TasksPage } from './components/TasksPage';
 import { Verse } from './components/Verse';
 import { isActionable, useStore, type EventView, type NoteView, type TaskView, type Theme } from './store';
 import { downloadFile, formatTime, parseDateKey, todayKey } from './utils/date';
+import { initialsOf } from './utils/text';
 
 type Page = 'Overview' | 'Tasks' | 'Calendar' | 'Notes' | 'Files' | 'Spiritual' | 'Goals' | 'Authenticator' | 'Settings';
 
@@ -30,7 +31,6 @@ const navItems: { name: Page; icon: IconName }[] = [{ name: 'Overview', icon: 'o
 const personalItems: { name: Page; icon: IconName }[] = [{ name: 'Spiritual', icon: 'book' }, { name: 'Authenticator', icon: 'shield' }];
 const pageDescriptions: Record<Page, string> = { Overview: 'A little clarity for the day ahead.', Tasks: 'Your priorities, all in one place.', Calendar: 'Your commitments, with room to breathe.', Notes: 'A place for the thoughts worth keeping.', Files: 'The documents behind your work.', Spiritual: 'Stay grounded in your daily rhythm.', Goals: 'Every project, one milestone at a time.', Authenticator: 'A quiet place for your one-time codes.', Settings: 'Make the workspace your own.' };
 
-const initialsOf = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]?.toUpperCase()).join('') || '·';
 
 /** Shows the uploaded image when set (and loadable), otherwise the fallback content. */
 function AvatarContent({ src, fallback }: { src?: string; fallback: ReactNode }) {
@@ -250,7 +250,7 @@ function Workspace() {
                 {page === 'Settings' && <SettingsPage theme={theme} setTheme={setTheme} notify={notify}/>}
               </>}
             </div>
-            <aside className={`context-rail ${activeTask ? 'detail-rail' : ''}`} aria-label={activeTask ? 'Task details' : 'Daily context'}>{activeTask
+            <aside className={`context-rail ${activeTask ? 'detail-rail' : ''}`} aria-label={activeTask ? 'Task details' : 'Daily context'} tabIndex={activeTask ? 0 : undefined}>{activeTask
               ? <TaskDetail task={activeTask} onClose={() => setSelectedTask(null)} onDelete={task => setConfirmDelete({ type: 'task', item: task })} onNotice={notify}/>
               : <><div className="rail-date"><span><Icon name="sun" size={15}/>A {new Date().toLocaleDateString('en-US', { weekday: 'long' })} in {new Date().toLocaleDateString('en-US', { month: 'long' })}</span>{hijri && <small>{hijri}</small>}</div>
                 {page !== 'Spiritual' && widgetVisible('prayerTimes') && <PrayerTimes/>}

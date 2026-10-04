@@ -3,6 +3,7 @@ import { ApiClient } from '../api';
 import { useAuth } from '../auth';
 import { useStore, type SettingsView, type Theme } from '../store';
 import { downloadFile } from '../utils/date';
+import { initialsOf } from '../utils/text';
 import { Icon } from './Icon';
 
 function Toggle({ on, label, onChange }: { on: boolean; label: string; onChange: (next: boolean) => void }) {
@@ -81,7 +82,7 @@ function ProfileGroup({ settings, username, notify, onSave }: { settings: Settin
   const [profileName, setProfileName] = useState(settings.profileName), [appTitle, setAppTitle] = useState(settings.appTitle);
   const [iconBackgroundColor, setIconBackgroundColor] = useState(settings.iconBackgroundColor || '#A7C080');
   const dirty = profileName !== settings.profileName || appTitle !== settings.appTitle || iconBackgroundColor !== settings.iconBackgroundColor;
-  const initials = (profileName || username).split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]?.toUpperCase()).join('') || '·';
+  const initials = initialsOf(profileName || username);
   return <form className="settings-group" onSubmit={e => { e.preventDefault(); onSave({ profileName: profileName.trim(), appTitle: appTitle.trim() || 'Dashboard', iconBackgroundColor }); }}><span className="eyebrow">PROFILE</span>
     <p className="settings-description">Signed in as <strong>{username}</strong>.</p>
     <div className="form-grid mt-4"><label className="form-label">Display name<input maxLength={200} value={profileName} onChange={e => setProfileName(e.target.value)}/></label><label className="form-label">Workspace name<input maxLength={200} value={appTitle} onChange={e => setAppTitle(e.target.value)}/></label></div>

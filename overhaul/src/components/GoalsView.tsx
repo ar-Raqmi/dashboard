@@ -47,7 +47,6 @@ export function GoalsView({ notify }: { notify: (message: string) => void }) {
         {renaming === goal.id
           ? <input className="note-title-input" aria-label="Project name" autoFocus defaultValue={goal.title} maxLength={200} onBlur={e => { setRenaming(null); const v = e.target.value.trim(); if (v && v !== goal.title) void mutate('goals:update', { id: goal.id, title: v }, ['goals']).catch(fail); }} onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') setRenaming(null); }}/>
           : <h2>{goal.title}</h2>}
-        <p className="goal-summary">{total ? `${done} of ${total} milestone${total === 1 ? '' : 's'} done` : 'No milestones yet'}</p>
       </div><span className="goal-big-percentage">{goal.progress}<small>%</small></span></div>
       <div className="goal-progress-track" role="progressbar" aria-valuenow={goal.progress} aria-valuemin={0} aria-valuemax={100} aria-label={`${goal.title} progress`} title={total ? `${done} of ${total} milestones completed` : `${goal.progress}% complete`}><span style={{ width: `${goal.progress}%`, background: color }}/></div>
       <div className="goal-progress-meta"><span>{total ? `${done} of ${total} milestones complete` : 'No milestones yet. Set progress manually or add one below.'}</span><span>{goal.progress >= 100 ? 'Complete' : goal.progress > 0 ? 'In motion' : 'Not started'}</span></div>

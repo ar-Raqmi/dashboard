@@ -410,7 +410,7 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
 .detail-fields select, .detail-fields input { min-width: 0; width: 100%; font-size: 11px; background: transparent; height: 30px; border-color: transparent; padding: 0 5px; }
 .detail-fields select:hover, .detail-fields input:hover { background: var(--bg0); border-color: var(--border); }
 .description-label { display: block; font-size: 12px; margin-top: 23px; color: var(--subtle); }
-.description-label textarea { margin-top: 10px; display: block; background: transparent; border-color: transparent; font-size: 12px; color: var(--subtle); padding: 8px; margin-left: -8px; width: calc(100% + 16px); min-height: 155px; }
+.description-label textarea { margin-top: 10px; display: block; background: transparent; border-color: transparent; font-size: 12px; color: var(--subtle); padding: 8px; margin-left: -8px; width: calc(100% + 16px); }
 .description-label textarea:hover, .description-label textarea:focus { background: var(--bg0); border-color: var(--border); }
 .detail-activity { border-top: 1px solid var(--border); padding-top: 21px; margin-top: 18px; }
 .detail-activity h3 { font-size: 12px; font-weight: 510; }
@@ -420,6 +420,16 @@ kbd { font-family: inherit; font-size: 10px; font-weight: 400; background: rgba(
 .detail-activity small { display: block; font-size: 9px; color: var(--muted); margin-top: 7px; }
 .danger-button { color: var(--red) !important; }
 .task-detail > .danger-button { margin-top: 33px; font-size: 11px; }
+/* The detail rail scrolls on its own instead of running past the viewport: sticky beside the grid on desktop, a fixed overlay on narrow screens. */
+.context-rail.detail-rail { --rail-bg: var(--bg-dim); position: sticky; top: 16px; align-self: start; max-height: calc(100dvh - 64px - 32px); overflow-y: auto; overscroll-behavior: contain; padding: 4px 12px 28px 25px; scrollbar-width: thin; scrollbar-color: var(--muted) transparent;
+  /* Edge shadows appear only while content is hidden above or below, so a clipped panel never looks like a finished one. */
+  background: linear-gradient(var(--rail-bg) 30%, transparent) top / 100% 28px no-repeat local, linear-gradient(transparent, var(--rail-bg) 70%) bottom / 100% 28px no-repeat local, radial-gradient(farthest-side at 50% 0, rgba(0,0,0,.14), transparent) top / 100% 9px no-repeat scroll, radial-gradient(farthest-side at 50% 100%, rgba(0,0,0,.14), transparent) bottom / 100% 9px no-repeat scroll; }
+.context-rail.detail-rail:focus-visible { outline: 2px solid var(--fg); outline-offset: -2px; }
+.detail-rail .detail-overline { margin-top: 0; }
+.task-detail { min-width: 0; }
+.task-detail > h2, .detail-activity p { overflow-wrap: anywhere; }
+.detail-overline > span { min-width: 0; }
+.description-label textarea { min-height: 96px; field-sizing: content; overflow-wrap: anywhere; scrollbar-width: thin; scrollbar-color: var(--muted) transparent; }
 .modal-backdrop { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(16,22,24,.66); backdrop-filter: blur(5px); z-index: 100; padding: 24px; animation: fade-in .18s ease both; overflow-y: auto; }
 .modal:focus { outline: none; }
 .modal { background: var(--bg2); width: 500px; max-width: 100%; max-height: calc(100dvh - 48px); overflow: auto; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.06); animation: modal-appear .22s cubic-bezier(.16,1,.3,1) both; }
@@ -624,7 +634,6 @@ textarea.wrap-80 { max-width: calc(80ch + 5px); } /* + scrollbar, so 80 columns 
 .goal-project-label { display: flex; align-items: center; gap: 6px; font-size: 9px; letter-spacing: .8px; color: var(--muted); }
 .goal-project-label > i { width: 5px; height: 5px; border-radius: 1px; }
 .goal-detail-heading h2 { font-size: 21px; margin-top: 12px; }
-.goal-detail-heading p { font-size: 12px; color: var(--subtle); margin-top: 8px; }
 .goal-big-percentage { font-family: var(--mono); font-size: 38px; font-weight: 400; letter-spacing: -1.5px; }
 .goal-big-percentage small { font-size: 20px; color: var(--muted); margin-left: 2px; }
 .goal-detail > .goal-progress-track { margin-top: 24px; height: 4px; }
@@ -881,7 +890,7 @@ textarea.wrap-80 { max-width: calc(80ch + 5px); } /* + scrollbar, so 80 columns 
   .daily-verse { grid-column: 1 / -1; }
   .daily-verse blockquote { font-size: 13px; }
   .rail-bottom-note { display: none; }
-  .context-rail.detail-rail { display: block; position: fixed; right: 0; top: 64px; bottom: 0; width: 310px; z-index: 40; border-left: 1px solid var(--border); border-top: 0; padding: 24px; margin-top: 0; background: var(--bg0); overflow-y: auto; box-shadow: -20px 0 50px rgba(0,0,0,.2); }
+  .context-rail.detail-rail { display: block; position: fixed; right: 0; top: 64px; bottom: 0; width: 310px; z-index: 40; border-left: 1px solid var(--border); border-top: 0; padding: 24px 24px 40px; margin-top: 0; --rail-bg: var(--bg0); background-color: var(--bg0); align-self: stretch; max-height: none; overflow-y: auto; box-shadow: -20px 0 50px rgba(0,0,0,.2); }
   .task-table th:nth-child(3) { width: 85px; }
   .task-table th:nth-child(4) { width: 78px; }
   .priority > span:last-child { display: block; }
