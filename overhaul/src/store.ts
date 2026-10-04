@@ -252,6 +252,9 @@ export const useStore = create<WorkspaceState>()((set, get) => {
 const GOAL_COLORS = ['var(--aqua)', 'var(--yellow)', 'var(--purple)', 'var(--blue)', 'var(--orange)', 'var(--green)', 'var(--red)'];
 
 /** Goals double as projects; each gets a stable palette colour from its position. */
+/** A project is complete at 100%. The server derives progress from milestones (or the manual slider when it has none), so no NaN and no drift reach the client. */
+export const isGoalComplete = (goal: Pick<GoalView, 'progress'>) => goal.progress >= 100;
+
 export function goalColor(goals: GoalView[], id: string | null | undefined) {
   const index = goals.findIndex(g => g.id === id);
   return index < 0 ? 'var(--subtle)' : GOAL_COLORS[index % GOAL_COLORS.length];

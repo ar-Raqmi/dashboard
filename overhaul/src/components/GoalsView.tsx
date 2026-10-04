@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { goalColor, useStore, type GoalView } from '../store';
+import { goalColor, isGoalComplete, useStore, type GoalView } from '../store';
 import { cn } from '../utils/cn';
 import { Icon } from './Icon';
 import { ConfirmModal, Modal } from './Modal';
@@ -8,6 +8,7 @@ export function GoalsView({ onOpenProject, notify }: { onOpenProject: (goalId: s
   const goals = useStore(s => s.goals), tasks = useStore(s => s.tasks);
   const toggleMilestone = useStore(s => s.toggleMilestone), mutate = useStore(s => s.mutate);
   const [deleting, setDeleting] = useState<GoalView | null>(null), [renaming, setRenaming] = useState<string | null>(null);
+  const [tab, setTab] = useState<'ongoing' | 'complete'>('ongoing');
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const fail = (err: unknown) => notify((err as Error).message);
 
@@ -21,20 +22,28 @@ export function GoalsView({ onOpenProject, notify }: { onOpenProject: (goalId: s
     void mutate('goals:addMilestone', { goalId: goal.id, label }, ['goals']).catch(fail);
   }
 
+  const ongoing = goals.filter(g => !isGoalComplete(g)), complete = goals.filter(isGoalComplete);
+  const shown = tab === 'ongoing' ? ongoing : complete;
+
+  /** Swaps with the neighbouring project of the same tab, so the move is visible even though the other tab's projects sit between. */
   function move(goal: GoalView, delta: number) {
-    const ids = goals.map(g => g.id), from = ids.indexOf(goal.id), to = from + delta;
-    if (to < 0 || to >= ids.length) return;
+    const neighbour = shown[shown.indexOf(goal) + delta];
+    if (!neighbour) return;
+    const ids = goals.map(g => g.id), from = ids.indexOf(goal.id), to = ids.indexOf(neighbour.id);
     [ids[from], ids[to]] = [ids[to], ids[from]];
     void mutate('goals:reorder', { ids }, ['goals']).catch(fail);
   }
 
-  return <div className="goals-view">{goals.map((goal, index) => {
+  return <div className="goals-view">
+    <div className="task-tabs" role="tablist" aria-label="Project state">{([['ongoing', 'Ongoing', ongoing.length], ['complete', 'Complete', complete.length]] as const).map(([id, label, count]) => <button key={id} role="tab" aria-selected={tab === id} className={tab === id ? 'active' : ''} onClick={() => setTab(id)}>{label}<span>{count}</span></button>)}</div>
+    {!shown.length && <div className="empty-state" role="tabpanel"><Icon name="flag" size={36}/><h3>{tab === 'ongoing' ? 'No ongoing projects' : 'No completed projects yet'}</h3><p>{tab === 'ongoing' ? 'Every project is complete. Create a new one to keep moving.' : 'A project lands here once all of its milestones are done.'}</p></div>}
+    {shown.map((goal, index) => {
     const color = goalColor(goals, goal.id), done = goal.milestones.filter(m => m.completed).length, total = goal.milestones.length;
     const openTasks = tasks.filter(t => t.goalId === goal.id && t.status !== 'completed').length;
     return <section key={goal.id} className="goal-detail">
       <div className="goal-detail-heading"><div>
         <div className="goal-project-label"><i style={{ background: color }}/><span>PROJECT</span>
-          <span className="ml-auto flex gap-1"><button className="icon-button compact" title="Move up" aria-label={`Move ${goal.title} up`} disabled={index === 0} onClick={() => move(goal, -1)}><span className="inline-flex rotate-180"><Icon name="down" size={13}/></span></button><button className="icon-button compact" title="Move down" aria-label={`Move ${goal.title} down`} disabled={index === goals.length - 1} onClick={() => move(goal, 1)}><Icon name="down" size={13}/></button><button className="icon-button compact" title="Rename project" aria-label={`Rename ${goal.title}`} onClick={() => setRenaming(goal.id)}><Icon name="pen" size={13}/></button><button className="icon-button compact danger-button" title="Delete project" aria-label={`Delete ${goal.title}`} onClick={() => setDeleting(goal)}><Icon name="trash" size={13}/></button></span>
+          <span className="ml-auto flex gap-1"><button className="icon-button compact" title="Move up" aria-label={`Move ${goal.title} up`} disabled={index === 0} onClick={() => move(goal, -1)}><span className="inline-flex rotate-180"><Icon name="down" size={13}/></span></button><button className="icon-button compact" title="Move down" aria-label={`Move ${goal.title} down`} disabled={index === shown.length - 1} onClick={() => move(goal, 1)}><Icon name="down" size={13}/></button><button className="icon-button compact" title="Rename project" aria-label={`Rename ${goal.title}`} onClick={() => setRenaming(goal.id)}><Icon name="pen" size={13}/></button><button className="icon-button compact danger-button" title="Delete project" aria-label={`Delete ${goal.title}`} onClick={() => setDeleting(goal)}><Icon name="trash" size={13}/></button></span>
         </div>
         {renaming === goal.id
           ? <input className="note-title-input" aria-label="Project name" autoFocus defaultValue={goal.title} maxLength={200} onBlur={e => { setRenaming(null); const v = e.target.value.trim(); if (v && v !== goal.title) void mutate('goals:update', { id: goal.id, title: v }, ['goals']).catch(fail); }} onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') setRenaming(null); }}/>
