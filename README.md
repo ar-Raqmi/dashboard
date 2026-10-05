@@ -30,9 +30,10 @@ It is a **Vite + React 19 single-page app**. Its API runs as Cloudflare Pages Fu
 - **Markdown notes** with GitHub-flavoured rendering (tables, footnotes, heading anchors), output sanitised by DOMPurify, and syntax highlighting that loads only when a note contains code
 - **Goals** with milestones
 - **Files**: folders, uploads, rename, move, star and download, stored in Cloudflare R2
-- **Spiritual**: daily ayah in Arabic with an English translation, a hadith, prayer times (JAKIM zones for Malaysia, or the Aladhan API by city and country) and the Hijri date
+- **Spiritual**: daily ayah in Arabic with an English translation, a hadith, prayer times and the Hijri date. Prayer times come from JAKIM e-Solat (any zone) or Aladhan (city or GPS, with a calculation method and Asr school). The Hijri date is a separate choice: JAKIM's moon sighting, Umm al-Qura, the Saudi council, Diyanet or an astronomical calculation, switching at midnight or Maghrib
 - **Authenticator**: a TOTP code generator for your other accounts (see [Authenticator (2FA codes)](#-authenticator-2fa-codes))
-- **World clocks**
+- **World clocks**, and a **time zone** setting that follows the device (so travelling needs no action) or pins any IANA zone
+- **Installable PWA** with an offline fallback, and an editable brand name
 - **Search palette** across tasks, notes, goals, events and pages
 - **Keyboard shortcuts** (listed [below](#%EF%B8%8F-keyboard-shortcuts))
 - **Cross-device clipboard**: scratch text saved to your account, so it shows up on your other devices
@@ -53,12 +54,19 @@ The app has no charts. There is also no automated test suite yet; `npm run typec
 ### 🗂️ Project layout
 
 ```
-src/                  React SPA: App.tsx (shell, routing, shortcuts), store.ts (Zustand), components/
-server/               API logic: api.ts (router), auth.ts, db.ts (D1 wrapper), services/*.ts
+src/
+  app/                Workspace shell: Sidebar, Topbar, ContextRail, search palette, shortcuts and theme hooks
+  features/           One folder per feature: tasks, notes, calendar, goals, files, spiritual, settings, authenticator, brand, auth
+  components/         Shared UI (Icon, Modal, BrandMark, Avatar)
+  store/              Zustand store, data types and selectors
+  lib/                ApiClient, date and time-zone helpers
+  pwa/                Service worker registration and the install prompt
+  styles/             Ordered CSS files (base, layout, per-feature, responsive, light theme)
+server/               API: api.ts (router class), procedures.ts (query/mutation allowlists), auth.ts, db.ts, cache.ts, services/*
 functions/api/        Pages Functions entry point that hands every /api/* request to server/api.ts
 db/migrations/        Numbered SQL migrations; 0001 is the production baseline
-public/               Static assets
-scripts/              seed-admin.mjs prints the SQL for a new login
+public/               Logo, icons (npm run icons), manifest, service worker, offline page
+scripts/              seed-admin.mjs prints the SQL for a new login; build-icons.mjs renders the PNG icons
 wrangler.toml         Local Pages config (gitignored); copy wrangler.toml.example
 .dev.vars.example     Template for local secrets
 ```
