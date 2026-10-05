@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Icon } from '@/components/Icon';
+import { timeZone } from '@/lib/timezone';
 import { useStore } from '@/store';
 import { pageDescriptions, pageLabel, type Page } from './pages';
 
@@ -21,7 +22,7 @@ export function PageHeading({ page, refreshing, onRefresh, action }: PageHeading
       <p>{pageDescriptions[page]}</p>
     </div>
     <div className="page-heading-actions">
-      <span className="sample-date"><Icon name="calendar" size={14}/>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
+      <span className="sample-date"><Icon name="calendar" size={14}/>{timeZone.format(new Date(), { weekday: 'long', month: 'long', day: 'numeric' })}</span>
       <button className={`icon-button refresh-button ${refreshing ? 'refreshing' : ''}`} title="Refresh workspace" aria-label="Refresh workspace" onClick={onRefresh} disabled={refreshing}><Icon name="refresh" size={15}/></button>
       {action}
     </div>

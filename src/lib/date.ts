@@ -1,9 +1,11 @@
-/** Date helpers. All app dates are local `YYYY-MM-DD` strings. */
+import { timeZone } from '@/lib/timezone';
+
+/** Date helpers. All app dates are `YYYY-MM-DD` strings; "today" is read in the active time zone. */
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
 export const toDateKey = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-export const todayKey = () => toDateKey(new Date());
+export const todayKey = () => timeZone.dateKey();
 export const parseDateKey = (key: string) => new Date(`${key}T12:00:00`);
 
 export function addDays(key: string, days: number) {

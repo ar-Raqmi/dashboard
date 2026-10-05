@@ -7,6 +7,7 @@ import { ProfileGroup } from './ProfileGroup';
 import { PrayerGroup } from './PrayerGroup';
 import { ClocksGroup } from './ClocksGroup';
 import { AppGroup } from './AppGroup';
+import { TimeZoneGroup } from './TimeZoneGroup';
 import { PasswordGroup } from './PasswordGroup';
 
 /** Seeded by the server but not rendered anywhere on the Overview yet, so a toggle would do nothing. */
@@ -15,11 +16,16 @@ const WIDGETS_WITHOUT_EFFECT = ['clock', 'files'];
 export function SettingsPage({ theme, setTheme, notify }: { theme: Theme; setTheme: (theme: Theme) => void; notify: (message: string) => void }) {
   const { user, logout } = useAuth();
   const settings = useStore(s => s.settings), preferences = useStore(s => s.preferences), widgets = useStore(s => s.widgets), clocks = useStore(s => s.clocks);
-  const mutate = useStore(s => s.mutate), updatePreferences = useStore(s => s.updatePreferences), loadDaily = useStore(s => s.loadDaily);
+  const mutate = useStore(s => s.mutate), updatePreferences = useStore(s => s.updatePreferences), loadDaily = useStore(s => s.loadDaily), load = useStore(s => s.load);
   const fail = (err: unknown) => notify((err as Error).message);
 
-  const saveSettings = (patch: Partial<SettingsView>, message = 'Settings saved', refreshDaily = false) =>
-    void mutate('settings:update', patch, ['settings']).then(() => { notify(message); if (refreshDaily) void loadDaily(); }).catch(fail);
+  /** `refresh` names what depends on the setting and must be fetched again once it is saved. */
+  const saveSettings = (patch: Partial<SettingsView>, message = 'Settings saved', refresh?: 'daily' | 'workspace') =>
+    void mutate('settings:update', patch, ['settings']).then(async () => {
+      if (refresh === 'workspace') await Promise.all([load(), loadDaily()]);
+      else if (refresh === 'daily') await loadDaily();
+      notify(message);
+    }).catch(fail);
 
   if (!settings) return <p className="muted-note">Loading settings...</p>;
   return <div className="settings-body" style={{ padding: 0, maxWidth: 720 }}>
@@ -31,7 +37,8 @@ export function SettingsPage({ theme, setTheme, notify }: { theme: Theme; setThe
     </div>
 
     <ProfileGroup settings={settings} username={user?.username || ''} notify={notify} onSave={(patch, message = 'Profile saved') => saveSettings(patch, message)}/>
-    <PrayerGroup settings={settings} onSave={patch => saveSettings(patch, 'Prayer settings saved', true)}/>
+    <TimeZoneGroup settings={settings} onSave={patch => saveSettings(patch, 'Time zone updated', 'workspace')}/>
+    <PrayerGroup settings={settings} onSave={patch => saveSettings(patch, 'Prayer settings saved', 'daily')}/>
     <ClocksGroup clocks={clocks} notify={notify}/>
 
     <div className="settings-group"><span className="eyebrow">OVERVIEW WIDGETS</span>

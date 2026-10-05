@@ -1,4 +1,5 @@
 import { Icon } from '@/components/Icon';
+import { timeZone } from '@/lib/timezone';
 import { EventList } from '@/features/calendar/EventList';
 import { useWidgetVisible } from '@/features/overview/OverviewPage';
 import { hijriLabel, PrayerTimes } from '@/features/spiritual/PrayerTimes';
@@ -28,7 +29,7 @@ export function ContextRail({ page, activeTask, onCloseTask, onDeleteTask, onOpe
     {activeTask
       ? <TaskDetail task={activeTask} onClose={onCloseTask} onDelete={onDeleteTask} onNotice={notify}/>
       : <>
-        <div className="rail-date"><span><Icon name="sun" size={15}/>A {now.toLocaleDateString('en-US', { weekday: 'long' })} in {now.toLocaleDateString('en-US', { month: 'long' })}</span>{hijri && <small>{hijri}</small>}</div>
+        <div className="rail-date"><span><Icon name="sun" size={15}/>A {timeZone.format(now, { weekday: 'long' })} in {timeZone.format(now, { month: 'long' })}</span>{hijri && <small>{hijri}</small>}</div>
         {page !== 'Spiritual' && widgetVisible('prayerTimes') && <PrayerTimes/>}
         {widgetVisible('calendar') && <EventList onEvent={onOpenEvent} onCalendar={onOpenCalendar}/>}
         {page !== 'Spiritual' && page !== 'Overview' && widgetVisible('verse') && <Verse/>}

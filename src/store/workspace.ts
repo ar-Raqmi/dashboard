@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { ApiClient } from '@/lib/api';
 import { todayKey } from '@/lib/date';
+import { timeZone } from '@/lib/timezone';
 import type {
   ClockView, Completion, DailyHadith, DailyVerse, EventView, GoalView, NoteView, Preferences, PrayerDay, SettingsView, TaskView, WidgetView,
 } from './types';
@@ -163,3 +164,6 @@ export const useStore = create<WorkspaceState>()((set, get) => {
     },
   };
 });
+
+// "Today" everywhere follows the time zone chosen in settings, so it is applied the moment settings arrive.
+useStore.subscribe(state => timeZone.select(state.settings?.timezone));
