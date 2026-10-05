@@ -1,10 +1,11 @@
 // Bump VERSION to drop every cache from older releases. Hashed files under /assets never change
 // for a given name, so they are safe to serve from cache first; the HTML shell is network-first.
-const VERSION = 'v3';
+const VERSION = 'v4';
 const SHELL_CACHE = `dashboard-shell-${VERSION}`;
 const ASSET_CACHE = `dashboard-assets-${VERSION}`;
-const PRECACHE = ['/', '/offline.html', '/favicon.svg', '/logo.png'];
-const NETWORK_ONLY = ['/api/', '/sw.js'];
+const PRECACHE = ['/', '/offline.html'];
+// Identity files are always asked of the network, so a stale copy of the icon or manifest can never be served.
+const NETWORK_ONLY = ['/api/', '/sw.js', '/logo.png', '/manifest.webmanifest'];
 
 self.addEventListener('install', event => {
   event.waitUntil(precache().then(() => self.skipWaiting()));

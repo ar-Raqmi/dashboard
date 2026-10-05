@@ -1,5 +1,5 @@
 {
-  "id": "/",
+  "id": "personal-dashboard",
   "name": "Dashboard",
   "short_name": "Dashboard",
   "description": "A personal workspace for tasks, calendar, notes, goals, files and daily prayer times.",
@@ -7,8 +7,8 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#EFEBD4",
-  "theme_color": "#EFEBD4",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
   "lang": "en",
   "dir": "ltr",
   "icons": [

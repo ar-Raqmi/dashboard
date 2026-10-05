@@ -66,7 +66,7 @@ src/
 server/               API: api.ts (router class), procedures.ts (query/mutation allowlists), auth.ts, db.ts, cache.ts, services/*
 functions/api/        Pages Functions entry point that hands every /api/* request to server/api.ts
 db/migrations/        Numbered SQL migrations; 0001 is the production baseline
-public/               logo.png (the installed-app icon), favicon, manifest, service worker, offline page
+public/               logo.png (the original app and tab icon), manifest, service worker, offline page
 scripts/              seed-admin.mjs prints the SQL for a new login
 wrangler.toml         Local Pages config (gitignored); copy wrangler.toml.example
 .dev.vars.example     Template for local secrets
