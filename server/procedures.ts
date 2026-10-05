@@ -7,6 +7,7 @@ import { FileService } from './services/files';
 import { GoalService } from './services/goals';
 import { NoteService } from './services/notes';
 import { PreferenceService, WidgetService } from './services/preferences';
+import { PrayerService } from './services/prayer/PrayerService';
 import { SettingService } from './services/settings';
 import { TaskService } from './services/tasks';
 import { TwoFactorService } from './services/twoFactor';
@@ -29,6 +30,7 @@ export function services(db: Db, env: Env, user: AuthUser) {
     twoFactor: new TwoFactorService(db, env, user),
     files: new FileService(db, env, user),
     content: new ContentService(db, env, user),
+    prayer: new PrayerService(db, env, user),
   };
 }
 export type Services = ReturnType<typeof services>;
@@ -57,7 +59,7 @@ export const queries = (s: Services, user: AuthUser): ProcedureTable => ({
   'files:zipInfo': args => s.files.zipInfo(args),
   'content:verse': args => s.content.verse(args),
   'content:hadith': args => s.content.hadith(args),
-  'content:prayer': args => s.content.prayer(args),
+  'prayer:today': args => s.prayer.today(args),
 });
 
 /** `sessionToken` identifies the caller's own session, which password changes must keep alive. */

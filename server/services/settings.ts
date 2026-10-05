@@ -1,64 +1,148 @@
-import { bool, HttpError, type Row, uuid } from '../db';
-import { BaseService, str } from './base';
+import { assert, bool, HttpError, toSql, type Row, uuid } from '../db';
+import { BaseService, oneOf, str } from './base';
 
 export const DEFAULT_BRAND = 'raqmi';
 const MAX_BRAND_LENGTH = 24;
+const LARGE = 400_000;
 
-const DEFAULTS = {
-  profileName: '', profilePicture: '', appTitle: 'Dashboard', brandName: DEFAULT_BRAND, timezone: 'auto', appLogo: '', iconBackgroundColor: '#A7C080',
-  hijriVisible: true, hijriOffset: 0, hijriProvider: 'calculated', hijriCalendar: 'UmmAlQura', showSeconds: true, clipboardText: '',
-  backgroundType: 'default', backgroundColor: '#A7C080', backgroundGradient: 'forest-dew', backgroundImage: '', backgroundOpacity: 30,
-  aladhanCity: 'Kuala Lumpur', aladhanCountry: 'Malaysia',
-};
-type Settings = typeof DEFAULTS;
-
-const TEXT_FIELDS = ['profileName', 'profilePicture', 'appTitle', 'brandName', 'timezone', 'appLogo', 'iconBackgroundColor', 'hijriProvider', 'hijriCalendar', 'clipboardText',
-  'backgroundType', 'backgroundColor', 'backgroundGradient', 'backgroundImage', 'aladhanCity', 'aladhanCountry'] as const;
-const BOOL_FIELDS = ['hijriVisible', 'showSeconds'] as const;
-
-/** 'auto' (follow the device) or an IANA zone this runtime knows. */
-function validTimeZone(value: unknown) {
-  const zone = typeof value === 'string' ? value.trim() : '';
-  if (zone === 'auto') return zone;
-  try {
-    new Intl.DateTimeFormat('en-US', { timeZone: zone });
-    return zone;
-  } catch {
-    throw new HttpError(400, 'Unknown time zone');
-  }
+/** How one settings column is decoded from a row and validated on the way in. `write` returns undefined to leave the column alone. */
+interface Field<T> {
+  default: T;
+  read(raw: unknown): T;
+  write(value: unknown): T | undefined;
 }
+
+const text = (def = '', max = 200): Field<string> => ({
+  default: def,
+  read: raw => (typeof raw === 'string' ? raw : def),
+  write: value => str(value, max),
+});
+const flag = (def: boolean): Field<boolean> => ({ default: def, read: bool, write: value => !!value });
+const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
+const integer = (def: number, min: number, max: number): Field<number> => ({
+  default: def,
+  read: raw => Number(raw ?? def),
+  write: value => clamp(Math.round(Number(value) || 0), min, max),
+});
+const choice = <T extends string>(def: T, options: readonly T[]): Field<T> => ({
+  default: def,
+  read: raw => (options.includes(raw as T) ? (raw as T) : def),
+  write: value => oneOf(value, options),
+});
+const numericChoice = (def: number, options: readonly number[]): Field<number> => ({
+  default: def,
+  read: raw => (options.includes(Number(raw)) ? Number(raw) : def),
+  write: value => {
+    assert(options.includes(Number(value)), 400, `Expected one of: ${options.join(', ')}`);
+    return Number(value);
+  },
+});
+const coordinate = (limit: number): Field<number | null> => ({
+  default: null,
+  read: raw => (raw === null || raw === undefined ? null : Number(raw)),
+  write: value => {
+    if (value === null || value === '') return null;
+    const n = Number(value);
+    assert(Number.isFinite(n) && Math.abs(n) <= limit, 400, `Coordinates must be within ±${limit}`);
+    return n;
+  },
+});
+const brand: Field<string> = {
+  default: DEFAULT_BRAND,
+  read: raw => (typeof raw === 'string' && raw ? raw : DEFAULT_BRAND),
+  write: value => str(value, MAX_BRAND_LENGTH)?.trim() || DEFAULT_BRAND,
+};
+/** 'auto' (follow the device) or an IANA zone this runtime knows. */
+const timezone: Field<string> = {
+  default: 'auto',
+  read: raw => (typeof raw === 'string' && raw ? raw : 'auto'),
+  write: value => {
+    const zone = typeof value === 'string' ? value.trim() : '';
+    if (zone === 'auto') return zone;
+    try {
+      new Intl.DateTimeFormat('en-US', { timeZone: zone });
+      return zone;
+    } catch {
+      throw new HttpError(400, 'Unknown time zone');
+    }
+  },
+};
+const jakimZone: Field<string> = {
+  default: 'SGR01',
+  read: raw => (typeof raw === 'string' && /^[A-Z]{3}\d{2}$/.test(raw) ? raw : 'SGR01'),
+  write: value => {
+    const zone = String(value ?? '').trim().toUpperCase();
+    assert(/^[A-Z]{3}\d{2}$/.test(zone), 400, 'JAKIM zones look like SGR01 or WLY01');
+    return zone;
+  },
+};
+
+/** Aladhan method ids that exist (6 was never assigned; 99 is custom angles, which the app does not collect). */
+const PRAYER_METHODS = [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23] as const;
+
+const FIELDS = {
+  profileName: text(),
+  profilePicture: text('', LARGE),
+  appTitle: text('Dashboard'),
+  brandName: brand,
+  timezone,
+  appLogo: text('', LARGE),
+  iconBackgroundColor: text('#A7C080'),
+  clipboardText: text('', 100_000),
+  showSeconds: flag(true),
+
+  backgroundType: text('default'),
+  backgroundColor: text('#A7C080'),
+  backgroundGradient: text('forest-dew'),
+  backgroundImage: text('', LARGE),
+  backgroundOpacity: integer(30, 0, 100),
+
+  prayerProvider: choice('jakim', ['jakim', 'aladhan'] as const),
+  jakimZone,
+  prayerPlace: choice('city', ['city', 'coords'] as const),
+  aladhanCity: text('Kuala Lumpur', 100),
+  aladhanCountry: text('Malaysia', 100),
+  prayerLatitude: coordinate(90),
+  prayerLongitude: coordinate(180),
+  prayerPlaceName: text('', 100),
+  prayerMethod: numericChoice(3, PRAYER_METHODS),
+  prayerSchool: numericChoice(0, [0, 1]),
+
+  hijriVisible: flag(true),
+  hijriMethod: choice('jakim', ['jakim', 'UAQ', 'HJCoSA', 'DIYANET', 'MATHEMATICAL'] as const),
+  hijriRollover: choice('midnight', ['midnight', 'maghrib'] as const),
+  hijriOffset: integer(0, -3, 3),
+};
+
+type Fields = typeof FIELDS;
+export type Settings = { -readonly [K in keyof Fields]: Fields[K]['default'] };
+const KEYS = Object.keys(FIELDS) as (keyof Settings)[];
+const field = (key: string) => (FIELDS as Record<string, Field<unknown>>)[key];
 
 export class SettingService extends BaseService {
   async get(): Promise<Settings> {
     let row = await this.db.first<Row>('SELECT * FROM UserSettings WHERE userId = ?', this.user.id);
     if (!row) {
-      const seed = { ...DEFAULTS, profileName: this.user.username };
-      const keys = Object.keys(seed) as (keyof Settings)[];
+      const seed = { ...this.defaults(), profileName: this.user.username };
       await this.db.run(
-        `INSERT INTO UserSettings (id, userId, ${keys.map(k => `"${k}"`).join(', ')}) VALUES (?, ?, ${keys.map(() => '?').join(', ')})`,
-        uuid(), this.user.id, ...keys.map(k => (typeof seed[k] === 'boolean' ? (seed[k] ? 1 : 0) : seed[k])),
+        `INSERT INTO UserSettings (id, userId, ${KEYS.map(k => `"${k}"`).join(', ')}) VALUES (?, ?, ${KEYS.map(() => '?').join(', ')})`,
+        uuid(), this.user.id, ...KEYS.map(k => toSql(seed[k])),
       );
       row = await this.db.first<Row>('SELECT * FROM UserSettings WHERE userId = ?', this.user.id);
     }
-    const out = { ...DEFAULTS };
-    for (const k of TEXT_FIELDS) out[k] = (row?.[k] as string | null) ?? DEFAULTS[k];
-    for (const k of BOOL_FIELDS) out[k] = bool(row?.[k]);
-    out.hijriOffset = Number(row?.hijriOffset ?? 0);
-    out.backgroundOpacity = Number(row?.backgroundOpacity ?? 30);
-    return out;
+    return Object.fromEntries(KEYS.map(k => [k, field(k).read(row?.[k])])) as Settings;
   }
 
   async update(args: Record<string, unknown>) {
     await this.get();
     const patch: Record<string, unknown> = {};
-    for (const k of TEXT_FIELDS) if (args[k] !== undefined) patch[k] = str(args[k], k === 'clipboardText' ? 100000 : k.endsWith('Image') || k.endsWith('Picture') || k.endsWith('Logo') ? 400000 : 200) ?? '';
-    if (args.brandName !== undefined) patch.brandName = str(args.brandName, MAX_BRAND_LENGTH)?.trim() || DEFAULT_BRAND;
-    if (args.timezone !== undefined) patch.timezone = validTimeZone(args.timezone);
-    for (const k of BOOL_FIELDS) if (args[k] !== undefined) patch[k] = !!args[k];
-    if (args.hijriOffset !== undefined) patch.hijriOffset = Math.max(-3, Math.min(3, Math.round(Number(args.hijriOffset) || 0)));
-    if (args.backgroundOpacity !== undefined) patch.backgroundOpacity = Math.max(0, Math.min(100, Math.round(Number(args.backgroundOpacity) || 0)));
+    for (const key of KEYS) if (args[key] !== undefined) patch[key] = field(key).write(args[key]);
     const row = await this.db.first<{ id: string }>('SELECT id FROM UserSettings WHERE userId = ?', this.user.id);
     if (row) await this.db.update('UserSettings', row.id, patch);
     return this.get();
+  }
+
+  private defaults() {
+    return Object.fromEntries(KEYS.map(k => [k, FIELDS[k].default])) as Settings;
   }
 }
