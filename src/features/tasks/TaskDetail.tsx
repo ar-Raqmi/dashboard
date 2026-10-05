@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useStore, type Priority, type TaskStatus, type TaskView } from '@/store';
+import { DateField } from '@/components/DateField';
 import { shortDate } from '@/lib/date';
 import { initialsOf } from '@/lib/text';
 import { Icon } from '@/components/Icon';
@@ -24,7 +25,7 @@ export function TaskDetail({ task, onClose, onDelete, onNotice }: { task: TaskVi
     <div className="detail-fields">
       <label><span>Status</span><select value={task.status} disabled={task.isRecurring} onChange={e => update({ status: e.target.value as TaskStatus })}><option value="pending">To do</option><option value="in_progress">In progress</option><option value="completed">Completed</option></select></label>
       <label><span>Priority</span><select value={task.priority} onChange={e => update({ priority: e.target.value as Priority })}><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></label>
-      <label><span>{task.isRecurring ? 'Next date' : 'Due date'}</span><input aria-label="Task due date" type="date" value={task.dueDate || ''} disabled={task.isRecurring} onChange={e => update({ dueDate: e.target.value || null })}/></label>
+      <label><span>{task.isRecurring ? 'Next date' : 'Due date'}</span><DateField label="Task due date" value={task.dueDate || ''} disabled={task.isRecurring} onChange={value => update({ dueDate: value || null })}/></label>
     </div>
     {task.rrule && <div className="detail-fields"><label><span>Repeat</span><span className="flex items-center justify-between gap-2"><span>{repeatLabel(task.rrule)}</span><button className="text-button" onClick={() => void mutate('tasks:update', { id: task.id, clearRecurrence: true }, ['tasks']).then(() => onNotice('Task no longer repeats')).catch(fail)}>Stop repeating</button></span></label></div>}
     <label className="description-label">Description<textarea key={task.id} defaultValue={task.description} onBlur={e => { if (e.target.value !== task.description) update({ description: e.target.value }); }} placeholder="Add a little context..." rows={4}/></label>

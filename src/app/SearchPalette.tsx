@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Icon, type IconName } from '@/components/Icon';
 import { Modal } from '@/components/Modal';
-import { parseDateKey, todayKey } from '@/lib/date';
+import { shortDay, todayKey } from '@/lib/date';
 import { useStore, type EventView, type NoteView } from '@/store';
 import { pageLabel, personalNav, settingsNav, workspaceNav, type Page } from './pages';
 
@@ -30,7 +30,7 @@ export function SearchPalette({ onClose, onNavigate, onSelectTask, onOpenNote, o
     ...goals.map(g => ({ id: `goal:${g.id}`, title: g.title, kind: `Project / ${g.progress}%`, icon: 'flag' as const, action: () => onNavigate('Goals') })),
     ...events.filter(e => e.date >= today).slice(0, MAX_EVENTS).map(e => ({
       id: `event:${e.id}:${e.date}`, title: e.title, icon: 'calendar' as const, action: () => onOpenEvent(e),
-      kind: `Event / ${parseDateKey(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+      kind: `Event / ${shortDay(e.date)}`,
     })),
     ...[...workspaceNav, ...personalNav, settingsNav].map(n => ({ id: n.name, title: pageLabel(n.name), kind: 'Navigate', icon: n.icon, action: () => onNavigate(n.name) })),
   ];

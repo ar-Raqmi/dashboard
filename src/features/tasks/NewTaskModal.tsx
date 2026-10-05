@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useStore, type Priority } from '@/store';
 import { todayKey } from '@/lib/date';
+import { DateField } from '@/components/DateField';
 import { Icon } from '@/components/Icon';
 import { Modal } from '@/components/Modal';
 
@@ -42,7 +43,7 @@ export function NewTaskModal({ onClose, onCreated }: { onClose: () => void; onCr
     <label className="form-label">Task name<input autoFocus required maxLength={300} placeholder="What needs to get done?" value={title} onChange={e => setTitle(e.target.value)}/></label>
     <label className="form-label">Description <span>(optional)</span><textarea placeholder="Add context, links, or a next step..." rows={3} value={description} onChange={e => setDescription(e.target.value)}/></label>
     <div className="form-grid"><label className="form-label">Priority<select value={priority} onChange={e => setPriority(e.target.value as Priority)}><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></label></div>
-    <div className="form-grid"><label className="form-label">{rrule ? 'Starts on' : 'Due date'}<input type="date" required={!!rrule} value={due} onChange={e => setDue(e.target.value)}/></label><label className="form-label">Repeat<select value={rrule} onChange={e => setRrule(e.target.value)}>{REPEAT_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div>
+    <div className="form-grid"><label className="form-label">{rrule ? 'Starts on' : 'Due date'}<DateField required={!!rrule} value={due} onChange={setDue}/></label><label className="form-label">Repeat<select value={rrule} onChange={e => setRrule(e.target.value)}>{REPEAT_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div>
     {error && <p className="form-error" role="alert">{error}</p>}
   </div><div className="modal-footer"><span>Saved to your workspace</span><div><button type="button" className="button" onClick={onClose}>Cancel</button><button className="button primary" type="submit" disabled={busy}><Icon name="plus" size={15}/>{busy ? 'Creating...' : 'Create task'}</button></div></div></form></Modal>;
 }

@@ -33,7 +33,8 @@ It is a **Vite + React 19 single-page app**. Its API runs as Cloudflare Pages Fu
 - **Spiritual**: daily ayah in Arabic with an English translation, a hadith, prayer times and the Hijri date. Prayer times come from JAKIM e-Solat (any zone) or Aladhan (city or GPS, with a calculation method and Asr school). The Hijri date is a separate choice: JAKIM's moon sighting, Umm al-Qura, the Saudi council, Diyanet or an astronomical calculation, switching at midnight or Maghrib
 - **Authenticator**: a TOTP code generator for your other accounts (see [Authenticator (2FA codes)](#-authenticator-2fa-codes))
 - **World clocks**, and a **time zone** setting that follows the device (so travelling needs no action) or pins any IANA zone
-- **Installable PWA** with an offline fallback, and an editable brand name
+- **Installable PWA** with an offline fallback, an editable brand name and a choice of app icon (the Raqmi mark, the feather pen and other built-ins, or your own image by upload or link)
+- **Date format** you can set to dd/mm/yyyy, mm/dd/yyyy, ISO or any pattern you write, applied to task dates, the calendar and date fields
 - **Search palette** across tasks, notes, goals, events and pages
 - **Keyboard shortcuts** (listed [below](#%EF%B8%8F-keyboard-shortcuts))
 - **Cross-device clipboard**: scratch text saved to your account, so it shows up on your other devices

@@ -1,3 +1,4 @@
+import { longDay, todayKey } from '@/lib/date';
 import { timeZone } from '@/lib/timezone';
 import { useNow } from '@/lib/useNow';
 import { useStore } from '@/store';
@@ -11,7 +12,7 @@ export function SpiritualPage({ onManageClocks }: { onManageClocks: () => void }
   const now = useNow(30_000);
   const hijri = hijriLabel(prayer, settings, now);
   return <div className="spiritual-view">
-    <div className="spiritual-date"><Icon name="moon" size={21}/><span>{hijri || timeZone.format(now, { weekday: 'long' })}<small>{timeZone.format(now, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</small></span></div>
+    <div className="spiritual-date"><Icon name="moon" size={21}/><span>{hijri || timeZone.format(now, { weekday: 'long' })}<small>{longDay(todayKey(), true)}</small></span></div>
     <PrayerTimes expanded/>
     <Verse full/>
     {hadith && <section className="daily-verse full-verse"><div className="verse-label"><Icon name="book" size={15}/><span>Hadith of the day</span></div><blockquote>{hadith.translation}</blockquote><a href={hadith.url} target="_blank" rel="noreferrer">{hadith.source}<Icon name="upRight" size={12}/></a></section>}

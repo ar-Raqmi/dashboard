@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AvatarContent } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
 import { useAuth } from '@/features/auth/auth';
-import { formatTime, parseDateKey, todayKey } from '@/lib/date';
+import { formatTime, longDay, todayKey } from '@/lib/date';
 import { initialsOf } from '@/lib/text';
 import { useStore, type EventView, type Theme } from '@/store';
 import type { Page } from './pages';
@@ -75,7 +75,7 @@ export function Topbar(props: TopbarProps) {
       {notificationsOpen && <div className="popover notifications-popover">
         <div className="popover-title"><h3>Notifications</h3><button className="text-button" onClick={() => void useStore.getState().updatePreferences({ notificationsReadAt: new Date().toISOString() }).catch(onError)}>{notificationsRead ? 'All read' : 'Mark all read'}</button></div>
         <button className="notification-item" onClick={pick(() => onNavigate('Tasks'))}><span className={`notification-icon ${overdue ? 'danger' : ''}`}><Icon name="clock" size={17}/></span><span><strong>{overdue ? `${overdue} task${overdue === 1 ? ' needs' : 's need'} your attention` : 'You are all caught up'}</strong><small>{overdue ? 'These tasks are past their due date.' : 'No overdue tasks in your workspace.'}</small><time>Tasks</time></span></button>
-        {nextEvent && <button className="notification-item" onClick={pick(() => onOpenEvent(nextEvent))}><span className="notification-icon"><Icon name="calendar" size={17}/></span><span><strong>{nextEvent.date === today ? `${nextEvent.title} is today` : `${nextEvent.title} is coming up`}</strong><small>{parseDateKey(nextEvent.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}{nextEvent.startTime ? ` at ${formatTime(nextEvent.startTime)}` : ''}</small><time>Calendar</time></span></button>}
+        {nextEvent && <button className="notification-item" onClick={pick(() => onOpenEvent(nextEvent))}><span className="notification-icon"><Icon name="calendar" size={17}/></span><span><strong>{nextEvent.date === today ? `${nextEvent.title} is today` : `${nextEvent.title} is coming up`}</strong><small>{longDay(nextEvent.date)}{nextEvent.startTime ? ` at ${formatTime(nextEvent.startTime)}` : ''}</small><time>Calendar</time></span></button>}
         <div className="popover-bottom">{todaysEvents.length ? `${todaysEvents.length} event${todaysEvents.length === 1 ? '' : 's'} today` : 'No events today'}</div>
       </div>}
       {profileOpen && <div className="popover profile-popover">

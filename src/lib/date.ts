@@ -1,3 +1,4 @@
+import { dateFormat } from '@/lib/dateFormat';
 import { timeZone } from '@/lib/timezone';
 
 /** Date helpers. All app dates are `YYYY-MM-DD` strings; "today" is read in the active time zone. */
@@ -19,8 +20,20 @@ export function dueLabel(due: string | null, today = todayKey()) {
   if (due === today) return 'Today';
   if (due === addDays(today, 1)) return 'Tomorrow';
   if (due === addDays(today, -1)) return 'Yesterday';
-  const d = parseDateKey(due);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(d.getFullYear() !== new Date().getFullYear() ? { year: 'numeric' } : {}) });
+  return dateFormat.isAuto ? autoShort(parseDateKey(due), new Date()) : dateFormat.format(due);
+}
+
+const autoShort = (d: Date, now: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(d.getFullYear() !== now.getFullYear() ? { year: 'numeric' } : {}) });
+
+/** A date in the user's style: "Oct 6" by default. */
+export const shortDay = (key: string) => (dateFormat.isAuto ? autoShort(parseDateKey(key), new Date()) : dateFormat.format(key));
+
+/** A date with its weekday: "Tuesday, October 6" by default, "Tuesday, 06/10/2026" with a chosen style. */
+export function longDay(key: string, withYear = false) {
+  const d = parseDateKey(key);
+  if (dateFormat.isAuto) return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', ...(withYear ? { year: 'numeric' } : {}) });
+  // A pattern that already spells the weekday (eee) must not get a second one in front.
+  return /e/i.test(dateFormat.setting) ? dateFormat.format(key) : `${d.toLocaleDateString('en-US', { weekday: 'long' })}, ${dateFormat.format(key)}`;
 }
 
 /** "Oct 4" for recent dates, used for note timestamps. */
@@ -28,7 +41,7 @@ export function shortDate(iso: string | null) {
   if (!iso) return '';
   const d = new Date(iso), now = new Date();
   if (toDateKey(d) === toDateKey(now)) return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(d.getFullYear() !== now.getFullYear() ? { year: 'numeric' } : {}) });
+  return dateFormat.isAuto ? autoShort(d, now) : dateFormat.format(toDateKey(d));
 }
 
 /** "14:30" -> "2:30 PM". */

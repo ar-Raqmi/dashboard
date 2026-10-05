@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useStore, type EventView } from '@/store';
-import { downloadFile, formatTime, minutesBetween, parseDateKey, todayKey } from '@/lib/date';
+import { downloadFile, formatTime, longDay, minutesBetween, parseDateKey, todayKey } from '@/lib/date';
+import { DateField } from '@/components/DateField';
 import { Icon } from '@/components/Icon';
 import { Modal } from '@/components/Modal';
 import { REPEAT_OPTIONS, repeatLabel } from '@/features/tasks/NewTaskModal';
@@ -25,7 +26,7 @@ export function CalendarView({ onEvent, initialDate }: { onEvent: (event: EventV
       const day = i - first + 1, date = dateOf(day), found = events.filter(e => e.date === date);
       return day > 0 && day <= days ? <button key={i} className={`calendar-day ${day === selectedDay ? 'selected' : ''} ${date === today ? 'today' : ''}`} onClick={() => setSelectedDay(day)} onDoubleClick={() => { setSelectedDay(day); setCreating(true); }} aria-label={`${label} ${day}${found.length ? `, ${found.length} event${found.length === 1 ? '' : 's'}` : ''}`}><span>{day}</span>{found.map(e => <small key={`${e.id}:${e.date}`}><i style={e.color ? { background: e.color } : undefined}/>{e.title}</small>)}</button> : <div key={i} className="calendar-day blank"/>;
     })}</div>
-    <div className="day-agenda"><h3>{parseDateKey(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</h3>{dayEvents.length ? dayEvents.map(e => <button className="agenda-event" key={`${e.id}:${e.date}`} onClick={() => onEvent(e)}><time>{formatTime(e.startTime)}</time><span><strong>{e.title}</strong><small>{e.isRecurring ? repeatLabel(e.rrule) : e.endTime ? `Until ${formatTime(e.endTime)}` : e.allDay ? 'All day' : ''}</small></span><Icon name="right" size={16}/></button>) : <p>No events scheduled. A little room to breathe.</p>}</div>
+    <div className="day-agenda"><h3>{longDay(selectedDate)}</h3>{dayEvents.length ? dayEvents.map(e => <button className="agenda-event" key={`${e.id}:${e.date}`} onClick={() => onEvent(e)}><time>{formatTime(e.startTime)}</time><span><strong>{e.title}</strong><small>{e.isRecurring ? repeatLabel(e.rrule) : e.endTime ? `Until ${formatTime(e.endTime)}` : e.allDay ? 'All day' : ''}</small></span><Icon name="right" size={16}/></button>) : <p>No events scheduled. A little room to breathe.</p>}</div>
     <p className="view-footnote">Double-click a day to add an event. Repeating events are shown up to a year ahead.</p>
     {creating && <EventModal event={null} defaultDate={selectedDate} onClose={() => setCreating(false)}/>}
   </section>;
@@ -58,7 +59,7 @@ export function EventModal({ event, defaultDate, onClose, onSaved }: { event: Ev
 
   return <Modal title={event ? 'Edit event' : 'New event'} onClose={onClose}><form onSubmit={submit}><div className="form-body">
     <label className="form-label">Title<input autoFocus required maxLength={300} placeholder="What's happening?" value={title} onChange={e => setTitle(e.target.value)}/></label>
-    <div className="form-grid"><label className="form-label">{rrule ? 'Starts on' : 'Date'}<input type="date" required value={date} onChange={e => setDate(e.target.value)}/></label><label className="form-label">Repeat<select value={rrule} onChange={e => setRrule(e.target.value)}>{presets.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div>
+    <div className="form-grid"><label className="form-label">{rrule ? 'Starts on' : 'Date'}<DateField required value={date} onChange={setDate}/></label><label className="form-label">Repeat<select value={rrule} onChange={e => setRrule(e.target.value)}>{presets.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div>
     <div className="setting-row"><span><strong>All day</strong><small>No specific start or end time.</small></span><button type="button" className={`toggle-switch ${allDay ? 'on' : ''}`} role="switch" aria-checked={allDay} aria-label="All day" onClick={() => setAllDay(!allDay)}><span/></button></div>
     {!allDay && <div className="form-grid"><label className="form-label">Starts<input type="time" required value={startTime} onChange={e => setStartTime(e.target.value)}/></label><label className="form-label">Ends<input type="time" value={endTime} onChange={e => setEndTime(e.target.value)}/></label></div>}
     <div className="form-label">Colour<span className="mt-2 flex gap-2" role="radiogroup" aria-label="Event colour">{EVENT_COLORS.map(c => <button type="button" key={c} role="radio" aria-checked={color === c} aria-label={`Colour ${c}`} onClick={() => setColor(c)} style={{ width: 18, height: 18, borderRadius: 99, background: c, outline: color === c ? '2px solid var(--fg)' : 'none', outlineOffset: 2 }}/>)}</span></div>
@@ -91,7 +92,7 @@ export function EventDetailModal({ event, onClose, notify }: { event: EventView;
   return <Modal title="Event details" onClose={onClose}><div className="event-modal-body">
     <span className="sample-detail" style={event.color ? { color: event.color } : undefined}>{event.isRecurring ? repeatLabel(event.rrule).toUpperCase() : 'CALENDAR EVENT'}</span>
     <h3>{event.title}</h3>
-    <div className="event-meta"><span><Icon name="calendar" size={16}/>{parseDateKey(event.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span><span><Icon name="clock" size={16}/>{event.allDay || !event.startTime ? 'All day' : `${formatTime(event.startTime)}${event.endTime ? ` – ${formatTime(event.endTime)}` : ''}${duration ? ` · ${duration} minutes` : ''}`}</span></div>
+    <div className="event-meta"><span><Icon name="calendar" size={16}/>{longDay(event.date, true)}</span><span><Icon name="clock" size={16}/>{event.allDay || !event.startTime ? 'All day' : `${formatTime(event.startTime)}${event.endTime ? ` – ${formatTime(event.endTime)}` : ''}${duration ? ` · ${duration} minutes` : ''}`}</span></div>
     {confirming && <div className="settings-data-actions">{event.isRecurring && <button className="button" onClick={() => remove('one')}>Only this occurrence</button>}<button className="button danger-action" onClick={() => remove('all')}>{event.isRecurring ? 'Every occurrence' : 'Delete event'}</button><button className="button" onClick={() => setConfirming(false)}>Cancel</button></div>}
   </div><div className="modal-footer"><span className="flex gap-2"><button className="icon-button" title="Edit event" aria-label="Edit event" onClick={() => setEditing(true)}><Icon name="pen" size={15}/></button><button className="icon-button danger-button" title="Delete event" aria-label="Delete event" onClick={() => setConfirming(true)}><Icon name="trash" size={15}/></button></span><button className="button primary" onClick={() => { downloadIcs(event); notify('Calendar file downloaded'); }}><Icon name="download" size={14}/>Add to calendar</button></div></Modal>;
 }
