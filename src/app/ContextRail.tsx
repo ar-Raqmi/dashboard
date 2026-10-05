@@ -1,5 +1,6 @@
 import { Icon } from '@/components/Icon';
 import { timeZone } from '@/lib/timezone';
+import { useNow } from '@/lib/useNow';
 import { EventList } from '@/features/calendar/EventList';
 import { useWidgetVisible } from '@/features/overview/OverviewPage';
 import { hijriLabel, PrayerTimes } from '@/features/spiritual/PrayerTimes';
@@ -22,14 +23,14 @@ export function ContextRail({ page, activeTask, onCloseTask, onDeleteTask, onOpe
   const widgetVisible = useWidgetVisible();
   const prayer = useStore(s => s.prayer);
   const settings = useStore(s => s.settings);
-  const hijri = hijriLabel(prayer, settings);
-  const now = new Date();
+  const now = useNow(30_000);
+  const hijri = hijriLabel(prayer, settings, now);
 
   return <aside className={`context-rail ${activeTask ? 'detail-rail' : ''}`} aria-label={activeTask ? 'Task details' : 'Daily context'} tabIndex={activeTask ? 0 : undefined}>
     {activeTask
       ? <TaskDetail task={activeTask} onClose={onCloseTask} onDelete={onDeleteTask} onNotice={notify}/>
       : <>
-        <div className="rail-date"><span><Icon name="sun" size={15}/>A {timeZone.format(now, { weekday: 'long' })} in {timeZone.format(now, { month: 'long' })}</span>{hijri && <small>{hijri}</small>}</div>
+        <div className="rail-date"><span><Icon name="sun" size={15}/>A {timeZone.format(now, { weekday: 'long' })} in {timeZone.format(now, { month: 'long' })}</span>{hijri && <small title={`Calendar: ${prayer?.hijri?.source}`}>{hijri}</small>}</div>
         {page !== 'Spiritual' && widgetVisible('prayerTimes') && <PrayerTimes/>}
         {widgetVisible('calendar') && <EventList onEvent={onOpenEvent} onCalendar={onOpenCalendar}/>}
         {page !== 'Spiritual' && page !== 'Overview' && widgetVisible('verse') && <Verse/>}

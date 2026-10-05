@@ -33,10 +33,14 @@ export interface TwoFactorSecret {
 }
 export interface UserSettings {
   id: string; userId: string; profileName: string; profilePicture: string | null; appTitle: string; brandName: string; timezone: string; appLogo: string | null;
-  iconBackgroundColor: string; hijriVisible: boolean; hijriOffset: number; hijriProvider: string; hijriCalendar: string; showSeconds: boolean;
+  iconBackgroundColor: string; showSeconds: boolean;
   clipboardText: string; backgroundType: string; backgroundColor: string; backgroundGradient: string; backgroundImage: string;
-  backgroundOpacity: number; aladhanCity: string; aladhanCountry: string;
+  backgroundOpacity: number;
+  prayerProvider: 'jakim' | 'aladhan'; jakimZone: string; prayerPlace: 'city' | 'coords'; aladhanCity: string; aladhanCountry: string;
+  prayerLatitude: number | null; prayerLongitude: number | null; prayerPlaceName: string; prayerMethod: number; prayerSchool: 0 | 1;
+  hijriVisible: boolean; hijriMethod: HijriMethod; hijriRollover: 'midnight' | 'maghrib'; hijriOffset: number;
 }
+export type HijriMethod = 'jakim' | 'UAQ' | 'HJCoSA' | 'DIYANET' | 'MATHEMATICAL';
 
 /* ------------------------------------------------------------- *
  * API views — what the endpoints return (user-scoped, derived). *
@@ -63,10 +67,14 @@ export interface FileView {
 }
 export interface TwoFactorAccount { id: string; accountName: string; category: string; icon: string | null; token: string | null; nextToken: string | null; undecryptable?: boolean }
 export interface TwoFactorList { locked: boolean; period: number; generatedAt: number; accounts: TwoFactorAccount[] }
+export interface HijriDate { day: number; month: string; year: number }
 export interface PrayerDay {
-  source: string; location: string; timezone: string;
-  times: { fajr: string; syuruk?: string; dhuhr: string; asr: string; maghrib: string; isha: string };
-  hijri: { day: number; month: string; year: number } | null;
+  /** The calendar date at the prayer location, which may differ from the device's date while travelling. */
+  date: string; source: string; location: string; timezone: string;
+  times: { fajr: string; syuruk: string; dhuhr: string; asr: string; maghrib: string; isha: string };
+  /** Today's Hijri date and tomorrow's (for switching at Maghrib); null when its source could not be reached. */
+  hijri: { today: HijriDate; tomorrow: HijriDate; source: string } | null;
+  hijriError?: string;
 }
 export interface DailyVerse { arabic: string; translation: string; reference: string; url: string }
 export interface DailyHadith { translation: string; arabic: string | null; source: string; url: string }

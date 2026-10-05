@@ -21,6 +21,8 @@ interface WorkspaceState extends WorkspaceData {
   lastSyncedAt: number | null;
   /** Shared cache for the daily content widgets (one fetch per day). */
   prayer: PrayerDay | null | undefined;
+  /** Why the prayer times could not be loaded; null while they are fine. */
+  prayerError: string | null;
   verse: DailyVerse | null | undefined;
   hadith: DailyHadith | null | undefined;
 
@@ -74,6 +76,7 @@ export const useStore = create<WorkspaceState>()((set, get) => {
     saving: 0,
     lastSyncedAt: null,
     prayer: undefined,
+    prayerError: null,
     verse: undefined,
     hadith: undefined,
 
@@ -103,16 +106,17 @@ export const useStore = create<WorkspaceState>()((set, get) => {
 
     async loadDaily() {
       const today = todayKey();
+      let prayerError: string | null = null;
       const [prayer, verse, hadith] = await Promise.all([
-        ApiClient.query<PrayerDay | null>('content:prayer', { date: today }).catch(() => null),
+        ApiClient.query<PrayerDay>('prayer:today', { date: today }).catch((err: Error) => { prayerError = err.message; return null; }),
         ApiClient.query<DailyVerse>('content:verse', { date: today }).catch(() => null),
         ApiClient.query<DailyHadith | null>('content:hadith', { date: today }).catch(() => null),
       ]);
-      set({ prayer, verse, hadith });
+      set({ prayer, prayerError, verse, hadith });
     },
 
     reset() {
-      set({ ...empty, status: 'idle', error: null, saving: 0, lastSyncedAt: null, prayer: undefined, verse: undefined, hadith: undefined });
+      set({ ...empty, status: 'idle', error: null, saving: 0, lastSyncedAt: null, prayer: undefined, prayerError: null, verse: undefined, hadith: undefined });
     },
 
     async toggleTask(task) {

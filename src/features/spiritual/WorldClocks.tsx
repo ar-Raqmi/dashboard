@@ -1,12 +1,11 @@
-import { useEffect, useState } from 'react';
 import { timeZone } from '@/lib/timezone';
+import { useNow } from '@/lib/useNow';
 import { useStore } from '@/store';
 
 export function WorldClocks({ onManage }: { onManage?: () => void }) {
   const clocks = useStore(s => s.clocks);
   const showSeconds = useStore(s => s.settings?.showSeconds ?? true);
-  const [now, setNow] = useState(new Date());
-  useEffect(() => { const timer = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(timer); }, []);
+  const now = useNow(1000);
   useStore(s => s.settings?.timezone); // re-render when the active time zone changes
   const local = timeZone.active;
   const rows: [string, string][] = [['Local time', local], ...clocks.map(c => [c.label, c.timezone] as [string, string])];

@@ -1,0 +1,112 @@
+/** Choices offered in the prayer and Hijri settings. */
+
+export interface JakimZone { code: string; state: string; districts: string }
+
+/** Zone codes checked against the live e-Solat API. */
+export const JAKIM_ZONES: JakimZone[] = [
+  { code: 'JHR01', state: 'Johor', districts: 'Pulau Aur dan Pulau Pemanggil' },
+  { code: 'JHR02', state: 'Johor', districts: 'Johor Bahru, Kota Tinggi, Mersing, Kulai' },
+  { code: 'JHR03', state: 'Johor', districts: 'Kluang, Pontian' },
+  { code: 'JHR04', state: 'Johor', districts: 'Batu Pahat, Muar, Segamat, Gemas Johor, Tangkak' },
+  { code: 'KDH01', state: 'Kedah', districts: 'Kota Setar, Kubang Pasu, Pokok Sena (Daerah Kecil)' },
+  { code: 'KDH02', state: 'Kedah', districts: 'Kuala Muda, Yan, Pendang' },
+  { code: 'KDH03', state: 'Kedah', districts: 'Padang Terap, Sik' },
+  { code: 'KDH04', state: 'Kedah', districts: 'Baling' },
+  { code: 'KDH05', state: 'Kedah', districts: 'Bandar Baharu, Kulim' },
+  { code: 'KDH06', state: 'Kedah', districts: 'Langkawi' },
+  { code: 'KDH07', state: 'Kedah', districts: 'Puncak Gunung Jerai' },
+  { code: 'KTN01', state: 'Kelantan', districts: 'Bachok, Kota Bharu, Machang, Pasir Mas, Pasir Puteh, Tanah Merah, Tumpat, Kuala Krai, Mukim Chiku' },
+  { code: 'KTN02', state: 'Kelantan', districts: 'Gua Musang (Daerah Galas Dan Bertam), Jeli, Jajahan Kecil Lojing' },
+  { code: 'MLK01', state: 'Melaka', districts: 'SELURUH NEGERI MELAKA' },
+  { code: 'NGS01', state: 'Negeri Sembilan', districts: 'Tampin, Jempol' },
+  { code: 'NGS02', state: 'Negeri Sembilan', districts: 'Jelebu, Kuala Pilah, Rembau' },
+  { code: 'NGS03', state: 'Negeri Sembilan', districts: 'Port Dickson, Seremban' },
+  { code: 'PHG01', state: 'Pahang', districts: 'Pulau Tioman' },
+  { code: 'PHG02', state: 'Pahang', districts: 'Kuantan, Pekan, Muadzam Shah' },
+  { code: 'PHG03', state: 'Pahang', districts: 'Jerantut, Temerloh, Maran, Bera, Chenor, Jengka' },
+  { code: 'PHG04', state: 'Pahang', districts: 'Bentong, Lipis, Raub' },
+  { code: 'PHG05', state: 'Pahang', districts: 'Genting Sempah, Janda Baik, Bukit Tinggi' },
+  { code: 'PHG06', state: 'Pahang', districts: 'Cameron Highlands, Genting Higlands, Bukit Fraser' },
+  { code: 'PHG07', state: 'Pahang', districts: 'Zon Khas Daerah Rompin, (Mukim Rompin, Mukim Endau, Mukim Pontian)' },
+  { code: 'PRK01', state: 'Perak', districts: 'Tapah, Slim River, Tanjung Malim' },
+  { code: 'PRK02', state: 'Perak', districts: 'Kuala Kangsar, Sg. Siput , Ipoh, Batu Gajah, Kampar' },
+  { code: 'PRK03', state: 'Perak', districts: 'Lenggong, Pengkalan Hulu, Grik' },
+  { code: 'PRK04', state: 'Perak', districts: 'Temengor, Belum' },
+  { code: 'PRK05', state: 'Perak', districts: 'Kg Gajah, Teluk Intan, Bagan Datuk, Seri Iskandar, Beruas, Parit, Lumut, Sitiawan, Pulau Pangkor' },
+  { code: 'PRK06', state: 'Perak', districts: 'Selama, Taiping, Bagan Serai, Parit Buntar' },
+  { code: 'PRK07', state: 'Perak', districts: 'Bukit Larut' },
+  { code: 'PLS01', state: 'Perlis', districts: 'SELURUH NEGERI PERLIS' },
+  { code: 'PNG01', state: 'Pulau Pinang', districts: 'SELURUH NEGERI PULAU PINANG' },
+  { code: 'SBH01', state: 'Sabah', districts: 'Bahagian Sandakan (Timur), Bukit Garam, Semawang, Temanggong, Tambisan, Bandar Sandakan, Sukau' },
+  { code: 'SBH02', state: 'Sabah', districts: 'Beluran, Telupid, Pinangah, Terusan, Kuamut, Bahagian Sandakan (Barat)' },
+  { code: 'SBH03', state: 'Sabah', districts: 'Lahad Datu, Silabukan, Kunak, Sahabat, Semporna, Tungku, Bahagian Tawau (Timur)' },
+  { code: 'SBH04', state: 'Sabah', districts: 'Bandar Tawau, Balong, Merotai, Kalabakan, Bahagian Tawau (Barat)' },
+  { code: 'SBH05', state: 'Sabah', districts: 'Kudat, Kota Marudu, Pitas, Pulau Banggi, Bahagian Kudat' },
+  { code: 'SBH06', state: 'Sabah', districts: 'Gunung Kinabalu' },
+  { code: 'SBH07', state: 'Sabah', districts: 'Kota Kinabalu, Ranau, Kota Belud, Tuaran, Penampang, Papar, Putatan, Bahagian Pantai Barat' },
+  { code: 'SBH08', state: 'Sabah', districts: 'Pensiangan, Keningau, Tambunan, Nabawan, Bahagian Pendalaman (Atas)' },
+  { code: 'SBH09', state: 'Sabah', districts: 'Beaufort, Kuala Penyu, Sipitang, Tenom, Long Pasia, Membakut, Weston, Bahagian Pendalaman (Bawah)' },
+  { code: 'SWK01', state: 'Sarawak', districts: 'Limbang, Lawas, Sundar, Trusan' },
+  { code: 'SWK02', state: 'Sarawak', districts: 'Miri, Niah, Bekenu, Sibuti, Marudi' },
+  { code: 'SWK03', state: 'Sarawak', districts: 'Pandan, Belaga, Suai, Tatau, Sebauh, Bintulu' },
+  { code: 'SWK04', state: 'Sarawak', districts: 'Sibu, Mukah, Dalat, Song, Igan, Oya, Balingian, Kanowit, Kapit' },
+  { code: 'SWK05', state: 'Sarawak', districts: 'Sarikei, Matu, Julau, Rajang, Daro, Bintangor, Belawai' },
+  { code: 'SWK06', state: 'Sarawak', districts: 'Lubok Antu, Sri Aman, Roban, Debak, Kabong, Lingga, Engkelili, Betong, Spaoh, Pusa, Saratok' },
+  { code: 'SWK07', state: 'Sarawak', districts: 'Serian, Simunjan, Samarahan, Sebuyau, Meludam' },
+  { code: 'SWK08', state: 'Sarawak', districts: 'Kuching, Bau, Lundu, Sematan' },
+  { code: 'SWK09', state: 'Sarawak', districts: 'Zon Khas (Kampung Patarikan)' },
+  { code: 'SGR01', state: 'Selangor', districts: 'Gombak, Petaling, Sepang, Hulu Langat, Hulu Selangor, Shah Alam' },
+  { code: 'SGR02', state: 'Selangor', districts: 'Kuala Selangor, Sabak Bernam' },
+  { code: 'SGR03', state: 'Selangor', districts: 'Klang, Kuala Langat' },
+  { code: 'TRG01', state: 'Terengganu', districts: 'Kuala Terengganu, Marang, Kuala Nerus' },
+  { code: 'TRG02', state: 'Terengganu', districts: 'Besut, Setiu' },
+  { code: 'TRG03', state: 'Terengganu', districts: 'Hulu Terengganu' },
+  { code: 'TRG04', state: 'Terengganu', districts: 'Dungun, Kemaman' },
+  { code: 'WLY01', state: 'Wilayah Persekutuan', districts: 'Kuala Lumpur, Putrajaya' },
+  { code: 'WLY02', state: 'Wilayah Persekutuan', districts: 'Labuan' },
+];
+
+/** Aladhan calculation methods (https://api.aladhan.com/v1/methods); 99, custom angles, is left out. */
+export const PRAYER_METHODS: { id: number; name: string }[] = [
+  { id: 3, name: 'Muslim World League' },
+  { id: 2, name: 'Islamic Society of North America (ISNA)' },
+  { id: 5, name: 'Egyptian General Authority of Survey' },
+  { id: 4, name: 'Umm Al-Qura University, Makkah' },
+  { id: 1, name: 'University of Islamic Sciences, Karachi' },
+  { id: 7, name: 'Institute of Geophysics, University of Tehran' },
+  { id: 0, name: 'Shia Ithna-Ashari, Leva Institute, Qum' },
+  { id: 8, name: 'Gulf Region' },
+  { id: 9, name: 'Kuwait' },
+  { id: 10, name: 'Qatar' },
+  { id: 11, name: 'Majlis Ugama Islam Singapura, Singapore' },
+  { id: 12, name: 'Union Organization Islamic de France' },
+  { id: 13, name: 'Diyanet İşleri Başkanlığı, Turkey (experimental)' },
+  { id: 14, name: 'Spiritual Administration of Muslims of Russia' },
+  { id: 15, name: 'Moonsighting Committee Worldwide (Moonsighting.com)' },
+  { id: 16, name: 'Dubai (experimental)' },
+  { id: 17, name: 'Jabatan Kemajuan Islam Malaysia (JAKIM)' },
+  { id: 18, name: 'Tunisia' },
+  { id: 19, name: 'Algeria' },
+  { id: 20, name: 'Kementerian Agama Republik Indonesia' },
+  { id: 21, name: 'Morocco' },
+  { id: 22, name: 'Comunidade Islamica de Lisboa' },
+  { id: 23, name: 'Ministry of Awqaf, Islamic Affairs and Holy Places, Jordan' },
+];
+
+/** Zones grouped under their state, in file order, for a grouped select. */
+export const JAKIM_ZONES_BY_STATE: [string, JakimZone[]][] = Object.entries(
+  JAKIM_ZONES.reduce<Record<string, JakimZone[]>>((groups, zone) => ({ ...groups, [zone.state]: [...(groups[zone.state] ?? []), zone] }), {}),
+);
+
+export const PRAYER_SCHOOLS = [
+  { id: 0, name: "Standard (Shafi'i, Maliki, Hanbali)" },
+  { id: 1, name: 'Hanafi (later Asr)' },
+];
+
+export const HIJRI_METHODS = [
+  { id: 'jakim', name: 'JAKIM, Malaysia (moon sighting)' },
+  { id: 'UAQ', name: 'Umm al-Qura, Saudi Arabia' },
+  { id: 'HJCoSA', name: 'Hijri Calendar Council of Saudi Arabia' },
+  { id: 'DIYANET', name: 'Diyanet, Turkey' },
+  { id: 'MATHEMATICAL', name: 'Astronomical calculation' },
+] as const;
