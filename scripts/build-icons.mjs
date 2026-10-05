@@ -1,12 +1,15 @@
 // Regenerates the PNG icon set from public/logo.svg:  npm run icons
-// The maskable icon shrinks the glyph to 90% so launchers can crop to any shape without clipping it.
+// The maskable icon keeps the glyph inside the safe zone so launchers can crop it to any shape.
 import { readFile } from 'node:fs/promises';
 import sharp from 'sharp';
 
 const SOURCE = new URL('../public/logo.svg', import.meta.url);
 const OUT = new URL('../public/', import.meta.url);
-const GLYPH_SCALE = 'scale(1.0)';
-const MASKABLE_SCALE = 'scale(0.9)';
+// The glyph is 332x224 in a 512 canvas: 1.3 fills ~84% of the width like other Dock and home-screen icons.
+// A maskable icon is meant to stay inside the central 80% circle (scale ~1.0); 1.12 trades a little
+// of that margin for a Dock icon that is not visibly smaller when a desktop browser picks this one.
+const GLYPH_SCALE = 'scale(1.3)';
+const MASKABLE_SCALE = 'scale(1.12)';
 
 const icons = [
   { file: 'icon-192.png', size: 192 },

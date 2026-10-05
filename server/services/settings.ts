@@ -67,6 +67,42 @@ const timezone: Field<string> = {
     }
   },
 };
+/** A profile or logo image: an uploaded file of ours, or an https link. Anything else (data:, javascript:) is refused. */
+const imageSource: Field<string> = {
+  default: '',
+  read: raw => (typeof raw === 'string' ? raw : ''),
+  write: value => {
+    const src = typeof value === 'string' ? value.trim() : '';
+    if (!src || /^\/api\/files\/[\w-]+\/content(\?.*)?$/.test(src)) return src;
+    try {
+      assert(new URL(src).protocol === 'https:' && src.length <= 2000, 400, 'Use an https link');
+      return src;
+    } catch (err) {
+      throw err instanceof HttpError ? err : new HttpError(400, 'That is not a valid image link');
+    }
+  },
+};
+/** A PNG rendered by the browser, or '' to fall back to the built-in icons. */
+const pngDataUrl: Field<string> = {
+  default: '',
+  read: raw => (typeof raw === 'string' ? raw : ''),
+  write: value => {
+    const src = typeof value === 'string' ? value : '';
+    assert(!src || (/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(src) && src.length <= LARGE), 400, 'Icons must be PNG images under 400 KB');
+    return src;
+  },
+};
+/** 'auto' or a pattern built from d, m, y (and e for the weekday) with / - . , and spaces, e.g. dd/mm/yyyy. */
+const dateFormat: Field<string> = {
+  default: 'auto',
+  read: raw => (typeof raw === 'string' && raw ? raw : 'auto'),
+  write: value => {
+    const pattern = typeof value === 'string' ? value.trim() : '';
+    if (pattern === 'auto') return pattern;
+    assert(/^[dmyeDMYE/\-., ]{3,30}$/.test(pattern) && /d/i.test(pattern) && /m/i.test(pattern) && /y/i.test(pattern), 400, 'A date format needs a day, month and year, such as dd/mm/yyyy');
+    return pattern;
+  },
+};
 const jakimZone: Field<string> = {
   default: 'SGR01',
   read: raw => (typeof raw === 'string' && /^[A-Z]{3}\d{2}$/.test(raw) ? raw : 'SGR01'),
@@ -82,11 +118,15 @@ const PRAYER_METHODS = [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1
 
 const FIELDS = {
   profileName: text(),
-  profilePicture: text('', LARGE),
+  profilePicture: imageSource,
   appTitle: text('Dashboard'),
   brandName: brand,
   timezone,
-  appLogo: text('', LARGE),
+  appLogo: imageSource,
+  brandIcon: choice('raqmi', ['raqmi', 'feather', 'leaf', 'moon', 'compass', 'book', 'bolt', 'star', 'custom', 'none'] as const),
+  pwaIcon: pngDataUrl,
+  pwaIconMaskable: pngDataUrl,
+  dateFormat,
   iconBackgroundColor: text('#A7C080'),
   clipboardText: text('', 100_000),
   showSeconds: flag(true),
