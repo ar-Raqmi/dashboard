@@ -6,6 +6,7 @@ pages_build_output_dir = "dist"
 [[d1_databases]]
 binding = "DB"
 database_name = "dashboard-db"
+migrations_dir = "db/migrations"
 database_id = "<your-d1-database-id>"
 
 [[r2_buckets]]

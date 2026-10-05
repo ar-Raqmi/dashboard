@@ -1,15 +1,16 @@
--- CreateTable
-CREATE TABLE "CalendarEvent" (
+-- Baseline: the schema as it stands in the production D1 database (dashboard-db).
+-- Idempotent (IF NOT EXISTS), so applying it to the live database is a no-op.
+
+CREATE TABLE IF NOT EXISTS "CalendarEvent" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "date" TEXT NOT NULL,
-    "color" TEXT,
+    "color" TEXT, "rrule" TEXT, "dtstart" TEXT, "recurrenceUntil" TEXT, "recurrenceCount" INTEGER, "startTime" TEXT, "endTime" TEXT, "allDay" BOOLEAN,
     CONSTRAINT "CalendarEvent_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- CreateTable
-CREATE TABLE "Clock" (
+CREATE TABLE IF NOT EXISTS "Clock" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
     "label" TEXT NOT NULL,
@@ -17,8 +18,7 @@ CREATE TABLE "Clock" (
     CONSTRAINT "Clock_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- CreateTable
-CREATE TABLE "DashboardLayout" (
+CREATE TABLE IF NOT EXISTS "DashboardLayout" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
     "layoutType" TEXT NOT NULL,
@@ -26,8 +26,7 @@ CREATE TABLE "DashboardLayout" (
     CONSTRAINT "DashboardLayout_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- CreateTable
-CREATE TABLE "DashboardWidget" (
+CREATE TABLE IF NOT EXISTS "DashboardWidget" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
     "type" TEXT NOT NULL,
@@ -37,8 +36,7 @@ CREATE TABLE "DashboardWidget" (
     CONSTRAINT "DashboardWidget_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- CreateTable
-CREATE TABLE "FileItem" (
+CREATE TABLE IF NOT EXISTS "FileItem" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -52,13 +50,12 @@ CREATE TABLE "FileItem" (
     "starred" BOOLEAN DEFAULT false,
     "lastAccessed" REAL,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "updatedAt" DATETIME NOT NULL, "mimeType" TEXT, "width" INTEGER, "height" INTEGER, "duration" REAL, "thumbnailR2Key" TEXT,
     CONSTRAINT "FileItem_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "FileItem" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "FileItem_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- CreateTable
-CREATE TABLE "Goal" (
+CREATE TABLE IF NOT EXISTS "Goal" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
     "title" TEXT NOT NULL,
@@ -68,8 +65,7 @@ CREATE TABLE "Goal" (
     CONSTRAINT "Goal_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- CreateTable
-CREATE TABLE "Milestone" (
+CREATE TABLE IF NOT EXISTS "Milestone" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "goalId" TEXT NOT NULL,
     "label" TEXT NOT NULL,
@@ -78,8 +74,7 @@ CREATE TABLE "Milestone" (
     CONSTRAINT "Milestone_goalId_fkey" FOREIGN KEY ("goalId") REFERENCES "Goal" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- CreateTable
-CREATE TABLE "Note" (
+CREATE TABLE IF NOT EXISTS "Note" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
     "title" TEXT NOT NULL,
@@ -91,8 +86,20 @@ CREATE TABLE "Note" (
     CONSTRAINT "Note_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- CreateTable
-CREATE TABLE "Session" (
+CREATE TABLE IF NOT EXISTS "RecurrenceException" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "userId" TEXT NOT NULL,
+    "entityType" TEXT NOT NULL,
+    "entityId" TEXT NOT NULL,
+    "date" TEXT NOT NULL,
+    "status" TEXT,
+    "newDate" TEXT,
+    "title" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "RecurrenceException_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "Session" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
     "token" TEXT NOT NULL,
@@ -101,20 +108,18 @@ CREATE TABLE "Session" (
     CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- CreateTable
-CREATE TABLE "Task" (
+CREATE TABLE IF NOT EXISTS "Task" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "dueDate" TEXT,
     "priority" TEXT NOT NULL,
     "status" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, "rrule" TEXT, "dtstart" TEXT, "recurrenceUntil" TEXT, "recurrenceCount" INTEGER,
     CONSTRAINT "Task_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- CreateTable
-CREATE TABLE "TwoFactorSecret" (
+CREATE TABLE IF NOT EXISTS "TwoFactorSecret" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
     "accountName" TEXT NOT NULL,
@@ -126,8 +131,7 @@ CREATE TABLE "TwoFactorSecret" (
     CONSTRAINT "TwoFactorSecret_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- CreateTable
-CREATE TABLE "User" (
+CREATE TABLE IF NOT EXISTS "User" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "username" TEXT NOT NULL,
     "passwordHash" TEXT NOT NULL,
@@ -135,8 +139,7 @@ CREATE TABLE "User" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- CreateTable
-CREATE TABLE "UserSettings" (
+CREATE TABLE IF NOT EXISTS "UserSettings" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
     "profileName" TEXT NOT NULL,
@@ -152,16 +155,12 @@ CREATE TABLE "UserSettings" (
     "backgroundColor" TEXT NOT NULL,
     "backgroundGradient" TEXT NOT NULL,
     "backgroundImage" TEXT NOT NULL,
-    "backgroundOpacity" INTEGER NOT NULL,
+    "backgroundOpacity" INTEGER NOT NULL, hijriProvider TEXT DEFAULT 'calculated', hijriCalendar TEXT DEFAULT 'UmmAlQura', aladhanCity TEXT DEFAULT 'Kuala Lumpur', aladhanCountry TEXT DEFAULT 'Malaysia', "brandName" TEXT NOT NULL DEFAULT 'raqmi',
     CONSTRAINT "UserSettings_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- CreateIndex
-CREATE UNIQUE INDEX "Session_token_key" ON "Session"("token");
+CREATE UNIQUE INDEX IF NOT EXISTS "Session_token_key" ON "Session"("token");
 
--- CreateIndex
-CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
+CREATE UNIQUE INDEX IF NOT EXISTS "UserSettings_userId_key" ON "UserSettings"("userId");
 
--- CreateIndex
-CREATE UNIQUE INDEX "UserSettings_userId_key" ON "UserSettings"("userId");
-
+CREATE UNIQUE INDEX IF NOT EXISTS "User_username_key" ON "User"("username");

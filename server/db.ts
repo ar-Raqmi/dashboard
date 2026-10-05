@@ -1,12 +1,11 @@
 /**
- * Featherlight D1 access. The schema is owned by prisma/schema.prisma in the parent
- * project; this layer reads and writes the same tables with plain SQL so the SPA and
- * the legacy app can share one database.
+ * Featherlight D1 access with plain SQL. The schema lives in db/migrations (the baseline
+ * mirrors the production database); add a numbered file there for every schema change.
  */
 export interface Env {
   DB: D1Database;
   BUCKET: R2Bucket;
-  /** Same secret as the legacy app; required to decrypt stored 2FA secrets. */
+  /** Required to decrypt stored 2FA secrets. */
   JWT_SECRET?: string;
 }
 

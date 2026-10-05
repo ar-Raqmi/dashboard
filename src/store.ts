@@ -3,7 +3,7 @@ import { ApiClient } from './api';
 import { todayKey } from './utils/date';
 
 /* ------------------------------------------------------------------ *
- * Database models — one interface per model in prisma/schema.prisma. *
+ * Database models — one interface per table in db/migrations.     *
  * DateTime columns arrive as ISO strings; Booleans as booleans.      *
  * ------------------------------------------------------------------ */
 
