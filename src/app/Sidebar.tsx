@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { AvatarContent } from '@/components/Avatar';
-import { BrandMark, Icon } from '@/components/Icon';
+import { BrandMark } from '@/components/BrandMark';
+import { Icon } from '@/components/Icon';
 import { useAuth } from '@/features/auth/auth';
 import { initialsOf } from '@/lib/text';
 import { todayKey } from '@/lib/date';

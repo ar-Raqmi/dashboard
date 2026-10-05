@@ -4,6 +4,7 @@
   --fg: #5C6A72; --subtle: #657370; --muted: #8A968A;
   --red: #F85552; --orange: #F57D26; --yellow: #DFA000; --green: #8DA101; --aqua: #35A77C; --blue: #3A94C5; --purple: #DF69BA;
   --border: rgba(92,106,114,.14); --border-hover: rgba(92,106,114,.3);
+  --logo-from: #93B259; --logo-to: #4B5A00;
   color: var(--fg); background: var(--bg-dim);
 }
 :root[data-theme='light'] select, :root[data-theme='light'] input[type="date"] { color-scheme: light; }

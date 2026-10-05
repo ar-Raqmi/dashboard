@@ -1,5 +1,5 @@
 import { Workspace } from '@/app/Workspace';
-import { BrandMark } from '@/components/Icon';
+import { BrandMark } from '@/components/BrandMark';
 import { LoginScreen, useAuth } from '@/features/auth/auth';
 
 export default function App() {

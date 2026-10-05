@@ -11,9 +11,9 @@ export function useDocumentChrome(pageTitle: string) {
   useEffect(() => { document.documentElement.classList.toggle('reduce-motion', reducedMotion); }, [reducedMotion]);
   useEffect(() => { document.title = `${pageTitle} - ${appTitle && appTitle !== 'Dashboard' ? appTitle : 'Raqmi'}`; }, [pageTitle, appTitle]);
   useEffect(() => {
-    const link = document.querySelector<HTMLLinkElement>('link[rel~="icon"]');
-    if (!link) return;
-    const original = link.dataset.defaultHref ??= link.href;
-    link.href = appLogo || original;
+    document.querySelectorAll<HTMLLinkElement>('link[rel="icon"]').forEach(link => {
+      const original = link.dataset.defaultHref ??= link.href;
+      link.href = appLogo || original;
+    });
   }, [appLogo]);
 }

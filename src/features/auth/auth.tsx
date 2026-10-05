@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { ApiClient, ApiError, UNAUTHORIZED_EVENT } from '@/lib/api';
-import { BrandMark, Icon } from '@/components/Icon';
+import { BrandMark } from '@/components/BrandMark';
+import { Icon } from '@/components/Icon';
 import { useStore } from '@/store';
 
 export interface SessionUser { id: string; username: string }

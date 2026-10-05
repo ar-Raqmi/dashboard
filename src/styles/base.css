@@ -13,6 +13,7 @@
   --fg: #d3c6aa; --subtle: #9da9a0; --muted: #7a8478;
   --red: #e67e80; --orange: #e69875; --yellow: #dbbc7f; --green: #a7c080; --aqua: #83c092; --blue: #7fbbb3; --purple: #d699b6;
   --border: rgba(255,255,255,.06); --border-hover: rgba(255,255,255,.12);
+  --logo-from: #B3CF8A; --logo-to: #7E9C4D;
   --mono: 'JetBrains Mono', monospace; --arabic: 'Amiri', 'Scheherazade New', 'Noto Naskh Arabic', 'Geeza Pro', 'Traditional Arabic', 'Arabic Typesetting', serif; --sidebar-width: 224px;
 }
 * { box-sizing: border-box; }

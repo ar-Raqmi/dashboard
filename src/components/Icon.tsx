@@ -44,8 +44,3 @@ const iconPaths: Record<IconName, ReactNode> = {
 export function Icon({ name, size = 18, className = '' }: { name: IconName; size?: number; className?: string }) {
   return <svg className={`icon ${className}`} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{iconPaths[name]}</svg>;
 }
-
-/** The raqmi pen mark from the prototype's brand row. */
-export function BrandMark() {
-  return <svg width="28" height="31" viewBox="0 0 28 31" fill="none" aria-hidden="true"><path d="M5 25.5 22 5M8.5 21.3C5 10.5 11.5 3.2 25 2c-.2 13-7.5 21-16.5 19.3Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/><path d="m12.5 16.5-.8-6M16.3 12.2l5.3-.5M6.5 27H20" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>;
-}

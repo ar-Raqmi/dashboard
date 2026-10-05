@@ -2,7 +2,7 @@
 .sidebar { background: var(--bg0); border-right: 1px solid var(--border); width: var(--sidebar-width); flex: 0 0 var(--sidebar-width); height: 100%; display: flex; flex-direction: column; padding: 0 14px; transition: width .25s ease, flex-basis .25s ease, padding .25s ease; z-index: 30; }
 .brand-row { height: 78px; min-height: 78px; display: flex; align-items: center; justify-content: space-between; padding: 0 6px; }
 .brand { display: flex; gap: 9px; align-items: center; }
-.brand > svg { width: 25px; height: 30px; }
+.brand > svg { width: 38px; height: auto; flex: none; }
 .brand > span { font-size: 28px; letter-spacing: -1.2px; font-weight: 620; line-height: 1; }
 .brand-period { color: var(--subtle); }
 .collapse-button { color: var(--muted); width: 25px; height: 25px; }
