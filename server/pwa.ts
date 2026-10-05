@@ -31,7 +31,7 @@ export class PwaAssets {
     if (!data) return new Response('Not found', { status: 404 });
     const bytes = Uint8Array.from(atob(data.split(',')[1]), c => c.charCodeAt(0));
     // The URL carries a content hash (?v=), so a changed icon is a new URL.
-    return new Response(bytes, { headers: { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=86400' } });
+    return new Response(bytes, { headers: { 'Content-Type': mimeOf(data), 'Cache-Control': 'public, max-age=86400' } });
   }
 
   private document(owner: IconRow | null) {
@@ -48,11 +48,12 @@ export class PwaAssets {
   private customIcons(owner: IconRow) {
     const query = (data: string) => `?u=${owner.userId}&v=${hash(data)}`;
     const any = `/pwa-icon/any${query(owner.pwaIcon)}`;
+    const type = mimeOf(owner.pwaIcon);
     const icons = [
-      { src: any, sizes: '192x192', type: 'image/png', purpose: 'any' },
-      { src: any, sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: any, sizes: '192x192', type, purpose: 'any' },
+      { src: any, sizes: '512x512', type, purpose: 'any' },
     ];
-    if (owner.pwaIconMaskable) icons.unshift({ src: `/pwa-icon/maskable${query(owner.pwaIconMaskable)}`, sizes: '512x512', type: 'image/png', purpose: 'maskable' });
+    if (owner.pwaIconMaskable) icons.unshift({ src: `/pwa-icon/maskable${query(owner.pwaIconMaskable)}`, sizes: '512x512', type: mimeOf(owner.pwaIconMaskable), purpose: 'maskable' });
     return icons;
   }
 
@@ -69,6 +70,8 @@ export class PwaAssets {
       : db.first<IconRow>("SELECT userId, pwaIcon, pwaIconMaskable FROM UserSettings WHERE pwaIcon != '' ORDER BY rowid LIMIT 1");
   }
 }
+
+const mimeOf = (dataUrl: string) => /^data:([^;]+);/.exec(dataUrl)?.[1] ?? 'image/png';
 
 function hash(text: string) {
   let h = 5381;

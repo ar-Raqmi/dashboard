@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { type SettingsView } from '@/store';
 import { initialsOf } from '@/lib/text';
-import { Icon } from '@/components/Icon';
 import { Row } from './fields';
 import { ImageUpload } from './ImageUpload';
 
@@ -19,11 +18,7 @@ export function ProfileGroup({ settings, username, notify, onSave }: { settings:
       <ImageUpload label="Profile picture" src={settings.profilePicture} fallback={initials} notify={notify}
         onUploaded={url => onSave({ profilePicture: url }, 'Profile picture updated')} onRemove={() => onSave({ profilePicture: '' }, 'Profile picture removed')}/>
     </Row>
-    <Row title="App logo" hint="Replaces the brand mark, workspace icon, and favicon.">
-      <ImageUpload label="App logo" src={settings.appLogo} fallback={<Icon name="upload" size={16}/>} previewStyle={{ borderRadius: 8, background: iconBackgroundColor }} notify={notify}
-        onUploaded={url => onSave({ appLogo: url }, 'App logo updated')} onRemove={() => onSave({ appLogo: '' }, 'App logo removed')}/>
-    </Row>
-    <Row title="Icon background" hint="Fills the space behind the app logo.">
+    <Row title="Icon background" hint="Fills the space behind your own image.">
       <input type="color" aria-label="Icon background color" value={iconBackgroundColor} onChange={e => setIconBackgroundColor(e.target.value)} style={{ width: 44, height: 32, padding: 2, cursor: 'pointer' }}/>
     </Row>
     <div className="settings-data-actions"><button className="button primary" type="submit" disabled={!dirty}>Save profile</button></div>

@@ -82,13 +82,13 @@ const imageSource: Field<string> = {
     }
   },
 };
-/** A PNG rendered by the browser, or '' to fall back to the built-in icons. */
-const pngDataUrl: Field<string> = {
+/** An icon image rendered by the browser, or '' to fall back to the built-in icons. */
+const iconDataUrl: Field<string> = {
   default: '',
   read: raw => (typeof raw === 'string' ? raw : ''),
   write: value => {
     const src = typeof value === 'string' ? value : '';
-    assert(!src || (/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(src) && src.length <= LARGE), 400, 'Icons must be PNG images under 400 KB');
+    assert(!src || (/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(src) && src.length <= LARGE), 400, 'Icons must be PNG, JPEG or WebP images under 400 KB');
     return src;
   },
 };
@@ -124,8 +124,8 @@ const FIELDS = {
   timezone,
   appLogo: imageSource,
   brandIcon: choice('raqmi', ['raqmi', 'feather', 'leaf', 'moon', 'compass', 'book', 'bolt', 'star', 'custom', 'none'] as const),
-  pwaIcon: pngDataUrl,
-  pwaIconMaskable: pngDataUrl,
+  pwaIcon: iconDataUrl,
+  pwaIconMaskable: iconDataUrl,
   dateFormat,
   iconBackgroundColor: text('#A7C080'),
   clipboardText: text('', 100_000),

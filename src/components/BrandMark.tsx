@@ -1,19 +1,20 @@
 import { useId } from 'react';
+import { presetById, type PresetId } from '@/features/brand/icons';
 
-const GLYPH =
-  'M127 159 L259 159 L373 273 L373 203 L416 161 L416 366 L262 366 L262 261 L156 366 L96 366 L261 201 L127 201 L106 180 Z ' +
-  'M294 254 L294 333 L373 333 Z';
-
-/** The raqmi mark. Its gradient follows the theme through --logo-from / --logo-to. */
-export function BrandMark() {
+/** A built-in brand icon. Its gradient follows the theme through --logo-from / --logo-to. */
+export function BrandMark({ id = 'raqmi' }: { id?: PresetId }) {
   const gradient = useId();
-  return <svg viewBox="90 150 332 224" fill="none" aria-hidden="true">
+  const preset = presetById(id);
+  const [x, y, w, h] = preset.box;
+  const paint = `url(#${gradient})`;
+  return <svg viewBox={`${x} ${y} ${w} ${h}`} className={w === h || preset.strokes ? 'square' : undefined} fill="none" aria-hidden="true">
     <defs>
-      <linearGradient id={gradient} gradientUnits="userSpaceOnUse" x1="96" y1="159" x2="416" y2="366">
+      <linearGradient id={gradient} gradientUnits="userSpaceOnUse" x1={x} y1={y} x2={x + w} y2={y + h}>
         <stop offset="0" style={{ stopColor: 'var(--logo-from)' }}/>
         <stop offset="1" style={{ stopColor: 'var(--logo-to)' }}/>
       </linearGradient>
     </defs>
-    <path d={GLYPH} fill={`url(#${gradient})`} fillRule="evenodd"/>
+    {preset.fill && <path d={preset.fill} fill={paint} fillRule="evenodd"/>}
+    {preset.strokes?.map(s => <path key={s.d} d={s.d} stroke={paint} strokeWidth={s.width} strokeLinecap="round" strokeLinejoin="round"/>)}
   </svg>;
 }

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AvatarContent } from '@/components/Avatar';
-import { BrandMark } from '@/components/BrandMark';
+import { BrandIcon } from '@/features/brand/BrandIcon';
 import { BrandName } from '@/features/brand/BrandName';
 import { brandTitle } from '@/features/brand/brand';
 import { useBrand } from '@/features/brand/useBrand';
@@ -52,7 +52,7 @@ export function Sidebar({ page, collapsed, onNavigate, onToggleCollapsed, onQuic
 
   return <aside className="sidebar" aria-label="Main navigation">
     <div className="brand-row">
-      <button className="brand" onClick={() => navigate('Overview')} aria-label={`${brandTitle(brand)} overview`}><BrandMark/><BrandName/></button>
+      <button className="brand" onClick={() => navigate('Overview')} aria-label={`${brandTitle(brand)} overview`}><BrandIcon/><BrandName/></button>
       <button className="collapse-button icon-button" aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} title={`${collapsed ? 'Expand' : 'Collapse'} sidebar (Ctrl+B)`} onClick={onToggleCollapsed}><Icon name="collapse" size={17}/></button>
     </div>
     <div className="workspace-switcher-wrap" ref={menuRef}>

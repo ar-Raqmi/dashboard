@@ -8,6 +8,7 @@ import { HijriGroup } from './HijriGroup';
 import { PrayerGroup } from './PrayerGroup';
 import { ClocksGroup } from './ClocksGroup';
 import { AppGroup } from './AppGroup';
+import { BrandIconGroup } from './BrandIconGroup';
 import { TimeZoneGroup } from './TimeZoneGroup';
 import { PasswordGroup } from './PasswordGroup';
 
@@ -38,6 +39,7 @@ export function SettingsPage({ theme, setTheme, notify }: { theme: Theme; setThe
     </div>
 
     <ProfileGroup settings={settings} username={user?.username || ''} notify={notify} onSave={(patch, message = 'Profile saved') => saveSettings(patch, message)}/>
+    <BrandIconGroup settings={settings} notify={notify} onSave={(patch, message) => saveSettings(patch, message)}/>
     <TimeZoneGroup settings={settings} onSave={patch => saveSettings(patch, 'Time zone updated', 'workspace')}/>
     <PrayerGroup settings={settings} notify={notify} onSave={patch => saveSettings(patch, 'Prayer settings saved', 'daily')}/>
     <HijriGroup settings={settings} onSave={patch => saveSettings(patch, 'Hijri settings saved', 'daily')}/>

@@ -3,6 +3,8 @@
 .brand-row { height: 78px; min-height: 78px; display: flex; align-items: center; justify-content: space-between; padding: 0 6px; }
 .brand { display: flex; gap: 9px; align-items: center; }
 .brand > svg { width: 38px; height: auto; flex: none; }
+.brand > svg.square { width: 30px; }
+.brand > img.brand-logo { width: 32px; height: 32px; flex: none; object-fit: contain; border-radius: 8px; }
 .brand > span { font-size: 28px; letter-spacing: -1.2px; font-weight: 620; line-height: 1; }
 .brand-period { color: var(--subtle); }
 .collapse-button { color: var(--muted); width: 25px; height: 25px; }

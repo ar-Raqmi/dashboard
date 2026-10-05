@@ -11,6 +11,7 @@ export function ImageUpload({ label, src, fallback, previewStyle, notify, onUplo
 }) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [link, setLink] = useState('');
   async function upload(file: File | undefined) {
     if (!file) return;
     if (!file.type.startsWith('image/')) { notify('Please choose an image file.'); return; }
@@ -20,10 +21,23 @@ export function ImageUpload({ label, src, fallback, previewStyle, notify, onUplo
     catch (err) { notify((err as Error).message); }
     finally { setBusy(false); }
   }
-  return <div className="settings-data-actions" style={{ alignItems: 'center' }}>
+  function applyLink() {
+    const url = link.trim();
+    try {
+      if (new URL(url).protocol !== 'https:') throw new Error();
+    } catch { notify('Paste a full https:// link to an image.'); return; }
+    onUploaded(url);
+    setLink('');
+  }
+  return <div className="image-source"><div className="settings-data-actions" style={{ alignItems: 'center' }}>
     <span className="avatar" style={{ width: 44, height: 44, overflow: 'hidden', ...previewStyle }}>{src ? <img src={src} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover' }}/> : fallback}</span>
     <button type="button" className="button" disabled={busy} onClick={() => input.current?.click()}><Icon name="upload" size={14}/>{busy ? 'Uploading...' : src ? 'Replace' : 'Upload'}</button>
     {src && <button type="button" className="button" disabled={busy} onClick={onRemove}><Icon name="trash" size={14}/>Remove</button>}
     <input ref={input} className="visually-hidden" type="file" accept="image/*" tabIndex={-1} aria-label={`Choose ${label.toLowerCase()}`} onChange={e => { void upload(e.target.files?.[0]); e.target.value = ''; }}/>
+  </div>
+    <div className="settings-data-actions image-link">
+      <input type="url" inputMode="url" placeholder="or paste an image link (https://...)" aria-label={`${label} link`} value={link} onChange={e => setLink(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); applyLink(); } }}/>
+      <button type="button" className="button" disabled={!link.trim()} onClick={applyLink}>Use link</button>
+    </div>
   </div>;
 }

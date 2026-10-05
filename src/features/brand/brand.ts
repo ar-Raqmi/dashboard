@@ -1,4 +1,5 @@
 import { useStore } from '@/store';
+import type { BrandIconSetting } from './icons';
 
 export const DEFAULT_BRAND = 'raqmi';
 const CACHE_KEY = 'raqmi-brand';
@@ -10,6 +11,16 @@ export function cachedBrand() {
 
 export function cacheBrand(name: string) {
   try { localStorage.setItem(CACHE_KEY, name); } catch { /* The name falls back to the default next visit. */ }
+}
+
+const ICON_KEY = 'raqmi-brand-icon';
+
+export function cachedBrandIcon(): { icon: BrandIconSetting; logo: string } {
+  try { return JSON.parse(localStorage.getItem(ICON_KEY) ?? '') ?? { icon: 'raqmi', logo: '' }; } catch { return { icon: 'raqmi', logo: '' }; }
+}
+
+export function cacheBrandIcon(value: { icon: BrandIconSetting; logo: string }) {
+  try { localStorage.setItem(ICON_KEY, JSON.stringify(value)); } catch { /* Falls back to the default mark next visit. */ }
 }
 
 /** Brand name for non-React callers (file names, exports). */
