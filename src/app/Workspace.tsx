@@ -14,6 +14,7 @@ import { SettingsPage } from '@/features/settings/SettingsPage';
 import { SpiritualPage } from '@/features/spiritual/SpiritualPage';
 import { NewTaskModal } from '@/features/tasks/NewTaskModal';
 import { TasksPage } from '@/features/tasks/TasksPage';
+import { brandSlug } from '@/features/brand/brand';
 import { downloadScreenshot, exportWorkspace } from '@/lib/workspaceExport';
 import { useStore, type EventView, type NoteView, type TaskView } from '@/store';
 import { Footer } from './Footer';
@@ -71,7 +72,7 @@ export function Workspace() {
   async function saveScreenshot() {
     notify('Preparing your screenshot...');
     try {
-      await downloadScreenshot({ background: THEME_COLORS[theme], name: `raqmi-${page.toLowerCase()}-screenshot.png` });
+      await downloadScreenshot({ background: THEME_COLORS[theme], name: `${brandSlug()}-${page.toLowerCase()}-screenshot.png` });
       notify('Screenshot downloaded');
     } catch { notify('Screenshot export is unavailable here. Use your browser screenshot tool instead.'); }
   }

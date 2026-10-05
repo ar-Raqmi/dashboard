@@ -1,4 +1,6 @@
 import { Modal } from '@/components/Modal';
+import { brandTitle } from '@/features/brand/brand';
+import { useBrand } from '@/features/brand/useBrand';
 import { useStore } from '@/store';
 
 const SHORTCUTS: [string, string][] = [
@@ -8,9 +10,10 @@ const SHORTCUTS: [string, string][] = [
 
 export function HelpModal({ onClose }: { onClose: () => void }) {
   const prayerSource = useStore(s => s.prayer?.source);
+  const brand = brandTitle(useBrand());
   return <Modal title="A calmer place to get things done" onClose={onClose}>
     <div className="form-body">
-      <p className="help-intro">Raqmi keeps your tasks, projects, notes, calendar, files, and one-time codes in one calm place. Everything is saved to your account as you go.</p>
+      <p className="help-intro">{brand} keeps your tasks, projects, notes, calendar, files, and one-time codes in one calm place. Everything is saved to your account as you go.</p>
       <h3 className="help-heading">A few helpful shortcuts</h3>
       <div className="shortcut-list">{SHORTCUTS.map(([label, keys]) => <div key={label}><span>{label}</span><kbd>{keys}</kbd></div>)}</div>
       <p className="help-storage">Prayer times come from {prayerSource || 'your configured provider'}; always consult your local mosque for verified times.</p>

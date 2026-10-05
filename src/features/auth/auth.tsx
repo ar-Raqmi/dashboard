@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { ApiClient, ApiError, UNAUTHORIZED_EVENT } from '@/lib/api';
 import { BrandMark } from '@/components/BrandMark';
+import { BrandName } from '@/features/brand/BrandName';
 import { Icon } from '@/components/Icon';
 import { useStore } from '@/store';
 
@@ -71,7 +72,7 @@ export function LoginScreen() {
 
   return <div className="modal-backdrop" style={{ background: 'var(--bg-dim)', backdropFilter: 'none' }}>
     <div className="modal" role="dialog" aria-modal="true" aria-label="Sign in" style={{ width: 400 }}>
-      <div className="modal-heading"><span className="brand flex items-center gap-2.5"><BrandMark/><span>raqmi<span className="brand-period">.</span></span></span></div>
+      <div className="modal-heading"><span className="brand flex items-center gap-2.5"><BrandMark/><BrandName/></span></div>
       <form onSubmit={submit}>
         <div className="form-body">
           <p className="help-intro">Welcome back. Sign in to your workspace.</p>

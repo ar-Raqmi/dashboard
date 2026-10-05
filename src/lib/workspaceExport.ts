@@ -1,9 +1,10 @@
+import { brandSlug } from '@/features/brand/brand';
 import { useStore } from '@/store';
 import { downloadFile } from '@/lib/date';
 
 export function exportWorkspace() {
   const { tasks, goals, notes, events, clocks } = useStore.getState();
-  downloadFile(JSON.stringify({ version: 2, exportedAt: new Date().toISOString(), tasks, goals, notes, events, clocks }, null, 2), 'raqmi-workspace.json', 'application/json');
+  downloadFile(JSON.stringify({ version: 2, exportedAt: new Date().toISOString(), tasks, goals, notes, events, clocks }, null, 2), `${brandSlug()}-workspace.json`, 'application/json');
 }
 
 /** Renders the workspace shell to a PNG and downloads it. Throws when the browser can't. */

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { isActionable, taskDate, useStore, type Priority, type TaskView } from '@/store';
 import { downloadFile, dueLabel, todayKey } from '@/lib/date';
 import { Icon } from '@/components/Icon';
+import { brandSlug } from '@/features/brand/brand';
 import { PriorityMark } from '@/features/tasks/PriorityMark';
 import { statusLabel } from '@/features/tasks/TaskDetail';
 
@@ -37,7 +38,7 @@ export function TaskTable({ onSelect, onAdd, full = false, onViewAll, selectedId
   function exportCsv() {
     const cell = (v: string) => `"${(/^[=+@\-\t\r]/.test(v) ? `'${v}` : v).replace(/"/g, '""')}"`;
     const csv = ['Task,Due date,Priority,Status,Description', ...sorted.map(t => [t.title, t.dueDate || '', t.priority, statusLabel(t.status), t.description].map(cell).join(','))].join('\n');
-    downloadFile(csv, 'raqmi-tasks.csv', 'text/csv');
+    downloadFile(csv, `${brandSlug()}-tasks.csv`, 'text/csv');
     onNotice('Task export downloaded');
   }
 

@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { AvatarContent } from '@/components/Avatar';
 import { BrandMark } from '@/components/BrandMark';
+import { BrandName } from '@/features/brand/BrandName';
+import { brandTitle } from '@/features/brand/brand';
+import { useBrand } from '@/features/brand/useBrand';
 import { Icon } from '@/components/Icon';
 import { useAuth } from '@/features/auth/auth';
 import { initialsOf } from '@/lib/text';
@@ -20,6 +23,7 @@ interface SidebarProps {
 
 export function Sidebar({ page, collapsed, onNavigate, onToggleCollapsed, onQuickCapture, onExported }: SidebarProps) {
   const { user } = useAuth();
+  const brand = useBrand();
   const settings = useStore(s => s.settings);
   const tasks = useStore(s => s.tasks);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -48,7 +52,7 @@ export function Sidebar({ page, collapsed, onNavigate, onToggleCollapsed, onQuic
 
   return <aside className="sidebar" aria-label="Main navigation">
     <div className="brand-row">
-      <button className="brand" onClick={() => navigate('Overview')} aria-label="Raqmi overview"><BrandMark/><span>raqmi<span className="brand-period">.</span></span></button>
+      <button className="brand" onClick={() => navigate('Overview')} aria-label={`${brandTitle(brand)} overview`}><BrandMark/><BrandName/></button>
       <button className="collapse-button icon-button" aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} title={`${collapsed ? 'Expand' : 'Collapse'} sidebar (Ctrl+B)`} onClick={onToggleCollapsed}><Icon name="collapse" size={17}/></button>
     </div>
     <div className="workspace-switcher-wrap" ref={menuRef}>
