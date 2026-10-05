@@ -6,6 +6,7 @@ import { Toggle, Row } from './fields';
 import { ProfileGroup } from './ProfileGroup';
 import { PrayerGroup } from './PrayerGroup';
 import { ClocksGroup } from './ClocksGroup';
+import { AppGroup } from './AppGroup';
 import { PasswordGroup } from './PasswordGroup';
 
 /** Seeded by the server but not rendered anywhere on the Overview yet, so a toggle would do nothing. */
@@ -39,6 +40,8 @@ export function SettingsPage({ theme, setTheme, notify }: { theme: Theme; setThe
     </div>
 
     <PasswordGroup notify={notify}/>
+
+    <AppGroup/>
 
     <div className="settings-group"><span className="eyebrow">YOUR DATA</span>
       <p className="settings-description">Your workspace is stored in your Cloudflare D1 database; files live in R2. Export a JSON copy of tasks, projects, notes, and events at any time.</p>

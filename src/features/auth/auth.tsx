@@ -9,7 +9,9 @@ export interface SessionUser { id: string; username: string }
 
 interface AuthContextValue {
   user: SessionUser | null;
-  status: 'checking' | 'signed-in' | 'signed-out';
+  status: 'checking' | 'signed-in' | 'signed-out' | 'offline';
+  /** Asks the server again whether the session is valid, e.g. after the connection returns. */
+  recheck: () => void;
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -27,15 +29,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [status, setStatus] = useState<AuthContextValue['status']>('checking');
 
-  useEffect(() => {
-    let cancelled = false;
+  const recheck = useCallback(() => {
+    setStatus('checking');
     ApiClient.session()
-      .then(res => { if (!cancelled) { setUser(res.user); setStatus('signed-in'); } })
-      .catch(() => { if (!cancelled) setStatus('signed-out'); });
+      .then(res => { setUser(res.user); setStatus('signed-in'); })
+      .catch(err => setStatus(err instanceof ApiError && err.status === 0 ? 'offline' : 'signed-out'));
+  }, []);
+
+  useEffect(() => {
+    recheck();
     const expired = () => { setUser(null); setStatus('signed-out'); useStore.getState().reset(); };
     window.addEventListener(UNAUTHORIZED_EVENT, expired);
-    return () => { cancelled = true; window.removeEventListener(UNAUTHORIZED_EVENT, expired); };
-  }, []);
+    return () => window.removeEventListener(UNAUTHORIZED_EVENT, expired);
+  }, [recheck]);
 
   const login = useCallback(async (username: string, password: string) => {
     const res = await ApiClient.login(username, password);
@@ -50,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus('signed-out');
   }, []);
 
-  return <AuthContext.Provider value={{ user, status, login, logout }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, status, login, logout, recheck }}>{children}</AuthContext.Provider>;
 }
 
 export function LoginScreen() {
@@ -82,6 +88,23 @@ export function LoginScreen() {
         </div>
         <div className="modal-footer"><span>Sessions last 7 days</span><button className="button primary" type="submit" disabled={busy}><Icon name="arrow" size={15}/>{busy ? 'Signing in...' : 'Sign in'}</button></div>
       </form>
+    </div>
+  </div>;
+}
+
+/** Shown when the session can't be checked because the network is down; retries on its own when the connection returns. */
+export function OfflineScreen() {
+  const { recheck } = useAuth();
+  useEffect(() => {
+    window.addEventListener('online', recheck);
+    return () => window.removeEventListener('online', recheck);
+  }, [recheck]);
+
+  return <div className="modal-backdrop" style={{ background: 'var(--bg-dim)', backdropFilter: 'none' }}>
+    <div className="modal" role="dialog" aria-modal="true" aria-label="Offline" style={{ width: 400 }}>
+      <div className="modal-heading"><span className="brand flex items-center gap-2.5"><BrandMark/><BrandName/></span></div>
+      <div className="form-body"><p className="help-intro">You are offline. Your workspace needs a connection, and it will pick up again as soon as you are back.</p></div>
+      <div className="modal-footer"><span>Checking automatically</span><button className="button primary" type="button" onClick={recheck}><Icon name="refresh" size={15}/>Try again</button></div>
     </div>
   </div>;
 }
