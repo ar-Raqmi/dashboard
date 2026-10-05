@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b",
     "preview": "npm run build && wrangler pages dev",
-    "deploy": "npm run build && wrangler pages deploy dist --project-name=ar-raqmi --branch=main"
+    "deploy": "npm run build && wrangler pages deploy dist --project-name=ar-raqmi --branch=main",
+    "icons": "node scripts/build-icons.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -32,6 +33,7 @@
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "5.1.1",
+    "sharp": "^0.35.5",
     "tailwindcss": "4.1.17",
     "typescript": "5.9.3",
     "vite": "7.3.2",
