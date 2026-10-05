@@ -15,7 +15,7 @@ Vite single-page app on Cloudflare Pages.
 - Data, settings and preferences live in the Zustand store ([src/store](src/store)). "Now" and "today" come from `timeZone` in [src/lib/timezone.ts](src/lib/timezone.ts), never from the browser's implicit zone.
 - Features live in `src/features/<name>`; the shell (sidebar, top bar, rail) is `src/app`. Import with the `@/` alias.
 - Dates are shown through `dateFormat` ([src/lib/dateFormat.ts](src/lib/dateFormat.ts)) and entered with `DateField`; do not format dates with `toLocaleDateString` in components.
-- The in-app and tab icon is one definition in [src/features/brand/icons.ts](src/features/brand/icons.ts). The installed-app icon is fixed: `public/logo.png`, referenced by `public/manifest.webmanifest`.
+- The in-app and tab icon is one definition in [src/features/brand/icons.ts](src/features/brand/icons.ts). The installed-app icons are fixed files in `public/` (white tile around the original `logo.png` artwork, rendered by `python3 scripts/build-icons.py`) referenced by `public/manifest.webmanifest`.
 - Prayer times and the Hijri date are separate sources under [server/services/prayer](server/services/prayer): add a provider by implementing `PrayerSource` or `HijriSource`.
 - Every settings column is a validated `Field` in [server/services/settings.ts](server/services/settings.ts); add a numbered file in `db/migrations` with it.
 - Keep React components as functions; use classes for services and clients.
