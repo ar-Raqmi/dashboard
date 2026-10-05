@@ -1,0 +1,23 @@
+.spiritual-date { display: flex; gap: 13px; align-items: center; padding-bottom: 25px; border-bottom: 1px solid var(--border); }
+.spiritual-date > .icon { color: var(--subtle); }
+.spiritual-date > span { font-size: 15px; }
+.spiritual-date small { display: block; color: var(--muted); font-size: 11px; margin-top: 7px; }
+.expanded-prayer { margin-top: 26px; max-width: 510px; }
+.expanded-prayer .rail-section-heading h2 { font-size: 16px; }
+.expanded-prayer .next-prayer { margin-top: 25px; }
+.expanded-prayer .prayer-name, .expanded-prayer .next-prayer-time { font-size: 32px; }
+.expanded-prayer .prayer-countdown { font-size: 12px; margin-left: 7px; }
+.expanded-prayer .prayer-row { height: 42px; font-size: 13px; }
+.expanded-prayer .prayer-row time { font-size: 13px; }
+.expanded-prayer .prayer-disclaimer { font-size: 10px; }
+.full-verse .verse-label { font-size: 13px; }
+.full-verse blockquote { font-size: 17px; line-height: 1.9; font-weight: 400; max-width: 620px; }
+.full-verse > a { max-width: 620px; font-size: 11px; }
+.world-clocks { border-top: 1px solid var(--border); padding-top: 25px; margin-top: 30px; }
+.live-label { display: flex; align-items: center; gap: 5px; font-size: 9px; color: var(--green); letter-spacing: .5px; }
+.world-clocks > div:not(.section-heading) { display: flex; align-items: center; justify-content: space-between; padding: 17px 0; border-bottom: 1px solid var(--border); }
+.world-clocks > div > span { font-size: 13px; }
+.world-clocks > div > span small { font-size: 10px; color: var(--muted); margin-left: 10px; }
+.world-clocks time { font-family: var(--mono); font-size: 22px; letter-spacing: -.8px; }
+.world-clocks time small { font-size: 12px; color: var(--muted); margin-left: 6px; }
+.world-clocks > .view-footnote { margin-top: 15px; }

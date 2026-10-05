@@ -1,0 +1,25 @@
+@media (min-width: 1550px) {
+  :root { --sidebar-width: 238px; }
+  .page-content { padding: 34px 40px 0; }
+  .topbar { padding: 0 40px; }
+  .content-grid { grid-template-columns: minmax(0, 1fr) 292px; column-gap: 34px; }
+  .context-rail { padding-left: 30px; }
+  .sidebar { padding: 0 17px; }
+  .nav-item.active:before { left: -17px; }
+  .metric { padding: 0 28px; }
+  .chart-canvas { height: 190px; }
+  .task-table td { height: 47px; }
+  .task-name > button { font-size: 14px; }
+  .task-table th:nth-child(3) { width: 105px; }
+  .task-table th:nth-child(4) { width: 90px; }
+  .due-date { font-size: 12px; }
+  .priority { font-size: 11px; }
+  .rail-section-heading h2 { font-size: 15px; }
+  .prayer-row { height: 36px; }
+  .prayer-row time { font-size: 12px; }
+  .event-copy > strong { font-size: 12px; }
+  .event-copy > small { font-size: 10px; }
+  .event-item { padding: 14px 0; }
+  .daily-verse blockquote { font-size: 13px; }
+  .pinned-note-body { font-size: 12px; }
+}

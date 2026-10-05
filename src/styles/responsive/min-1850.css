@@ -1,0 +1,28 @@
+@media (min-width: 1850px) {
+  :root { --sidebar-width: 250px; }
+  .content-grid { grid-template-columns: minmax(0, 1fr) 315px; column-gap: 40px; }
+  .context-rail { padding-left: 35px; }
+  .page-content { padding-top: 38px; }
+  .page-heading { margin-bottom: 36px; }
+  .overview-anchors { margin-bottom: 29px; }
+  .chart-canvas { height: 220px; }
+  .panel-heading { padding: 24px 25px 0; }
+  .mini-calendar-body { padding: 16px 25px 4px; gap: 32px; }
+  .mini-calendar-legend { padding: 12px 25px; font-size: 11px; }
+  .task-section { margin-top: 30px; }
+  .task-table td { height: 50px; }
+  .task-table th { font-size: 12px; height: 38px; }
+  .task-tabs { height: 38px; }
+  .task-tabs > button { font-size: 12px; }
+  .task-table th:nth-child(3) { width: 116px; }
+  .task-table th:nth-child(4) { width: 96px; }
+  .rail-date { padding-bottom: 26px; margin-bottom: 27px; }
+  .prayer-row { height: 39px; }
+  .event-item { padding: 16px 0; }
+  .upcoming-section { padding-top: 27px; margin-top: 29px; }
+  .daily-verse { margin-top: 31px; padding-top: 28px; }
+  .daily-verse blockquote { font-size: 14px; }
+  .nav-item { height: 40px; font-size: 14px; }
+  .workspace-text strong { font-size: 12px; }
+  .workspace-text small { font-size: 10px; }
+}

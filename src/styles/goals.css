@@ -1,0 +1,17 @@
+.goals-view { display: flex; flex-direction: column; gap: 37px; }
+.goals-view > .task-tabs { margin: 0 0 -14px; }
+.goal-detail + .goal-detail { border-top: 1px solid var(--border); padding-top: 31px; }
+.goal-detail-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.goal-project-label { display: flex; align-items: center; gap: 6px; font-size: 9px; letter-spacing: .8px; color: var(--muted); }
+.goal-project-label > i { width: 5px; height: 5px; border-radius: 1px; }
+.goal-detail-heading h2 { font-size: 21px; margin-top: 12px; }
+.goal-big-percentage { font-family: var(--mono); font-size: 38px; font-weight: 400; letter-spacing: -1.5px; }
+.goal-big-percentage small { font-size: 20px; color: var(--muted); margin-left: 2px; }
+.goal-detail > .goal-progress-track { margin-top: 24px; height: 4px; }
+.goal-progress-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 9px; font-size: 10px; color: var(--muted); }
+.goal-progress-meta > span:last-child { color: var(--green); }
+.milestone-list { margin-top: 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 15px; }
+.milestone-list > button { display: flex; align-items: center; text-align: left; gap: 9px; padding: 10px 4px; color: var(--subtle); font-size: 12px; }
+.milestone-list > button:hover { color: var(--fg); }
+.milestone-list > button.done { color: var(--muted); text-decoration: line-through; }
+.milestone-list .task-checkbox { width: 13px; height: 13px; }

@@ -1,0 +1,13 @@
+.auth-account { display: flex; align-items: center; gap: 17px; padding: 25px 0; border-bottom: 1px solid var(--border); }
+.account-service-icon { display: inline-flex; justify-content: center; align-items: center; width: 38px; height: 38px; color: var(--subtle); background: var(--bg0); border-radius: 8px; }
+.auth-account > div { flex: 1; }
+.auth-account strong { font-size: 12px; font-weight: 450; }
+.auth-code { display: flex; align-items: center; gap: 15px; font-family: var(--mono); font-size: 26px; color: var(--green); margin-top: 10px; letter-spacing: 1px; }
+.auth-code > .icon { color: var(--muted); opacity: 0; }
+.auth-code:hover > .icon { opacity: 1; }
+.code-timer { color: var(--muted); font-family: var(--mono); font-size: 12px; }
+.auth-undecryptable { margin: 8px 0 0; color: var(--red); font-size: 12px; }
+.form-error { color: var(--red); font-size: 12px; line-height: 1.6; margin-top: 13px; }
+.compact-density .task-table td { height: 35px; }
+.compact-density .full-table .task-table td { height: 39px; }
+.compact-density .nav-item { height: 32px; }

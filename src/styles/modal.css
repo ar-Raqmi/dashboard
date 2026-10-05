@@ -1,0 +1,27 @@
+.modal-backdrop { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(16,22,24,.66); backdrop-filter: blur(5px); z-index: 100; padding: 24px; animation: fade-in .18s ease both; overflow-y: auto; }
+.modal:focus { outline: none; }
+.modal { background: var(--bg2); width: 500px; max-width: 100%; max-height: calc(100dvh - 48px); overflow: auto; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.06); animation: modal-appear .22s cubic-bezier(.16,1,.3,1) both; }
+.modal-heading { display: flex; justify-content: space-between; align-items: center; padding: 19px 22px; border-bottom: 1px solid var(--border); }
+.modal-heading h2 { font-size: 16px; }
+.modal-heading .icon-button { width: 25px; height: 25px; }
+.modal-heading .icon-button:hover { background: var(--bg3); }
+.form-body { padding: 23px; }
+.form-label { display: block; font-size: 12px; font-weight: 510; color: var(--subtle); margin-bottom: 20px; }
+.form-label:last-child { margin-bottom: 0; }
+.form-label > span { font-weight: 400; color: var(--muted); }
+.form-label > input, .form-label > textarea, .form-label > select { display: block; width: 100%; padding: 10px 11px; margin-top: 8px; background: var(--bg0); font-size: 13px; color: var(--fg); }
+.form-label > input, .form-label > select { height: 39px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 17px; margin-bottom: 20px; }
+.form-grid .form-label { margin-bottom: 0; }
+.modal-footer { display: flex; justify-content: space-between; gap: 15px; align-items: center; border-top: 1px solid var(--border); padding: 16px 22px; }
+.modal-footer > span { font-size: 10px; color: var(--muted); }
+.modal-footer > div { display: flex; align-items: center; gap: 8px; }
+.modal-footer .button:not(.primary):not(.danger-action) { background: transparent; }
+.note-modal { width: 600px; }
+.note-title-input { width: 100%; border: 0; background: transparent; padding: 0 0 16px; font-size: 19px; font-weight: 510; border-bottom: 1px solid var(--border); border-radius: 0; }
+.note-editor { margin-top: 14px; padding: 8px 0; border: 0; width: 100%; font-size: 13px; color: var(--subtle); background: transparent; resize: vertical; min-height: 230px; line-height: 1.9; }
+.note-modal.wrap-80 { width: 720px; }
+.note-modal:not(.wrap-80) { width: 900px; }
+.note-source { font-family: var(--mono); font-size: 12.5px; line-height: 1.8; }
+.note-preview { overflow-y: auto; min-height: 260px; max-height: 60dvh; color: var(--fg); line-height: 1.75; }
+.note-source.wrap-80, .note-preview.wrap-80 { display: block; margin-left: auto; margin-right: auto; }

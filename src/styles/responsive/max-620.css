@@ -1,0 +1,155 @@
+@media (max-width: 620px) {
+  :root { --sidebar-width: 0px; }
+  .app-shell { height: 100dvh; }
+  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 224px; transform: translateX(-100%); transition: transform .25s ease; padding: 0 14px; z-index: 70; }
+  .mobile-nav-open .sidebar { transform: translateX(0); }
+  .mobile-scrim { display: block; position: fixed; inset: 0; z-index: 60; background: rgba(10,16,18,.6); backdrop-filter: blur(3px); }
+  .mobile-menu-button { display: inline-flex; width: 23px; margin-left: -3px; }
+  .sidebar .brand-row { padding: 0 6px; justify-content: space-between; }
+  .sidebar .brand > span, .sidebar .workspace-text, .sidebar .workspace-switcher > .icon { display: block; }
+  .sidebar .nav-section-label { display: flex; }
+  .sidebar .nav-item > span, .sidebar .nav-item > small, .sidebar .nav-item > kbd { display: block; }
+  .sidebar .nav-item { justify-content: flex-start; padding: 0 10px; }
+  .sidebar .nav-item.active:before { left: -14px; }
+  .sidebar .sidebar-profile { justify-content: flex-start; }
+  .sidebar .sidebar-profile > div { display: block; }
+  .sidebar .workspace-switcher { justify-content: flex-start; padding: 10px 5px 13px; }
+  .sidebar .workspace-text strong { font-size: 12px; }
+  .sidebar .workspace-text small { font-size: 9px; }
+  .sidebar .quick-capture { padding: 0 10px; }
+  .sidebar .quick-capture > span, .sidebar .quick-capture > kbd { display: block; }
+  .sidebar .workspace-menu { left: 0; }
+  .sidebar .sidebar-profile strong { font-size: 11px; }
+  .sidebar .sidebar-profile > div > span { font-size: 10px; }
+  .topbar { height: 56px; min-height: 56px; padding: 0 18px; gap: 10px; }
+  .breadcrumb { gap: 9px; font-size: 11px; }
+  .toolbar-right { gap: 11px; }
+  .search-trigger { padding: 0; border: 0; background: none; width: 22px; justify-content: center; }
+  .search-trigger > span, .search-trigger > kbd, .toolbar-divider { display: none; }
+  .search-trigger > .icon { width: 17px; height: 17px; }
+  .top-avatar { width: 26px; height: 26px; }
+  .notification-trigger { width: 22px; }
+  .page-content { padding: 25px 19px 0; }
+  .page-heading { align-items: flex-start; gap: 8px; margin-bottom: 29px; }
+  h1 { font-size: 23px; }
+  .page-title-row { align-items: flex-start; flex-direction: column; gap: 7px; }
+  .sample-label { font-size: 9px; margin: 0; }
+  .page-heading > div > p { margin-top: 10px; font-size: 11px; }
+  .page-heading-actions { gap: 4px; padding: 0; }
+  .page-heading-actions .refresh-button { display: none; }
+  .page-heading-actions .button { height: 31px; padding: 0 10px; font-size: 11px; }
+  .page-heading-actions .button > .icon { width: 13px; height: 13px; }
+  .overview-anchors { margin-bottom: 23px; }
+  .metric { padding: 0 13px; }
+  .panel-heading { padding: 18px 15px 0; }
+  .mini-calendar-body { grid-template-columns: minmax(0, 1fr); padding: 12px 15px 4px; gap: 18px; }
+  .mini-calendar-legend { padding: 10px 15px; }
+  .mini-calendar-hint { display: none; }
+  .panel-heading h2 { font-size: 15px; }
+  .panel-heading p { font-size: 10px; }
+  .select-wrap { height: 27px; padding-left: 7px; }
+  .select-wrap > .icon:first-child { display: none; }
+  .select-wrap select { font-size: 10px; }
+  .chart-canvas { height: 185px; margin-right: 10px; margin-left: 3px; }
+  .task-section { margin-top: 24px; }
+  .section-heading h2 { font-size: 15px; }
+  .overdue-count { font-size: 9px; margin-left: 2px; }
+  .task-tabs { gap: 21px; margin-top: 12px; }
+  .task-tabs > button { font-size: 10px; gap: 5px; }
+  .task-tabs > button > span { font-size: 9px; }
+  .task-table { min-width: 370px; }
+  .task-table .check-column { width: 24px; padding-left: 1px; padding-right: 2px; }
+  .task-table th:nth-child(3) { width: 60px; }
+  .task-table th:nth-child(4) { width: 31px; }
+  .task-table th:nth-child(4) > button { font-size: 0; }
+  .task-table th:nth-child(4) > button > .icon { opacity: .6; width: 12px; height: 12px; }
+  .task-table td { height: 46px; padding: 0 4px; }
+  .task-table th { padding: 0 4px; font-size: 9px; }
+  .task-name > button { font-size: 11px; }
+  .due-date { font-size: 9px; }
+  .priority > span:last-child { display: none; }
+  .sample-table-label { display: none; }
+  .table-footer .text-button, .table-footer > span { font-size: 10px; }
+  .bottom-split { margin-top: 16px; padding-top: 21px; grid-template-columns: .95fr 1.05fr; }
+  .goals-summary { padding-right: 18px; }
+  .pinned-notes { padding-left: 18px; }
+  .bottom-split h2, .clipboard-card h2 { font-size: 12px; }
+  .pinned-note-body, .goal-summary-item strong { font-size: 10px; }
+  .pinned-note { gap: 6px; padding: 7px 0; }
+  .pinned-note-icon .icon { width: 12px; }
+  .context-rail { gap: 0 24px; }
+  .rail-date > span { font-size: 11px; }
+  .rail-date > small { font-size: 9px; }
+  .rail-section-heading h2 { font-size: 13px; }
+  .location-label { font-size: 9px; }
+  .timezone-label { display: none; }
+  .prayer-name { font-size: 24px; flex-direction: column; gap: 2px; }
+  .next-prayer-time { font-size: 22px; padding-bottom: 14px; }
+  .next-prayer-time > span { font-size: 8px; }
+  .prayer-countdown { font-size: 9px; }
+  .prayer-progress { margin-top: 12px; }
+  .prayer-row { font-size: 11px; height: 33px; }
+  .prayer-row time { font-size: 10px; }
+  .next-label { font-size: 7px; margin-left: 0; }
+  .prayer-row > span { gap: 6px; }
+  .event-item { gap: 9px; padding: 13px 0; }
+  .event-date { width: 24px; }
+  .event-date > span { font-size: 18px; }
+  .event-date > small { font-size: 7px; }
+  .event-copy > strong { font-size: 10px; white-space: normal; line-height: 1.6; }
+  .event-copy > small { font-size: 8px; line-height: 1.6; white-space: normal; }
+  .event-copy .middle-dot { display: block; height: 0; visibility: hidden; }
+  .event-arrow { display: none; }
+  .upcoming-section .calendar-link { font-size: 10px; margin-top: 17px; }
+  .daily-verse blockquote { font-size: 12px; }
+  .workspace-footer { font-size: 9px; gap: 12px; margin-top: 22px; }
+  .workspace-footer > span:last-child { font-size: 0; gap: 0; }
+  .workspace-footer .footer-divider { display: none; }
+  .workspace-footer .footer-brand { font-size: 12px; }
+  .context-rail.detail-rail { top: 56px; width: min(330px, 90vw); }
+  .toast { left: 50%; bottom: 18px; width: max-content; font-size: 11px; }
+  .modal-backdrop { padding: 15px; }
+  .modal { max-height: calc(100dvh - 30px); border-radius: 10px; }
+  .modal-heading { padding: 17px 18px; }
+  .modal-heading h2 { font-size: 15px; }
+  .form-body, .settings-body { padding: 20px 18px; }
+  .modal-footer { padding: 15px 18px; }
+  .modal-footer > span { font-size: 9px; }
+  .modal-footer .button { font-size: 11px; padding: 0 10px; }
+  .notifications-popover { right: 0; width: min(340px, calc(100vw - 36px)); }
+  .search-modal { margin-top: 8vh; }
+  .command-footer { gap: 12px; padding: 12px 16px; font-size: 9px; }
+  .command-footer > span:last-child { display: none; }
+  .command-input { padding: 19px 16px; gap: 9px; }
+  .command-input > input { font-size: 13px; }
+  .calendar-view > .section-heading h2 { font-size: 16px; }
+  .calendar-view .section-actions { gap: 2px; }
+  .calendar-view .small-button { font-size: 9px; }
+  .calendar-weekday { font-size: 8px; padding-left: 5px; }
+  .calendar-day { min-height: 67px; padding: 6px 4px; }
+  .calendar-day > span { font-size: 11px; }
+  .calendar-day > small { font-size: 0; }
+  .calendar-day > small > i { width: 4px; height: 4px; margin-left: 9px; }
+  .calendar-grid { margin: 0 -3px; }
+  .day-agenda > h3 { font-size: 13px; }
+  .milestone-list { grid-template-columns: 1fr; }
+  .goal-detail-heading h2 { font-size: 20px; }
+  .goal-detail-heading p { font-size: 11px; }
+  .goal-big-percentage { font-size: 32px; }
+  .note-list-item { gap: 12px; }
+  .note-list-item > span > strong { font-size: 13px; }
+  .inline-search > input { width: 104px; }
+  .expanded-prayer .prayer-name { flex-direction: row; align-items: baseline; }
+  .expanded-prayer .next-prayer-time { padding-bottom: 0; }
+  .file-drop-zone { padding: 65px 20px; }
+  .file-drop-zone > strong { font-size: 16px; }
+  .file-drop-zone > small { font-size: 10px; line-height: 1.8; }
+  .file-row { gap: 8px; }
+  .file-row > span { display: none; }
+  .files-view > .section-heading { align-items: flex-start; }
+  .files-view > .section-heading > .view-footnote { font-size: 9px; }
+  .auth-code { font-size: 23px; gap: 8px; }
+  .auth-account { gap: 11px; }
+  .account-service-icon { width: 30px; height: 30px; }
+  .skip-link { left: 20px; }
+}

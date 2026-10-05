@@ -1,0 +1,66 @@
+.workspace-footer { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-top: 28px; border-top: 1px solid var(--border); height: 49px; color: var(--muted); font-size: 10px; }
+.workspace-footer > span { display: flex; align-items: center; gap: 6px; }
+.workspace-footer > span > .tiny-dot { width: 4px; height: 4px; color: var(--green); }
+.workspace-footer > span > .warning-dot { color: var(--orange); }
+.footer-divider { margin: 0 4px; color: var(--bg4); }
+.footer-brand { font-size: 12px; letter-spacing: -.6px; font-weight: 590; color: var(--subtle); }
+
+.popover-anchor { position: relative; }
+.popover { position: absolute; z-index: 50; background: var(--bg2); box-shadow: 0 8px 32px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.06); border-radius: 8px; padding: 6px; animation: popover-appear .15s ease-out both; }
+.popover > button { display: flex; align-items: center; gap: 9px; padding: 10px; width: 100%; text-align: left; font-size: 12px; color: var(--subtle); border-radius: 5px; }
+.popover > button:hover, .popover > button.selected { background: rgba(255,255,255,.04); color: var(--fg); }
+.popover .menu-label { display: block; padding: 8px 10px; }
+.filter-menu { top: 35px; right: 0; width: 175px; }
+.filter-menu > button { justify-content: space-between; }
+.workspace-menu { width: 250px; left: 0; top: 60px; }
+.workspace-menu-current { display: flex; align-items: center; padding: 8px 8px 14px; border-bottom: 1px solid var(--border); margin-bottom: 4px; gap: 9px; }
+.workspace-menu-current > span:nth-child(2) { font-size: 12px; flex: 1; }
+.workspace-menu-current small { display: block; color: var(--muted); font-size: 10px; margin-top: 4px; }
+.notifications-popover { top: 43px; right: 34px; width: 340px; padding: 0; }
+.popover-title { padding: 17px 16px 14px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+.popover-title .text-button { font-size: 10px; }
+.popover > .notification-item { padding: 16px; gap: 12px; border-bottom: 1px solid var(--border); border-radius: 0; align-items: flex-start; }
+.notification-icon { color: var(--subtle); padding-top: 1px; }
+.notification-icon.danger { color: var(--red); }
+.notification-item > span:last-child { flex: 1; }
+.notification-item strong { display: block; font-size: 12px; font-weight: 510; color: var(--fg); }
+.notification-item small { display: block; font-size: 11px; margin-top: 5px; line-height: 1.6; }
+.notification-item time { display: block; font-size: 9px; color: var(--muted); margin-top: 9px; }
+.popover-bottom { padding: 12px 16px; font-size: 10px; color: var(--muted); }
+.profile-popover { top: 43px; right: 0; width: 215px; }
+.profile-menu-heading { padding: 10px 10px 14px; border-bottom: 1px solid var(--border); margin-bottom: 5px; }
+.profile-menu-heading strong { display: block; font-size: 12px; font-weight: 550; }
+.profile-menu-heading small { display: block; font-size: 10px; margin-top: 5px; color: var(--muted); }
+.task-detail { animation: detail-appear .25s ease-out both; }
+.detail-overline { display: flex; align-items: center; justify-content: space-between; margin-top: -4px; }
+.detail-overline > span { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.sample-detail { font-size: 9px; color: var(--muted); letter-spacing: .3px; display: inline-block; margin-top: 8px; }
+.task-detail > h2 { font-size: 20px; line-height: 1.5; margin-top: 10px; }
+.detail-complete { margin-top: 22px; width: 100%; }
+.detail-complete.completed { color: var(--green); }
+.detail-fields { margin-top: 27px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 16px 0; }
+.detail-fields > label { display: flex; align-items: center; gap: 8px; font-size: 11px; padding: 6px 0; }
+.detail-fields > label > span { color: var(--muted); width: 63px; flex-shrink: 0; }
+.detail-fields select, .detail-fields input { min-width: 0; width: 100%; font-size: 11px; background: transparent; height: 30px; border-color: transparent; padding: 0 5px; }
+.detail-fields select:hover, .detail-fields input:hover { background: var(--bg0); border-color: var(--border); }
+.description-label { display: block; font-size: 12px; margin-top: 23px; color: var(--subtle); }
+.description-label textarea { margin-top: 10px; display: block; background: transparent; border-color: transparent; font-size: 12px; color: var(--subtle); padding: 8px; margin-left: -8px; width: calc(100% + 16px); }
+.description-label textarea:hover, .description-label textarea:focus { background: var(--bg0); border-color: var(--border); }
+.detail-activity { border-top: 1px solid var(--border); padding-top: 21px; margin-top: 18px; }
+.detail-activity h3 { font-size: 12px; font-weight: 510; }
+.detail-activity > div { display: flex; align-items: flex-start; gap: 9px; margin-top: 17px; }
+.mini-avatar { width: 23px; height: 23px; font-size: 8px; }
+.detail-activity p { font-size: 11px; color: var(--subtle); }
+.detail-activity small { display: block; font-size: 9px; color: var(--muted); margin-top: 7px; }
+.danger-button { color: var(--red) !important; }
+.task-detail > .danger-button { margin-top: 33px; font-size: 11px; }
+/* The detail rail scrolls on its own instead of running past the viewport: sticky beside the grid on desktop, a fixed overlay on narrow screens. */
+.context-rail.detail-rail { --rail-bg: var(--bg-dim); position: sticky; top: 16px; align-self: start; max-height: calc(100dvh - 64px - 32px); overflow-y: auto; overscroll-behavior: contain; padding: 4px 12px 28px 25px; scrollbar-width: thin; scrollbar-color: var(--muted) transparent;
+  /* Edge shadows appear only while content is hidden above or below, so a clipped panel never looks like a finished one. */
+  background: linear-gradient(var(--rail-bg) 30%, transparent) top / 100% 28px no-repeat local, linear-gradient(transparent, var(--rail-bg) 70%) bottom / 100% 28px no-repeat local, radial-gradient(farthest-side at 50% 0, rgba(0,0,0,.14), transparent) top / 100% 9px no-repeat scroll, radial-gradient(farthest-side at 50% 100%, rgba(0,0,0,.14), transparent) bottom / 100% 9px no-repeat scroll; }
+.context-rail.detail-rail:focus-visible { outline: 2px solid var(--fg); outline-offset: -2px; }
+.detail-rail .detail-overline { margin-top: 0; }
+.task-detail { min-width: 0; }
+.task-detail > h2, .detail-activity p { overflow-wrap: anywhere; }
+.detail-overline > span { min-width: 0; }
+.description-label textarea { min-height: 96px; field-sizing: content; overflow-wrap: anywhere; scrollbar-width: thin; scrollbar-color: var(--muted) transparent; }

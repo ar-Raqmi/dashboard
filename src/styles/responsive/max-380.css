@@ -1,0 +1,9 @@
+@media (max-width: 380px) {
+  .page-content { padding-left: 14px; padding-right: 14px; }
+  .metric { padding: 0 9px; }
+  .table-scroll { margin-right: -4px; }
+  .context-rail { column-gap: 19px; }
+  .next-prayer-time { font-size: 20px; }
+  .next-prayer-time > span { font-size: 7px; }
+  .modal-footer > span { max-width: 90px; line-height: 1.6; }
+}

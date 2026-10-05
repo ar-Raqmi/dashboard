@@ -1,0 +1,19 @@
+@media (max-width: 1090px) {
+  :root { --sidebar-width: 190px; }
+  .content-grid { grid-template-columns: minmax(0, 1fr) 217px; gap: 21px; }
+  .context-rail { padding-left: 19px; }
+  .sample-date { display: none; }
+  .metric { padding: 0 15px; }
+  .task-table th:nth-child(3) { width: 67px; }
+  .task-table th:nth-child(4) { width: 36px; }
+  .priority > span:last-child { display: none; }
+  .task-tabs { gap: 20px; }
+  .next-prayer-time { font-size: 21px; }
+  .prayer-name { gap: 5px; }
+  .prayer-disclaimer { white-space: normal; line-height: 1.6; font-size: 8px; }
+  .rail-date > span { font-size: 11px; }
+  .rail-date > small { font-size: 9px; }
+  .bottom-split h2, .clipboard-card h2 { font-size: 12px; }
+  .goal-summary-item strong, .pinned-note-body { font-size: 10px; }
+  .task-name > button { font-size: 11px; }
+}

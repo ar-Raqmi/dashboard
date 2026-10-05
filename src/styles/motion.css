@@ -1,0 +1,9 @@
+.mobile-menu-button, .mobile-scrim { display: none; }
+@keyframes content-appear { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes detail-appear { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes modal-appear { from { opacity: 0; transform: translateY(9px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes popover-appear { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+.reduce-motion *, .reduce-motion *:before, .reduce-motion *:after { animation-duration: .001ms !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }

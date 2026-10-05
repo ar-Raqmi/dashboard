@@ -1,0 +1,36 @@
+.goals-summary { padding-right: 25px; border-right: 1px solid var(--border); }
+.pinned-notes { padding-left: 25px; }
+.bottom-split h2 { font-size: 14px; }
+.bottom-split .section-heading { margin-bottom: 10px; min-height: 20px; }
+.goal-summary-item { display: block; width: 100%; text-align: left; margin-top: 14px; }
+.goal-summary-item > span:first-child { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+.goal-summary-item strong { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 400; color: var(--subtle); }
+.goal-summary-item strong i { width: 5px; height: 5px; border-radius: 1px; }
+.goal-summary-item small { font-size: 10px; font-family: var(--mono); color: var(--muted); }
+.goal-summary-item:hover strong { color: var(--fg); }
+.goal-progress-track { display: block; width: 100%; height: 3px; background: var(--bg1); border-radius: 3px; overflow: hidden; }
+.goal-progress-track > span { display: block; height: 100%; border-radius: inherit; transition: width .5s ease; }
+.pinned-note { width: 100%; display: flex; align-items: flex-start; text-align: left; gap: 9px; padding: 8px 0; }
+.pinned-note-icon { display: flex; flex: none; padding-top: 2px; }
+.pinned-note-body { font-size: 11px; color: var(--subtle); flex: 1; min-width: 0; }
+.pinned-note-title { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pinned-note > small { font-size: 9px; color: var(--muted); white-space: nowrap; padding-top: 2px; }
+.pinned-note:hover .pinned-note-title { color: var(--fg); }
+/* A two-line summary: same renderer and measure as the reader, with block spacing and decoration stripped so the clamp counts lines of text. */
+.markdown-body.pinned-note-preview { margin-top: 3px; font-size: .92em; line-height: 1.6; color: var(--muted); overflow: hidden; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; pointer-events: none; }
+.markdown-body.pinned-note-preview * { margin-top: 0; margin-bottom: 0; }
+.markdown-body.pinned-note-preview :is(h1, h2, h3, h4, h5, h6) { font-size: inherit; font-weight: 500; margin: 0; border: 0; padding: 0; }
+.markdown-body.pinned-note-preview :is(ul, ol) { padding-left: 1.3em; }
+.markdown-body.pinned-note-preview :is(pre, code) { white-space: normal; font-size: inherit; background: none; border: 0; padding: 0; }
+.markdown-body.pinned-note-preview blockquote { border: 0; padding: 0; margin: 0; }
+.markdown-body.pinned-note-preview :is(img, hr, table, .heading-anchor, .footnotes) { display: none; }
+/* Its own full-width row under Goals / Pinned notes, ruled off the same way. */
+.clipboard-card h2 { font-size: 14px; }
+.clipboard-card > .section-heading { margin-bottom: 10px; min-height: 20px; flex-wrap: wrap; gap: 4px 14px; }
+.clipboard-card h2 { white-space: nowrap; }
+/* The row (align-items: stretch) sets the height; the card fills it and the textarea takes what the heading leaves. */
+.clipboard-card { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+.clipboard-card .text-button:disabled { cursor: default; }
+.clipboard-card .text-button:disabled:hover { color: var(--subtle); gap: 7px; }
+.clipboard-card > textarea { display: block; flex: 1 1 auto; width: 100%; min-height: 96px; resize: vertical; padding: 10px 11px; background: var(--bg0); font-size: 12px; color: var(--fg); }
+.muted-note { font-size: 11px; color: var(--muted); padding: 9px 0; }

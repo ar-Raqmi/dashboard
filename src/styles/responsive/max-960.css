@@ -1,0 +1,24 @@
+@media (max-width: 960px) {
+  .note-panes.split { grid-template-columns: minmax(0, 1fr); }
+  .note-panes.split > .note-pane + .note-pane { border-left: 0; border-top: 1px solid var(--border); }
+  .note-panes.split .note-editor { height: 32dvh; }
+  :root { --sidebar-width: 66px; }
+  .sidebar { padding: 0 11px; }
+  .brand-row { padding: 0; justify-content: center; }
+  .brand > span, .collapse-button, .workspace-text, .workspace-switcher > .icon, .nav-section-label, .nav-item > span, .nav-item > small, .nav-item > kbd, .sidebar-profile > div, .quick-capture > span, .quick-capture > kbd { display: none; }
+  .nav-item { justify-content: center; padding: 0; height: 39px; }
+  .workspace-switcher { justify-content: center; padding: 9px 0; }
+  .sidebar-profile { justify-content: center; }
+  .quick-capture { padding: 0; justify-content: center; }
+  .workspace-menu { left: 45px; }
+  .content-grid { grid-template-columns: minmax(0, 1fr) 234px; gap: 24px; }
+  .context-rail { padding-left: 21px; }
+  .task-table th:nth-child(3) { width: 70px; }
+  .task-table th:nth-child(4) { width: 37px; }
+  .desktop-expand { display: none; }
+  .event-copy > strong { font-size: 11px; }
+  .event-copy > small { font-size: 9px; }
+  .rail-date > span { font-size: 12px; }
+  .next-prayer-time { font-size: 23px; }
+  .prayer-countdown { font-size: 9px; }
+}

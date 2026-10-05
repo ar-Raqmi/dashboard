@@ -1,0 +1,22 @@
+@media (max-width: 800px) {
+  .overview-anchors > .metric { flex: 1 1 100%; min-width: 0; padding: 0; border-left: 0; }
+  .overview-anchors > .metric + .metric { border-top: 1px solid var(--border); margin-top: 20px; padding-top: 18px; }
+  .content-grid { grid-template-columns: minmax(0, 1fr); }
+  .context-rail { border-left: 0; padding-left: 0; border-top: 1px solid var(--border); padding-top: 24px; margin-top: 27px; display: grid; grid-template-columns: 1fr 1fr; gap: 0 32px; }
+  .context-rail > .rail-date { grid-column: 1 / -1; margin-bottom: 24px; padding-bottom: 20px; }
+  .rail-date > small { margin-top: -14px; text-align: right; }
+  .upcoming-section { border-top: 0; margin-top: 0; padding-top: 0; }
+  .daily-verse { grid-column: 1 / -1; }
+  .daily-verse blockquote { font-size: 13px; }
+  .rail-bottom-note { display: none; }
+  .context-rail.detail-rail { display: block; position: fixed; right: 0; top: 64px; bottom: 0; width: 310px; z-index: 40; border-left: 1px solid var(--border); border-top: 0; padding: 24px 24px 40px; margin-top: 0; --rail-bg: var(--bg0); background-color: var(--bg0); align-self: stretch; max-height: none; overflow-y: auto; box-shadow: -20px 0 50px rgba(0,0,0,.2); }
+  .task-table th:nth-child(3) { width: 85px; }
+  .task-table th:nth-child(4) { width: 78px; }
+  .priority > span:last-child { display: block; }
+  .priority { font-size: 10px; }
+  .task-name > button { font-size: 12px; }
+  .chart-canvas { height: 214px; }
+  .bottom-split h2, .clipboard-card h2 { font-size: 14px; }
+  .goal-summary-item strong, .pinned-note-body { font-size: 11px; }
+  .full-table .task-table td { height: 48px; }
+}

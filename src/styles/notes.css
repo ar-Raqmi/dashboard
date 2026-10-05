@@ -1,0 +1,14 @@
+.notes-list { margin-top: 21px; }
+.note-list-item { display: flex; align-items: flex-start; gap: 17px; padding: 23px 10px 23px 0; border-top: 1px solid var(--border); width: 100%; text-align: left; transition: padding .2s, background .2s; }
+.note-list-item > .icon:first-child { color: var(--muted); margin-top: 3px; }
+.note-list-item > span { flex: 1; min-width: 0; }
+.note-list-item > span > strong { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 510; }
+.note-list-item > span > strong > .icon { color: var(--muted); }
+.note-list-item > span > small { display: block; color: var(--muted); font-size: 10px; margin-top: 13px; }
+.note-list-preview { color: var(--subtle); font-size: 12px; margin-top: 9px; line-height: 1.7; max-height: 6.8em; overflow: hidden; -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent); pointer-events: none; }
+.note-list-preview :is(h1, h2, h3, h4, h5, h6) { font-size: 12px; margin: 0; }
+.note-list-preview > * + * { margin-top: 4px; }
+.note-list-preview img, .note-list-preview hr { display: none; }
+.note-list-item > .icon:last-child { align-self: center; color: var(--muted); opacity: 0; }
+.note-list-item:hover { padding-left: 10px; background: rgba(255,255,255,.015); }
+.note-list-item:hover > .icon:last-child { opacity: 1; }

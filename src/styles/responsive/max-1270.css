@@ -1,0 +1,41 @@
+@media (max-width: 1270px) {
+  :root { --sidebar-width: 199px; }
+  .sidebar { padding: 0 11px; }
+  .nav-item.active:before { left: -11px; }
+  .brand-row { padding: 0 6px; }
+  .workspace-text strong { font-size: 10px; }
+  .workspace-text small { font-size: 8px; }
+  .workspace-switcher { gap: 7px; }
+  .workspace-avatar { width: 25px; height: 25px; font-size: 9px; }
+  .sidebar-profile { gap: 7px; }
+  .sidebar-profile strong { font-size: 10px; }
+  .sidebar-profile > div > span { font-size: 9px; }
+  .page-content { padding: 28px 25px 0; }
+  .topbar { padding: 0 25px; }
+  .content-grid { grid-template-columns: minmax(0, 1fr) 236px; column-gap: 24px; }
+  .context-rail { padding-left: 21px; }
+  .sample-date { font-size: 10px; }
+  .page-heading-actions { gap: 7px; }
+  .metric { padding: 0 19px; }
+  .next-prayer-time { font-size: 23px; }
+  .prayer-name { font-size: 23px; gap: 6px; }
+  .prayer-countdown { font-size: 8px; }
+  .prayer-disclaimer { font-size: 7.5px; gap: 4px; }
+  .event-item { gap: 10px; }
+  .event-copy > strong { font-size: 10px; }
+  .event-copy > small { font-size: 8px; }
+  .middle-dot { margin: 0 3px; }
+  .task-table th:nth-child(3) { width: 80px; }
+  .task-table th:nth-child(4) { width: 76px; }
+  .task-name > button { font-size: 12px; }
+  .priority { font-size: 9px; gap: 5px; }
+  .due-date { font-size: 10px; }
+  .panel-heading { padding-left: 19px; padding-right: 19px; }
+  .mini-calendar-body { padding-left: 19px; padding-right: 19px; gap: 20px; }
+  .mini-calendar-legend { padding-left: 19px; padding-right: 19px; }
+  .bottom-split { grid-template-columns: .85fr 1.15fr; }
+  .goals-summary { padding-right: 19px; }
+  .pinned-notes { padding-left: 19px; }
+  .pinned-note > small { display: none; }
+  .sidebar-collapsed { --sidebar-width: 66px; }
+}
