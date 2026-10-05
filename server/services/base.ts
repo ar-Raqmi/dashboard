@@ -14,6 +14,8 @@ export abstract class BaseService {
   }
 }
 
+/** Lower-case, filename-safe form of a label: "My Space" becomes "my-space". */
+export const slugify = (text: string, fallback: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || fallback;
 export const str = (v: unknown, max = 5000) => (typeof v === 'string' ? v.slice(0, max) : undefined);
 export const reqStr = (v: unknown, label: string, max = 500) => {
   const s = typeof v === 'string' ? v.trim().slice(0, max) : '';

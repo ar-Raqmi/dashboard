@@ -32,7 +32,7 @@ export interface TwoFactorSecret {
   id: string; userId: string; accountName: string; secret: string; createdAt: string; updatedAt: string; category: string | null; icon: string | null;
 }
 export interface UserSettings {
-  id: string; userId: string; profileName: string; profilePicture: string | null; appTitle: string; appLogo: string | null;
+  id: string; userId: string; profileName: string; profilePicture: string | null; appTitle: string; brandName: string; appLogo: string | null;
   iconBackgroundColor: string; hijriVisible: boolean; hijriOffset: number; hijriProvider: string; hijriCalendar: string; showSeconds: boolean;
   clipboardText: string; backgroundType: string; backgroundColor: string; backgroundGradient: string; backgroundImage: string;
   backgroundOpacity: number; aladhanCity: string; aladhanCountry: string;

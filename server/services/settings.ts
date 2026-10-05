@@ -1,15 +1,18 @@
 import { bool, type Row, uuid } from '../db';
 import { BaseService, str } from './base';
 
+export const DEFAULT_BRAND = 'raqmi';
+const MAX_BRAND_LENGTH = 24;
+
 const DEFAULTS = {
-  profileName: '', profilePicture: '', appTitle: 'Dashboard', appLogo: '', iconBackgroundColor: '#A7C080',
+  profileName: '', profilePicture: '', appTitle: 'Dashboard', brandName: DEFAULT_BRAND, appLogo: '', iconBackgroundColor: '#A7C080',
   hijriVisible: true, hijriOffset: 0, hijriProvider: 'calculated', hijriCalendar: 'UmmAlQura', showSeconds: true, clipboardText: '',
   backgroundType: 'default', backgroundColor: '#A7C080', backgroundGradient: 'forest-dew', backgroundImage: '', backgroundOpacity: 30,
   aladhanCity: 'Kuala Lumpur', aladhanCountry: 'Malaysia',
 };
 type Settings = typeof DEFAULTS;
 
-const TEXT_FIELDS = ['profileName', 'profilePicture', 'appTitle', 'appLogo', 'iconBackgroundColor', 'hijriProvider', 'hijriCalendar', 'clipboardText',
+const TEXT_FIELDS = ['profileName', 'profilePicture', 'appTitle', 'brandName', 'appLogo', 'iconBackgroundColor', 'hijriProvider', 'hijriCalendar', 'clipboardText',
   'backgroundType', 'backgroundColor', 'backgroundGradient', 'backgroundImage', 'aladhanCity', 'aladhanCountry'] as const;
 const BOOL_FIELDS = ['hijriVisible', 'showSeconds'] as const;
 
@@ -37,6 +40,7 @@ export class SettingService extends BaseService {
     await this.get();
     const patch: Record<string, unknown> = {};
     for (const k of TEXT_FIELDS) if (args[k] !== undefined) patch[k] = str(args[k], k === 'clipboardText' ? 100000 : k.endsWith('Image') || k.endsWith('Picture') || k.endsWith('Logo') ? 400000 : 200) ?? '';
+    if (args.brandName !== undefined) patch.brandName = str(args.brandName, MAX_BRAND_LENGTH)?.trim() || DEFAULT_BRAND;
     for (const k of BOOL_FIELDS) if (args[k] !== undefined) patch[k] = !!args[k];
     if (args.hijriOffset !== undefined) patch.hijriOffset = Math.max(-3, Math.min(3, Math.round(Number(args.hijriOffset) || 0)));
     if (args.backgroundOpacity !== undefined) patch.backgroundOpacity = Math.max(0, Math.min(100, Math.round(Number(args.backgroundOpacity) || 0)));

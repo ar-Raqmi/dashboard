@@ -1,6 +1,7 @@
 import { assert, bool, iso, nowIso, uuid } from '../db';
 import { streamZip, type ZipEntry } from '../zip';
-import { BaseService, reqStr } from './base';
+import { BaseService, reqStr, slugify } from './base';
+import { DEFAULT_BRAND, SettingService } from './settings';
 
 interface FileRow {
   id: string; name: string; type: string; category: string | null; parentId: string | null; size: number | null;
@@ -181,7 +182,8 @@ export class FileService extends BaseService {
       assert(files <= MAX_ZIP_FILES, 400, `That selection holds more than ${MAX_ZIP_FILES} files. Download it in smaller parts.`);
     }
     const first = roots.length === 1 ? await this.owned<FileRow>('FileItem', roots[0], 'File') : null;
-    const name = first?.type === 'folder' ? `${zipSegment(first.name)}.zip` : `raqmi-files-${new Date().toISOString().slice(0, 10)}.zip`;
+    const { brandName } = await new SettingService(this.db, this.env, this.user).get();
+    const name = first?.type === 'folder' ? `${zipSegment(first.name)}.zip` : `${slugify(brandName, DEFAULT_BRAND)}-files-${new Date().toISOString().slice(0, 10)}.zip`;
     return { name, entries, files, folders, bytes, skipped };
   }
 
