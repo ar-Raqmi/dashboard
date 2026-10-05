@@ -1,24 +1,29 @@
 # Dashboard Developer Guidelines
 
-This project is built on a fully local and serverless architecture powered by Cloudflare Pages.
+A personal workspace (tasks, calendar, notes, goals, files, prayer times, 2FA codes) built as a
+Vite single-page app on Cloudflare Pages.
 
-## Tech Stack
-- **Frontend**: Next.js (Edge Runtime) & React 19
-- **Database**: Cloudflare D1 (managed via Prisma ORM)
-- **Object Storage**: Cloudflare R2
-- **Styling**: TailwindCSS & shadcn/ui
+## Tech stack
+- **Frontend**: Vite 7, React 19, TypeScript, Tailwind CSS 4, Zustand
+- **API**: Cloudflare Pages Functions. One catch-all, [functions/api/[[path]].ts](functions/api/[[path]].ts), hands every `/api/*` request to [server/api.ts](server/api.ts)
+- **Data**: Cloudflare D1 (binding `DB`, plain SQL through `server/db.ts`) and R2 (binding `BUCKET`)
+- **Schema**: numbered SQL files in [db/migrations](db/migrations); `0001_baseline.sql` mirrors production
 
-## Code Architecture
-- All API interactions on the client side must go through the unified, static [ApiClient](src/lib/api-client.ts) (`ApiClient.query` and `ApiClient.mutate`). Do not perform manual fetches to `/api/query` or `/api/mutation`.
-- Client-side queries/mutations can also use the `useQuery` / `useMutation` React hooks in [useApi.ts](src/hooks/useApi.ts).
-- The backend routes requests through a single unified OOP API Router ([api-router.ts](src/lib/api-router.ts)).
-- Domain logic is encapsulated in object-oriented service classes extending `BaseService` under [src/lib/services/](src/lib/services/).
-- The database instance is managed dynamically per-request using `AsyncLocalStorage` to bind Cloudflare D1 to Prisma ([db.ts](src/lib/db.ts)).
+## Code architecture
+- Domain logic lives in service classes under [server/services/](server/services/), each extending `BaseService` and scoped to the signed-in user for one request. Add behaviour to the matching service rather than to the router.
+- The client talks to the API only through [src/api.ts](src/api.ts); do not call `fetch('/api/...')` from components.
+- Settings, theme and UI state live in the Zustand store ([src/store.ts](src/store.ts)).
+- Keep React components as functions; use classes for services and clients.
+- Do not rename stored identifiers: the `overhaul:` keys in `DashboardLayout.layoutType` and the `overhaul/` R2 key prefix are live data.
 
-## Development Commands
-- Build project for Cloudflare Pages: `npm run pages:build`
-- Run wrangler local emulation (D1 and R2):
-  `npx wrangler pages dev .vercel/output/static --compatibility-date=2025-01-01 --d1=DB`
-- Sync local Prisma schema: `npm run db:push`
-- Regenerate Prisma client: `npm run db:generate`
-- Deploy to Cloudflare Pages (recommends setting up DB bindings first): `npm run pages:deploy`
+## Commands
+- `npm run dev`: Vite dev server (proxies `/api` to `wrangler pages dev` on :8788)
+- `npm run preview`: build, then `wrangler pages dev` with local D1 and R2
+- `npm run typecheck` / `npm run build`: the checks to run before every commit
+- `npx wrangler d1 migrations apply dashboard-db --local|--remote`: apply schema changes
+- `npm run deploy`: build and publish to **production** (`--branch=main`). Any other branch is a preview that shares production's D1 and R2
+
+## Conventions
+- Small, focused commits in `type(scope): message` form. No co-author trailer.
+- Comments explain why, not what.
+- `wrangler.toml` and `.dev.vars` are gitignored; edit `wrangler.toml.example` and `.dev.vars.example` when the shape changes.

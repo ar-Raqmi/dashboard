@@ -11,17 +11,13 @@
 
 <br />
 
-<!-- TODO: add a real screenshot of the overhaul SPA at .github/images/dashboard-dark.png and dashboard-light.png. -->
-> 📸 **Screenshot coming soon.** The previous screenshot showed the old Next.js app and has been removed.
+> 📸 **Screenshot coming soon.**
 
 </div>
 
 A personal workspace for tasks, calendar, notes, goals, files and daily spiritual practice, in the Everforest palette.
 
-The current app is a **Vite + React 19 single-page app in [`overhaul/`](overhaul/)**. Its API runs as Cloudflare Pages Functions, backed by a D1 database and an R2 bucket.
-
-> [!NOTE]
-> **There are two apps in this repo.** The SPA in `overhaul/` is the one being developed and deployed. The Next.js 16 app in the repo root (`src/`, `src/app/`, `prisma/`) is the **legacy** app. It is kept for reference and still builds, but it is no longer the current app. Both use the same D1 schema, so they can share one database. Unless a section says otherwise, everything below is about `overhaul/`.
+It is a **Vite + React 19 single-page app**. Its API runs as Cloudflare Pages Functions, backed by a D1 database and an R2 bucket.
 
 ---
 
@@ -48,7 +44,7 @@ The current app is a **Vite + React 19 single-page app in [`overhaul/`](overhaul
 | --- | --- |
 | UI | Vite 7, React 19, TypeScript, Tailwind CSS 4, Zustand |
 | Notes | `marked` (+ `marked-footnote`) and `DOMPurify`; `highlight.js` is lazy-loaded |
-| API | Cloudflare Pages Functions: one catch-all function, [`functions/api/[[path]].ts`](overhaul/functions/api/%5B%5Bpath%5D%5D.ts), routes to service classes in `server/` |
+| API | Cloudflare Pages Functions: one catch-all function, [`functions/api/[[path]].ts`](functions/api/%5B%5Bpath%5D%5D.ts), routes to service classes in `server/` |
 | Data | Cloudflare D1 (binding `DB`) and Cloudflare R2 (binding `BUCKET`) |
 | Auth | Username and password (bcrypt) with an HTTP-only, `SameSite=Strict` session cookie |
 
@@ -57,16 +53,14 @@ The app has no charts. There is also no automated test suite yet; `npm run typec
 ### 🗂️ Project layout
 
 ```
-overhaul/                 ← the current app
-├── src/                  React SPA: App.tsx (shell, routing, shortcuts), store.ts (Zustand), components/
-├── server/               API logic: api.ts (router), auth.ts, db.ts (D1 wrapper), services/*.ts
-├── functions/api/        Pages Functions entry point that hands every /api/* request to server/api.ts
-├── public/               Static assets
-├── wrangler.toml         Pages project config with the D1 and R2 bindings (committed)
-└── .dev.vars.example     Template for local secrets
-
-src/, src/app/, prisma/   ← legacy Next.js 16 app (not the current app)
-migration.sql             D1 schema, shared by both apps
+src/                  React SPA: App.tsx (shell, routing, shortcuts), store.ts (Zustand), components/
+server/               API logic: api.ts (router), auth.ts, db.ts (D1 wrapper), services/*.ts
+functions/api/        Pages Functions entry point that hands every /api/* request to server/api.ts
+db/migrations/        Numbered SQL migrations; 0001 is the production baseline
+public/               Static assets
+scripts/              seed-admin.mjs prints the SQL for a new login
+wrangler.toml         Local Pages config (gitignored); copy wrangler.toml.example
+.dev.vars.example     Template for local secrets
 ```
 
 ---
@@ -76,7 +70,7 @@ migration.sql             D1 schema, shared by both apps
 #### 1. Install
 ```bash
 git clone https://github.com/ar-Raqmi/dashboard.git
-cd dashboard/overhaul
+cd dashboard
 npm install
 ```
 
@@ -86,21 +80,16 @@ cp .dev.vars.example .dev.vars
 ```
 Set `JWT_SECRET` in `.dev.vars`. This file is gitignored, so never commit it. It is the only secret the SPA reads.
 
-There is no `.env`, no `DATABASE_URL` and no Prisma in the SPA. D1 and R2 are **bindings** declared in [`overhaul/wrangler.toml`](overhaul/wrangler.toml). They are not environment variables. Locally, Wrangler emulates both bindings and keeps their data under `overhaul/.wrangler/`.
+There is no `.env` and no `DATABASE_URL`. D1 and R2 are **bindings** declared in `wrangler.toml` (copy [`wrangler.toml.example`](wrangler.toml.example) and fill in your IDs). They are not environment variables. Locally, Wrangler emulates both bindings and keeps their data under `.wrangler/`.
 
-#### 3. Seed the local D1 database
-The local D1 database starts empty. Load the shared schema into it:
+#### 3. Create the local D1 database
+The local D1 database starts empty. Apply the migrations, then add a login (the app has no sign-up screen):
 ```bash
-npx wrangler d1 execute <database_name> --local --file=../migration.sql
+npx wrangler d1 migrations apply dashboard-db --local
+node scripts/seed-admin.mjs you 'your-password' > .wrangler/seed.sql
+npx wrangler d1 execute dashboard-db --local --file=.wrangler/seed.sql
 ```
-Use the `database_name` from `wrangler.toml`.
-
-The SPA has no sign-up screen, so you also need a `User` row. One way to add one:
-```bash
-HASH=$(node -e "console.log(require('bcryptjs').hashSync(process.argv[1], 12))" 'your-password')
-npx wrangler d1 execute <database_name> --local --command \
-  "INSERT INTO User (id, username, passwordHash, salt, createdAt) VALUES (lower(hex(randomblob(16))), 'you', '$HASH', '', datetime('now'));"
-```
+Use the `database_name` from `wrangler.toml` in place of `dashboard-db` if you renamed it.
 
 #### 4. Run
 The API exists only as Pages Functions, so `wrangler pages dev` has to run for logins and data to work.
@@ -127,13 +116,13 @@ npm run dev          # terminal 2: Vite dev server with HMR
 
 ### 🌐 Deployment
 
-`overhaul/wrangler.toml` is committed and defines the Pages project name, the build output (`dist`), and the `DB` (D1) and `BUCKET` (R2) bindings. Edit that file rather than writing a new one. If you fork the project, point it at your own D1 database and R2 bucket:
+`wrangler.toml` defines the Pages project name, the build output (`dist`), the migrations folder, and the `DB` (D1) and `BUCKET` (R2) bindings. If you fork the project, point it at your own D1 database and R2 bucket:
 
 ```bash
 npx wrangler login
 npx wrangler d1 create <your-db-name>             # copy the name and id into wrangler.toml
 npx wrangler r2 bucket create <your-bucket-name>  # copy the name into wrangler.toml
-npx wrangler d1 execute <your-db-name> --remote --file=../migration.sql
+npx wrangler d1 migrations apply <your-db-name> --remote
 ```
 
 Set the secret:
@@ -144,11 +133,11 @@ npx wrangler pages secret put JWT_SECRET --project-name=<project> --env=preview
 
 Deploy:
 ```bash
-cd overhaul && npm run deploy
+npm run deploy
 ```
 
 > [!IMPORTANT]
-> `npm run deploy` runs `wrangler pages deploy --branch=overhaul`, so it **always deploys to the `overhaul` branch**, whatever git branch you are on. Whether that is a preview or a production deployment depends on the project's production branch in the Cloudflare dashboard. To target another branch, run `npm run build && npx wrangler pages deploy --branch=<branch>`.
+> `npm run deploy` runs `wrangler pages deploy dist --project-name=ar-raqmi --branch=main`, which **replaces the production site**. To try a build first, run `npm run build && npx wrangler pages deploy dist --project-name=<project> --branch=<other-branch>`. That publishes a preview that reads the **same D1 and R2** as production.
 
 > [!WARNING]
 > **Preview and production have separate secrets.** A `JWT_SECRET` set on the production environment is **not** available to preview branches. Set it on both (see the commands above), or preview deployments will show the Authenticator as locked.
@@ -164,7 +153,7 @@ To add an account:
 2. Add an account. Enter the account name, then paste the service's **Base32 setup key**: the text secret that services show next to their QR code, often behind "Can't scan it?" or "Enter key manually". There is no QR scanning. Spaces and dashes are removed, and the key must be at least 16 Base32 characters.
 3. Optionally, give it a category (for example, Work). You can remove the entry later.
 
-Secrets are encrypted with AES-GCM using a key derived from `JWT_SECRET`. The format matches the legacy app, so entries created there still decrypt.
+Secrets are encrypted with AES-GCM using a key derived from `JWT_SECRET`.
 
 > [!IMPORTANT]
 > **`JWT_SECRET` controls access to every stored 2FA secret.**
@@ -200,10 +189,6 @@ The single-letter shortcuts do nothing while you are typing in a field or while 
 - [ ] Search palette (<kbd>⌘K</kbd>) and collapsing the sidebar (<kbd>⌘B</kbd>)
 
 ---
-
-### 🏛️ Legacy Next.js app
-
-The original app is still in the repo root. It is a Next.js 16 app built with `@cloudflare/next-on-pages`, uses Prisma over D1, and has its own `package.json` scripts (`dev`, `pages:build`, `pages:deploy`, `db:*`) and root `wrangler.toml`. It is not the current app and gets no new work. The SPA replaced its `/api/query` and `/api/mutation` endpoints and its `/api/storage/*` routes with the Pages Functions in `overhaul/`.
 
 ---
 
