@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useStore, type Priority, type TaskStatus, type TaskView } from '../store';
-import { shortDate } from '../utils/date';
-import { initialsOf } from '../utils/text';
-import { Icon } from './Icon';
-import { repeatLabel } from './NewTaskModal';
+import { useStore, type Priority, type TaskStatus, type TaskView } from '@/store';
+import { shortDate } from '@/lib/date';
+import { initialsOf } from '@/lib/text';
+import { Icon } from '@/components/Icon';
+import { repeatLabel } from '@/features/tasks/NewTaskModal';
 
 export const statusLabel = (s: TaskStatus) => (s === 'completed' ? 'Completed' : s === 'in_progress' ? 'In progress' : 'To do');
 

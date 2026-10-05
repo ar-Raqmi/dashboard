@@ -1,9 +1,9 @@
 import { useState, type FormEvent } from 'react';
-import { useStore, type EventView } from '../store';
-import { downloadFile, formatTime, minutesBetween, parseDateKey, todayKey } from '../utils/date';
-import { Icon } from './Icon';
-import { Modal } from './Modal';
-import { REPEAT_OPTIONS, repeatLabel } from './NewTaskModal';
+import { useStore, type EventView } from '@/store';
+import { downloadFile, formatTime, minutesBetween, parseDateKey, todayKey } from '@/lib/date';
+import { Icon } from '@/components/Icon';
+import { Modal } from '@/components/Modal';
+import { REPEAT_OPTIONS, repeatLabel } from '@/features/tasks/NewTaskModal';
 
 const EVENT_COLORS = ['#A7C080', '#7FBBB3', '#DBBC7F', '#E69875', '#E67E80', '#D699B6', '#83C092'];
 const pad = (n: number) => String(n).padStart(2, '0');

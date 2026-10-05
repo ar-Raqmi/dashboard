@@ -1,10 +1,10 @@
 import { useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
-import { ApiClient } from '../api';
-import { useAuth } from '../auth';
-import { useStore, type SettingsView, type Theme } from '../store';
-import { downloadFile } from '../utils/date';
-import { initialsOf } from '../utils/text';
-import { Icon } from './Icon';
+import { ApiClient } from '@/lib/api';
+import { useAuth } from '@/features/auth/auth';
+import { useStore, type SettingsView, type Theme } from '@/store';
+import { downloadFile } from '@/lib/date';
+import { initialsOf } from '@/lib/text';
+import { Icon } from '@/components/Icon';
 
 function Toggle({ on, label, onChange }: { on: boolean; label: string; onChange: (next: boolean) => void }) {
   return <button className={`toggle-switch ${on ? 'on' : ''}`} role="switch" aria-checked={on} aria-label={label} onClick={() => onChange(!on)}><span/></button>;

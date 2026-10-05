@@ -1,8 +1,8 @@
-import { useStore } from '../store';
-import { Icon } from './Icon';
-import { hijriLabel, PrayerTimes } from './PrayerTimes';
-import { Verse } from './Verse';
-import { WorldClocks } from './WorldClocks';
+import { useStore } from '@/store';
+import { Icon } from '@/components/Icon';
+import { hijriLabel, PrayerTimes } from '@/features/spiritual/PrayerTimes';
+import { Verse } from '@/features/spiritual/Verse';
+import { WorldClocks } from '@/features/spiritual/WorldClocks';
 
 export function SpiritualPage({ onManageClocks }: { onManageClocks: () => void }) {
   const prayer = useStore(s => s.prayer), settings = useStore(s => s.settings), hadith = useStore(s => s.hadith);

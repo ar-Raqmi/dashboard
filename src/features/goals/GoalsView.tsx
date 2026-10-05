@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react';
-import { goalColor, isGoalComplete, useStore, type GoalView } from '../store';
-import { cn } from '../utils/cn';
-import { Icon } from './Icon';
-import { ConfirmModal, Modal } from './Modal';
+import { goalColor, isGoalComplete, useStore, type GoalView } from '@/store';
+import { cn } from '@/lib/cn';
+import { Icon } from '@/components/Icon';
+import { ConfirmModal, Modal } from '@/components/Modal';
 
 export function GoalsView({ notify }: { notify: (message: string) => void }) {
   const goals = useStore(s => s.goals);

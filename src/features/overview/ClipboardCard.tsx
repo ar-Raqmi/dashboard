@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { useStore } from '../store';
-import { copyText } from '../utils/date';
-import { Icon } from './Icon';
+import { useStore } from '@/store';
+import { copyText } from '@/lib/date';
+import { Icon } from '@/components/Icon';
 
 /** Scratch text that follows you across devices. Saved when the field loses focus. */
 export function ClipboardCard({ notify }: { notify: (message: string) => void }) {

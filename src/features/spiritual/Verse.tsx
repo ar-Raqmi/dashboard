@@ -1,5 +1,5 @@
-import { useStore } from '../store';
-import { Icon } from './Icon';
+import { useStore } from '@/store';
+import { Icon } from '@/components/Icon';
 
 export function Verse({ full = false }: { full?: boolean }) {
   const verse = useStore(s => s.verse);

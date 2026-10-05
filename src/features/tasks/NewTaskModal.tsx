@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react';
-import { useStore, type Priority } from '../store';
-import { todayKey } from '../utils/date';
-import { Icon } from './Icon';
-import { Modal } from './Modal';
+import { useStore, type Priority } from '@/store';
+import { todayKey } from '@/lib/date';
+import { Icon } from '@/components/Icon';
+import { Modal } from '@/components/Modal';
 
 /** Repeat presets shared by tasks and events; values are RRULE bodies. */
 export const REPEAT_OPTIONS = [

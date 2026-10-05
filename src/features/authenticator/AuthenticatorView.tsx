@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { ApiClient } from '../api';
-import { useStore, type TwoFactorAccount, type TwoFactorList } from '../store';
-import { copyText } from '../utils/date';
-import { Icon } from './Icon';
-import { ConfirmModal, Modal } from './Modal';
+import { ApiClient } from '@/lib/api';
+import { useStore, type TwoFactorAccount, type TwoFactorList } from '@/store';
+import { copyText } from '@/lib/date';
+import { Icon } from '@/components/Icon';
+import { ConfirmModal, Modal } from '@/components/Modal';
 
 /** Loads the account list and keeps the current one-time code and countdown ticking. */
 export function useTwoFactorCodes() {

@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useNoteWrap } from '../hooks/useNoteWrap';
-import { useStore, type NoteView } from '../store';
-import { shortDate } from '../utils/date';
-import { Icon } from './Icon';
-import { Markdown } from './Markdown';
+import { useNoteWrap } from '@/features/notes/useNoteWrap';
+import { useStore, type NoteView } from '@/store';
+import { shortDate } from '@/lib/date';
+import { Icon } from '@/components/Icon';
+import { Markdown } from '@/features/notes/Markdown';
 
 export function NotesPage({ onOpenNote }: { onOpenNote: (note: NoteView) => void }) {
   const notes = useStore(s => s.notes);

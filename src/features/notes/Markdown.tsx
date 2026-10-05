@@ -10,7 +10,7 @@ DOMPurify.addHook('afterSanitizeAttributes', node => {
 });
 
 /** Set once the lazy highlighter chunk has loaded; until then fenced code renders plain. */
-let highlighter: typeof import('./highlight').highlight | null = null;
+let highlighter: typeof import('@/features/notes/highlight').highlight | null = null;
 let loading: Promise<void> | null = null;
 
 const escapeHtml = (s: string) => s.replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
@@ -48,7 +48,7 @@ function useHighlighter(needed: boolean) {
   useEffect(() => {
     if (!needed || highlighter) return;
     let live = true;
-    (loading ??= import('./highlight').then(m => { highlighter = m.highlight; }, () => { loading = null; }))
+    (loading ??= import('@/features/notes/highlight').then(m => { highlighter = m.highlight; }, () => { loading = null; }))
       .then(() => { if (live && highlighter) setReady(true); });
     return () => { live = false; };
   }, [needed]);

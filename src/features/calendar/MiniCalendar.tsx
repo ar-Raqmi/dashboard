@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useStore, type EventView } from '../store';
-import { addDays, formatTime, parseDateKey, toDateKey, todayKey } from '../utils/date';
-import { Icon } from './Icon';
-import { repeatLabel } from './NewTaskModal';
+import { useStore, type EventView } from '@/store';
+import { addDays, formatTime, parseDateKey, toDateKey, todayKey } from '@/lib/date';
+import { Icon } from '@/components/Icon';
+import { repeatLabel } from '@/features/tasks/NewTaskModal';
 
 const AGENDA_LIMIT = 4;
 

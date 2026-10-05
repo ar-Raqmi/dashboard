@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
-import { Icon } from './Icon';
+import { Icon } from '@/components/Icon';
 
 /** `keyboard` opts a dialog into raising the on-screen keyboard on touch devices (e.g. a search box the user just tapped to type in). */
 export function Modal({ title, children, onClose, className = '', keyboard = false }: { title: string; children: ReactNode; onClose: () => void; className?: string; keyboard?: boolean }) {

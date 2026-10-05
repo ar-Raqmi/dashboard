@@ -1,6 +1,6 @@
-import { useStore, type EventView } from '../store';
-import { formatTime, parseDateKey, todayKey } from '../utils/date';
-import { Icon } from './Icon';
+import { useStore, type EventView } from '@/store';
+import { formatTime, parseDateKey, todayKey } from '@/lib/date';
+import { Icon } from '@/components/Icon';
 
 export function EventList({ onEvent, onCalendar }: { onEvent: (event: EventView) => void; onCalendar: () => void }) {
   const events = useStore(s => s.events);

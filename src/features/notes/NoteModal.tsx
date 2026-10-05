@@ -1,10 +1,10 @@
 import { useState, type FormEvent } from 'react';
-import { useNoteWrap } from '../hooks/useNoteWrap';
-import { useStore, type NoteView } from '../store';
-import { copyText } from '../utils/date';
-import { Icon } from './Icon';
-import { Markdown } from './Markdown';
-import { Modal } from './Modal';
+import { useNoteWrap } from '@/features/notes/useNoteWrap';
+import { useStore, type NoteView } from '@/store';
+import { copyText } from '@/lib/date';
+import { Icon } from '@/components/Icon';
+import { Markdown } from '@/features/notes/Markdown';
+import { Modal } from '@/components/Modal';
 
 const NOTE_COLORS = ['#A7C080', '#83C092', '#7FBBB3', '#DBBC7F', '#E69875', '#E67E80', '#D699B6'];
 type EditorMode = 'write' | 'split' | 'preview';

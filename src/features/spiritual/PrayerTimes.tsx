@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useStore, type PrayerDay, type SettingsView } from '../store';
-import { Icon } from './Icon';
+import { useStore, type PrayerDay, type SettingsView } from '@/store';
+import { Icon } from '@/components/Icon';
 
 const PRAYERS = [['Fajr', 'fajr'], ['Dhuhr', 'dhuhr'], ['Asr', 'asr'], ['Maghrib', 'maghrib'], ['Isha', 'isha']] as const;
 

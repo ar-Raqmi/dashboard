@@ -1,13 +1,13 @@
-import { useNoteWrap } from '../hooks/useNoteWrap';
-import { goalColor, isGoalComplete, useStore, type EventView, type NoteView, type TaskView } from '../store';
-import { shortDate } from '../utils/date';
-import { MiniAuthenticator } from './AuthenticatorView';
-import { ClipboardCard } from './ClipboardCard';
-import { Icon } from './Icon';
-import { Markdown } from './Markdown';
-import { MiniCalendar } from './MiniCalendar';
-import { TaskTable } from './TaskTable';
-import { OverviewVerse } from './Verse';
+import { useNoteWrap } from '@/features/notes/useNoteWrap';
+import { goalColor, isGoalComplete, useStore, type EventView, type NoteView, type TaskView } from '@/store';
+import { shortDate } from '@/lib/date';
+import { MiniAuthenticator } from '@/features/authenticator/AuthenticatorView';
+import { ClipboardCard } from '@/features/overview/ClipboardCard';
+import { Icon } from '@/components/Icon';
+import { Markdown } from '@/features/notes/Markdown';
+import { MiniCalendar } from '@/features/calendar/MiniCalendar';
+import { TaskTable } from '@/features/tasks/TaskTable';
+import { OverviewVerse } from '@/features/spiritual/Verse';
 
 /** Visible unless the user switched the widget off in Settings. */
 export const useWidgetVisible = () => {

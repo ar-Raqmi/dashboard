@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { isActionable, taskDate, useStore, type Priority, type TaskView } from '../store';
-import { downloadFile, dueLabel, todayKey } from '../utils/date';
-import { Icon } from './Icon';
-import { PriorityMark } from './PriorityMark';
-import { statusLabel } from './TaskDetail';
+import { isActionable, taskDate, useStore, type Priority, type TaskView } from '@/store';
+import { downloadFile, dueLabel, todayKey } from '@/lib/date';
+import { Icon } from '@/components/Icon';
+import { PriorityMark } from '@/features/tasks/PriorityMark';
+import { statusLabel } from '@/features/tasks/TaskDetail';
 
 type Tab = 'all' | 'today' | 'upcoming' | 'completed';
 type SortKey = 'title' | 'due' | 'priority';

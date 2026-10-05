@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { ApiClient } from './api';
-import { todayKey } from './utils/date';
+import { ApiClient } from '@/lib/api';
+import { todayKey } from '@/lib/date';
 
 /* ------------------------------------------------------------------ *
  * Database models — one interface per table in db/migrations.     *

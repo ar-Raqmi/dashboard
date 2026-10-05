@@ -1,12 +1,12 @@
 import { createPortal } from 'react-dom';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type MutableRefObject } from 'react';
-import { ApiClient, ApiError } from '../api';
-import { useMarquee } from '../hooks/useMarquee';
-import { useStore, type FileView } from '../store';
-import { formatBytes, shortDate } from '../utils/date';
-import { makeThumbnail } from '../utils/thumbnail';
-import { Icon, type IconName } from './Icon';
-import { ConfirmModal, Modal } from './Modal';
+import { ApiClient, ApiError } from '@/lib/api';
+import { useMarquee } from '@/features/files/useMarquee';
+import { useStore, type FileView } from '@/store';
+import { formatBytes, shortDate } from '@/lib/date';
+import { makeThumbnail } from '@/lib/thumbnail';
+import { Icon, type IconName } from '@/components/Icon';
+import { ConfirmModal, Modal } from '@/components/Modal';
 
 interface Listing { items: FileView[]; path: { id: string; name: string }[] }
 interface Loc { folderId: string | null; starred: boolean }

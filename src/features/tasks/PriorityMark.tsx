@@ -1,4 +1,4 @@
-import type { Priority } from '../store';
+import type { Priority } from '@/store';
 
 export const priorityLabel = (p: Priority) => (p === 'high' ? 'High' : p === 'low' ? 'Low' : 'Medium');
 
