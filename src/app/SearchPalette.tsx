@@ -41,7 +41,8 @@ export function SearchPalette({ onClose, onNavigate, onSelectTask, onOpenNote, o
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') { e.preventDefault(); setIndex(i => Math.max(0, Math.min(i + 1, results.length - 1))); }
     if (e.key === 'ArrowUp') { e.preventDefault(); setIndex(i => Math.max(i - 1, 0)); }
-    if (e.key === 'Enter' && results[index]) open(results[index]);
+    // preventDefault: closing restores focus to the nav button that opened it, and the same Enter would then click it.
+    if (e.key === 'Enter' && results[index]) { e.preventDefault(); open(results[index]); }
   };
 
   return <Modal title="Search workspace" onClose={onClose} className="search-modal" keyboard>
