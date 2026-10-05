@@ -1,11 +1,10 @@
 // Bump VERSION to drop every cache from older releases. Hashed files under /assets never change
 // for a given name, so they are safe to serve from cache first; the HTML shell is network-first.
-const VERSION = 'v2';
+const VERSION = 'v3';
 const SHELL_CACHE = `dashboard-shell-${VERSION}`;
 const ASSET_CACHE = `dashboard-assets-${VERSION}`;
-const PRECACHE = ['/', '/offline.html', '/favicon.svg', '/icon-192.png', '/icon-512.png'];
-// Per-user and changeable from Settings, so always asked of the network.
-const NETWORK_ONLY = ['/api/', '/pwa-icon/', '/manifest.webmanifest', '/sw.js'];
+const PRECACHE = ['/', '/offline.html', '/favicon.svg', '/logo.png'];
+const NETWORK_ONLY = ['/api/', '/sw.js'];
 
 self.addEventListener('install', event => {
   event.waitUntil(precache().then(() => self.skipWaiting()));

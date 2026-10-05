@@ -15,7 +15,7 @@ Vite single-page app on Cloudflare Pages.
 - Data, settings and preferences live in the Zustand store ([src/store](src/store)). "Now" and "today" come from `timeZone` in [src/lib/timezone.ts](src/lib/timezone.ts), never from the browser's implicit zone.
 - Features live in `src/features/<name>`; the shell (sidebar, top bar, rail) is `src/app`. Import with the `@/` alias.
 - Dates are shown through `dateFormat` ([src/lib/dateFormat.ts](src/lib/dateFormat.ts)) and entered with `DateField`; do not format dates with `toLocaleDateString` in components.
-- The app icon is one definition in [src/features/brand/icons.ts](src/features/brand/icons.ts) used by the sidebar, the favicon and the installed-app icon (served by `server/pwa.ts`).
+- The in-app and tab icon is one definition in [src/features/brand/icons.ts](src/features/brand/icons.ts). The installed-app icon is fixed: `public/logo.png`, referenced by `public/manifest.webmanifest`.
 - Prayer times and the Hijri date are separate sources under [server/services/prayer](server/services/prayer): add a provider by implementing `PrayerSource` or `HijriSource`.
 - Every settings column is a validated `Field` in [server/services/settings.ts](server/services/settings.ts); add a numbered file in `db/migrations` with it.
 - Keep React components as functions; use classes for services and clients.
@@ -25,7 +25,6 @@ Vite single-page app on Cloudflare Pages.
 - `npm run dev`: Vite dev server (proxies `/api` to `wrangler pages dev` on :8788)
 - `npm run preview`: build, then `wrangler pages dev` with local D1 and R2
 - `npm run typecheck` / `npm run build`: the checks to run before every commit
-- `npm run icons`: regenerate the PNG icon set from `public/logo.svg`
 - `npx wrangler d1 migrations apply dashboard-db --local|--remote`: apply schema changes
 - `npm run deploy`: build and publish to **production** (`--branch=main`). Any other branch is a preview that shares production's D1 and R2
 

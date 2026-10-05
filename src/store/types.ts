@@ -34,7 +34,7 @@ export interface TwoFactorSecret {
   id: string; userId: string; accountName: string; secret: string; createdAt: string; updatedAt: string; category: string | null; icon: string | null;
 }
 export interface UserSettings {
-  id: string; userId: string; profileName: string; profilePicture: string | null; appTitle: string; brandName: string; brandIcon: BrandIconSetting; pwaIcon: string; pwaIconMaskable: string; dateFormat: string; timezone: string; appLogo: string | null;
+  id: string; userId: string; profileName: string; profilePicture: string | null; appTitle: string; brandName: string; brandIcon: BrandIconSetting; dateFormat: string; timezone: string; appLogo: string | null;
   iconBackgroundColor: string; showSeconds: boolean;
   clipboardText: string; backgroundType: string; backgroundColor: string; backgroundGradient: string; backgroundImage: string;
   backgroundOpacity: number;

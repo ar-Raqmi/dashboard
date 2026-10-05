@@ -15,7 +15,6 @@ import { SpiritualPage } from '@/features/spiritual/SpiritualPage';
 import { NewTaskModal } from '@/features/tasks/NewTaskModal';
 import { TasksPage } from '@/features/tasks/TasksPage';
 import { brandSlug } from '@/features/brand/brand';
-import { useIconRepair } from '@/features/brand/useIconRepair';
 import { downloadScreenshot, exportWorkspace } from '@/lib/workspaceExport';
 import { useStore, type EventView, type NoteView, type TaskView } from '@/store';
 import { Footer } from './Footer';
@@ -57,7 +56,6 @@ export function Workspace() {
   const collapsed = !!preferences.sidebarCollapsed;
   const activeTask = tasks.find(t => t.id === selectedTask);
   useDocumentChrome(pageLabel(page));
-  useIconRepair();
   useGlobalShortcuts({
     onSearch: () => setSearchOpen(open => !open),
     onNewTask: () => setNewTask(true),

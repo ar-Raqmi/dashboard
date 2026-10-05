@@ -4,7 +4,6 @@ import { BaseService, oneOf, str } from './base';
 export const DEFAULT_BRAND = 'raqmi';
 const MAX_BRAND_LENGTH = 24;
 const LARGE = 400_000;
-const ICON_MAX = 700_000;
 
 /** How one settings column is decoded from a row and validated on the way in. `write` returns undefined to leave the column alone. */
 interface Field<T> {
@@ -83,16 +82,6 @@ const imageSource: Field<string> = {
     }
   },
 };
-/** An icon image rendered by the browser, or '' to fall back to the built-in icons. */
-const iconDataUrl: Field<string> = {
-  default: '',
-  read: raw => (typeof raw === 'string' ? raw : ''),
-  write: value => {
-    const src = typeof value === 'string' ? value : '';
-    assert(!src || (/^data:image\/(png|webp);base64,[A-Za-z0-9+/=]+$/.test(src) && src.length <= ICON_MAX), 400, 'Installed-app icons must be PNG or WebP images under 500 KB');
-    return src;
-  },
-};
 /** 'auto' or a pattern built from d, m, y (and e for the weekday) with / - . , and spaces, e.g. dd/mm/yyyy. */
 const dateFormat: Field<string> = {
   default: 'auto',
@@ -125,8 +114,6 @@ const FIELDS = {
   timezone,
   appLogo: imageSource,
   brandIcon: choice('raqmi', ['raqmi', 'feather', 'leaf', 'moon', 'compass', 'book', 'bolt', 'star', 'custom', 'none'] as const),
-  pwaIcon: iconDataUrl,
-  pwaIconMaskable: iconDataUrl,
   dateFormat,
   iconBackgroundColor: text('#A7C080'),
   clipboardText: text('', 100_000),
