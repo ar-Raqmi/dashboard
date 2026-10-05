@@ -1,0 +1,8 @@
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# The worker and manifest must revalidate so a new release is picked up promptly.
+/sw.js
+  Cache-Control: no-cache
+/manifest.webmanifest
+  Cache-Control: no-cache
