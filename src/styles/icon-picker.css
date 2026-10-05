@@ -8,6 +8,10 @@
 .image-link { width: 100%; justify-content: flex-end; }
 .image-link > input { flex: 1; min-width: 0; max-width: 300px; }
 
-.date-field { display: flex; align-items: center; gap: 6px; }
-.date-field > input[type="text"] { flex: 1; min-width: 0; }
+/* The calendar button sits inside the box, like a native date control, so the field lines up with its neighbours. */
+.date-field { position: relative; display: block; }
+.form-label > .date-field { margin-top: 8px; }
+.date-field > input[type="text"] { display: block; width: 100%; padding-right: 36px; }
+.form-label .date-field > input[type="text"] { height: 39px; padding-top: 10px; padding-bottom: 10px; padding-left: 11px; background: var(--bg0); font-size: 13px; }
+.date-field > .icon-button { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); }
 .date-field > input[aria-invalid="true"] { border-color: var(--red); }
