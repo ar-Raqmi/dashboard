@@ -4,6 +4,7 @@ import { BaseService, oneOf, str } from './base';
 export const DEFAULT_BRAND = 'raqmi';
 const MAX_BRAND_LENGTH = 24;
 const LARGE = 400_000;
+const ICON_MAX = 700_000;
 
 /** How one settings column is decoded from a row and validated on the way in. `write` returns undefined to leave the column alone. */
 interface Field<T> {
@@ -88,7 +89,7 @@ const iconDataUrl: Field<string> = {
   read: raw => (typeof raw === 'string' ? raw : ''),
   write: value => {
     const src = typeof value === 'string' ? value : '';
-    assert(!src || (/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(src) && src.length <= LARGE), 400, 'Icons must be PNG, JPEG or WebP images under 400 KB');
+    assert(!src || (/^data:image\/(png|webp);base64,[A-Za-z0-9+/=]+$/.test(src) && src.length <= ICON_MAX), 400, 'Installed-app icons must be PNG or WebP images under 500 KB');
     return src;
   },
 };

@@ -8,8 +8,8 @@ function canvasToPng(draw: (ctx: CanvasRenderingContext2D) => void) {
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas is unavailable');
   draw(ctx);
-  // JPEG: the tile is opaque, and a 512px PNG of a gradient is several times larger than it needs to be.
-  return canvas.toDataURL('image/jpeg', 0.92);
+  // PNG only: Chrome refuses to install an app whose manifest icons are JPEG.
+  return canvas.toDataURL('image/png');
 }
 
 const loadImage = (src: string, crossOrigin = false) => new Promise<HTMLImageElement>((resolve, reject) => {

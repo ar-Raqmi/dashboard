@@ -40,7 +40,7 @@ export class PwaAssets {
       description: 'A personal workspace for tasks, calendar, notes, goals, files and daily prayer times.',
       start_url: '/', scope: '/', display: 'standalone', orientation: 'any',
       background_color: THEME, theme_color: THEME, lang: 'en', dir: 'ltr',
-      icons: owner?.pwaIcon ? this.customIcons(owner) : DEFAULT_ICONS,
+      icons: owner && installable(owner.pwaIcon) ? this.customIcons(owner) : DEFAULT_ICONS,
       categories: ['productivity', 'utilities'], prefer_related_applications: false,
     };
   }
@@ -53,7 +53,7 @@ export class PwaAssets {
       { src: any, sizes: '192x192', type, purpose: 'any' },
       { src: any, sizes: '512x512', type, purpose: 'any' },
     ];
-    if (owner.pwaIconMaskable) icons.unshift({ src: `/pwa-icon/maskable${query(owner.pwaIconMaskable)}`, sizes: '512x512', type: mimeOf(owner.pwaIconMaskable), purpose: 'maskable' });
+    if (installable(owner.pwaIconMaskable)) icons.unshift({ src: `/pwa-icon/maskable${query(owner.pwaIconMaskable)}`, sizes: '512x512', type: mimeOf(owner.pwaIconMaskable), purpose: 'maskable' });
     return icons;
   }
 
@@ -70,6 +70,9 @@ export class PwaAssets {
       : db.first<IconRow>("SELECT userId, pwaIcon, pwaIconMaskable FROM UserSettings WHERE pwaIcon != '' ORDER BY rowid LIMIT 1");
   }
 }
+
+/** Chrome only treats PNG, SVG and WebP manifest icons as installable; anything else (an old JPEG) falls back to the built-in set. */
+const installable = (dataUrl: string) => /^data:image\/(png|webp);base64,/.test(dataUrl);
 
 const mimeOf = (dataUrl: string) => /^data:([^;]+);/.exec(dataUrl)?.[1] ?? 'image/png';
 
