@@ -1,178 +1,152 @@
-<div align="center">
+<h1 align="center">dashboard</h1>
+<p align="center">
+  <img src=".github/preview.png" alt="The dashboard in light and dark Everforest themes: tasks, calendar, prayer times and the daily ayah" width="100%">
+</p>
+<p align="center">
+  <video src="https://github.com/user-attachments/assets/7c73e2ca-af91-4f5d-bf11-c9de301469a0" controls muted width="100%"></video>
+</p>
+<p align="center">
+  <strong>One calm place for tasks, notes, files and the daily prayer times.</strong>
+</p>
+<p align="center">
+  <img src="https://img.shields.io/badge/Vite-7-4D7C0F?style=flat-square&labelColor=1A2E05&logo=vite&logoColor=white" alt="Vite 7">
+  <img src="https://img.shields.io/badge/React-19-4D7C0F?style=flat-square&labelColor=1A2E05&logo=react&logoColor=white" alt="React 19">
+  <img src="https://img.shields.io/badge/TypeScript-5-4D7C0F?style=flat-square&labelColor=1A2E05&logo=typescript&logoColor=white" alt="TypeScript 5">
+  <img src="https://img.shields.io/badge/Cloudflare-Pages%20%C2%B7%20D1%20%C2%B7%20R2-4D7C0F?style=flat-square&labelColor=1A2E05&logo=cloudflare&logoColor=white" alt="Cloudflare Pages, D1 and R2">
+</p>
 
-# Dashboard
+A personal workspace in the Everforest palette: tasks, calendar, notes, goals, files, a prayer-times page and a 2FA code generator, in one installable app that runs on your own Cloudflare account. Built with Vite, React 19 and TypeScript on Cloudflare Pages, D1 and R2.
 
-*Your personal digital sanctuary.*
+## Why this exists
 
-![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite)
-![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
-![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-F38020?logo=cloudflare)
+My tasks lived in one app, my notes in another, my files somewhere else, and the prayer times in a fourth tab. I wanted all of it in one place that I own: my account, my database, my storage.
 
-<br />
+It is also built to travel. The time zone, the prayer-times location and the Hijri calendar are all settings, not hardcoded, so changing country is a few clicks and not a code change.
 
-> 📸 **Screenshot coming soon.**
+It is single-user by design: there is no sign-up screen, and you create the login yourself (see [Quick start](#quick-start)).
 
-</div>
+## What's inside
 
-A personal workspace for tasks, calendar, notes, goals, files and daily spiritual practice, in the Everforest palette.
+**Work**
+- **Tasks** with priorities, due dates and repeating schedules (RRULE). Goals double as projects.
+- **Calendar** with repeating events and per-occurrence exceptions.
+- **Notes** in Markdown: GitHub-style tables, footnotes and task lists, sanitised with DOMPurify. Code highlighting only loads when a note contains code.
+- **Goals** with milestones.
+- **Files** in Cloudflare R2: folders, uploads, rename, move, star, thumbnails for images and video, and zip download.
 
-It is a **Vite + React 19 single-page app**. Its API runs as Cloudflare Pages Functions, backed by a D1 database and an R2 bucket.
+**Daily**
+- **Spiritual**: a daily ayah (Arabic with English), a hadith, prayer times and the Hijri date.
+- **Authenticator**: a TOTP code generator for your other accounts.
+- **World clocks** and a cross-device **clipboard**.
 
----
+**Feels like an app**
+- Light and dark Everforest themes, a ⌘K search palette and [keyboard shortcuts](#keyboard-shortcuts).
+- An installable PWA with an offline screen.
+- Export the whole workspace to JSON, or save a screenshot of the page.
 
-### ✨ Features
+## Make it yours
 
-- **Everforest design system** with light and dark appearances
-- **Overview** showing today's tasks, events, pinned notes, the daily ayah and a cross-device clipboard
-- **Tasks** with priorities, due dates, repeating schedules (RRULE) and projects (goals double as projects)
-- **Calendar** with repeating events and per-occurrence exceptions
-- **Markdown notes** with GitHub-flavoured rendering (tables, footnotes, heading anchors), output sanitised by DOMPurify, and syntax highlighting that loads only when a note contains code
-- **Goals** with milestones
-- **Files**: folders, uploads, rename, move, star and download, stored in Cloudflare R2
-- **Spiritual**: daily ayah in Arabic with an English translation, a hadith, prayer times and the Hijri date. Prayer times come from JAKIM e-Solat (any zone) or Aladhan (city or GPS, with a calculation method and Asr school). The Hijri date is a separate choice: JAKIM's moon sighting, Umm al-Qura, the Saudi council, Diyanet or an astronomical calculation, switching at midnight or Maghrib
-- **Authenticator**: a TOTP code generator for your other accounts (see [Authenticator (2FA codes)](#-authenticator-2fa-codes))
-- **World clocks**, and a **time zone** setting that follows the device (so travelling needs no action) or pins any IANA zone
-- **Installable PWA** with an offline fallback, an editable brand name and a choice of in-app icon (the Raqmi mark, the feather pen and other built-ins, or your own image by upload or link)
-- **Date format** you can set to dd/mm/yyyy, mm/dd/yyyy, ISO or any pattern you write, applied to task dates, the calendar and date fields
-- **Search palette** across tasks, notes, goals, events and pages
-- **Keyboard shortcuts** (listed [below](#%EF%B8%8F-keyboard-shortcuts))
-- **Cross-device clipboard**: scratch text saved to your account, so it shows up on your other devices
-- **Workspace export** to JSON, and a **Save screenshot** action in the profile menu
+Everything below is under **Settings**.
 
-### 🧱 Stack
-
-| Layer | What |
+| Setting | What you can change |
 | --- | --- |
-| UI | Vite 7, React 19, TypeScript, Tailwind CSS 4, Zustand |
-| Notes | `marked` (+ `marked-footnote`) and `DOMPurify`; `highlight.js` is lazy-loaded |
-| API | Cloudflare Pages Functions: one catch-all function, [`functions/api/[[path]].ts`](functions/api/%5B%5Bpath%5D%5D.ts), routes to service classes in `server/` |
-| Data | Cloudflare D1 (binding `DB`) and Cloudflare R2 (binding `BUCKET`) |
-| Auth | Username and password (bcrypt) with an HTTP-only, `SameSite=Strict` session cookie |
+| Brand name | The `raqmi.` wordmark in the sidebar, sign-in screen, footer and tab title. The installed app is always called "Dashboard". |
+| App icon | The Raqmi mark, the original feather pen, a few other icons, or your own image by upload or by link. It changes the sidebar, sign-in and tab icon. |
+| Time zone | Follow the device (so travelling needs nothing) or pin any IANA zone. "Today" means today in that zone everywhere. |
+| Date format | `dd/mm/yyyy`, `mm/dd/yyyy`, ISO, or any pattern you write with `d`, `m`, `y` and `eee` for the weekday. Date boxes follow it too. |
+| Prayer times | [JAKIM e-Solat](https://www.e-solat.gov.my/) (any of its 60 zones) or [Aladhan](https://aladhan.com/) by city or GPS, with a calculation method and Asr school. |
+| Hijri date | JAKIM's moon sighting, Umm al-Qura, the Saudi Hijri council, Diyanet or an astronomical calculation. The day can change at midnight or at Maghrib, with a ±3 day adjustment. |
+| Profile, widgets, clocks | Display name, profile picture, which Overview widgets show, and your world clocks. |
 
-The app has no charts. There is also no automated test suite yet; `npm run typecheck` is the only check.
+JAKIM and the published calendars can disagree by a day, so the Hijri source is your choice. Always check your local mosque for verified times.
 
-### 🗂️ Project layout
+## Quick start
 
-```
-src/
-  app/                Workspace shell: Sidebar, Topbar, ContextRail, search palette, shortcuts and theme hooks
-  features/           One folder per feature: tasks, notes, calendar, goals, files, spiritual, settings, authenticator, brand, auth
-  components/         Shared UI (Icon, Modal, BrandMark, Avatar)
-  store/              Zustand store, data types and selectors
-  lib/                ApiClient, date and time-zone helpers
-  pwa/                Service worker registration and the install prompt
-  styles/             Ordered CSS files (base, layout, per-feature, responsive, light theme)
-server/               API: api.ts (router class), procedures.ts (query/mutation allowlists), auth.ts, db.ts, cache.ts, services/*
-functions/api/        Pages Functions entry point that hands every /api/* request to server/api.ts
-db/migrations/        Numbered SQL migrations; 0001 is the production baseline
-public/               logo.png (the original artwork), the installed-app icons (python3 scripts/build-icons.py), manifest, service worker, offline page
-scripts/              seed-admin.mjs prints the SQL for a new login; build-icons.py renders the installed-app icons from logo.png
-wrangler.toml         Local Pages config (gitignored); copy wrangler.toml.example
-.dev.vars.example     Template for local secrets
-```
+You need **Node 20.19 or newer**. A Cloudflare account is only needed to deploy; local development uses Wrangler's emulated D1 and R2.
 
----
-
-### 🚀 Local development
-
-#### 1. Install
 ```bash
 git clone https://github.com/ar-Raqmi/dashboard.git
 cd dashboard
 npm install
+
+cp .dev.vars.example .dev.vars          # then set JWT_SECRET inside it
+cp wrangler.toml.example wrangler.toml  # local config, gitignored
 ```
 
-#### 2. Local secrets
-```bash
-cp .dev.vars.example .dev.vars
-```
-Set `JWT_SECRET` in `.dev.vars`. This file is gitignored, so never commit it. It is the only secret the SPA reads.
+D1 and R2 are **bindings** declared in `wrangler.toml`, not environment variables, and `JWT_SECRET` is the only secret the app reads. Wrangler keeps the local data under `.wrangler/`.
 
-There is no `.env` and no `DATABASE_URL`. D1 and R2 are **bindings** declared in `wrangler.toml` (copy [`wrangler.toml.example`](wrangler.toml.example) and fill in your IDs). They are not environment variables. Locally, Wrangler emulates both bindings and keeps their data under `.wrangler/`.
+Create the local database and your login:
 
-#### 3. Create the local D1 database
-The local D1 database starts empty. Apply the migrations, then add a login (the app has no sign-up screen):
 ```bash
 npx wrangler d1 migrations apply dashboard-db --local
 node scripts/seed-admin.mjs you 'your-password' > .wrangler/seed.sql
 npx wrangler d1 execute dashboard-db --local --file=.wrangler/seed.sql
 ```
-Use the `database_name` from `wrangler.toml` in place of `dashboard-db` if you renamed it.
 
-#### 4. Run
-The API exists only as Pages Functions, so `wrangler pages dev` has to run for logins and data to work.
+Use the `database_name` from `wrangler.toml` instead of `dashboard-db` if you changed it. Then run it:
 
 ```bash
-npm run preview      # builds, then runs `wrangler pages dev` (SPA + functions + local D1/R2) on :8788
+npm run preview      # builds, then serves the app and its API on http://localhost:8788
 ```
 
-For hot reload, run Vite as well. It proxies `/api` to `:8788`:
-```bash
-npm run preview      # terminal 1: functions on :8788
-npm run dev          # terminal 2: Vite dev server with HMR
-```
+The API only exists as Pages Functions, so `npm run preview` is the one that has to run. For hot reload, keep it running in one terminal and start `npm run dev` in another; Vite proxies `/api` to `:8788`.
 
 | Script | Does |
 | --- | --- |
-| `npm run dev` | Vite dev server (frontend only; `/api` is proxied to `:8788`) |
+| `npm run dev` | Vite dev server (frontend only, `/api` proxied to `:8788`) |
 | `npm run build` | Type-check, then build to `dist/` |
-| `npm run typecheck` | `tsc -b` across the app and functions |
+| `npm run typecheck` | `tsc -b` over the app and the functions |
 | `npm run preview` | Build, then `wrangler pages dev` |
-| `npm run deploy` | Build, then deploy to Cloudflare Pages (see below) |
+| `npm run deploy` | Build, then publish to production (see below) |
 
----
+## Deploy
 
-### 🌐 Deployment
-
-`wrangler.toml` defines the Pages project name, the build output (`dist`), the migrations folder, and the `DB` (D1) and `BUCKET` (R2) bindings. If you fork the project, point it at your own D1 database and R2 bucket:
+Deployment is Cloudflare Pages with a D1 database and an R2 bucket.
 
 ```bash
 npx wrangler login
-npx wrangler d1 create <your-db-name>             # copy the name and id into wrangler.toml
-npx wrangler r2 bucket create <your-bucket-name>  # copy the name into wrangler.toml
+npx wrangler d1 create <your-db-name>              # put the name and id in wrangler.toml
+npx wrangler r2 bucket create <your-bucket-name>   # put the name in wrangler.toml
 npx wrangler d1 migrations apply <your-db-name> --remote
-```
 
-Set the secret:
-```bash
 npx wrangler pages secret put JWT_SECRET --project-name=<project> --env=production
 npx wrangler pages secret put JWT_SECRET --project-name=<project> --env=preview
 ```
 
-Deploy:
+Add your login to the remote database the same way as locally, with `--remote` instead of `--local`.
+
+The `deploy` script in `package.json` has the author's project name in it (`ar-raqmi`). Change `--project-name` before you run it on your own account:
+
 ```bash
 npm run deploy
 ```
 
 > [!IMPORTANT]
-> `npm run deploy` runs `wrangler pages deploy dist --project-name=ar-raqmi --branch=main`, which **replaces the production site**. To try a build first, run `npm run build && npx wrangler pages deploy dist --project-name=<project> --branch=<other-branch>`. That publishes a preview that reads the **same D1 and R2** as production.
+> `npm run deploy` publishes with `--branch=main`, which **replaces the production site**. Apply new migrations to the remote database first. To try a build instead, run `npm run build && npx wrangler pages deploy dist --project-name=<project> --branch=<another-branch>`. That preview reads the **same D1 and R2** as production.
 
 > [!WARNING]
-> **Preview and production have separate secrets.** A `JWT_SECRET` set on the production environment is **not** available to preview branches. Set it on both (see the commands above), or preview deployments will show the Authenticator as locked.
+> Preview and production have separate secrets. A `JWT_SECRET` set for production is not available to preview branches, so set both or the Authenticator shows as locked there.
 
----
+To install it as an app, open the site in Chrome, Edge or Helium and use the browser's install option, or **Settings → App**. Safari on Mac uses Share → Add to Dock.
 
-### 🔐 Authenticator (2FA codes)
+## Authenticator
 
-The Authenticator page stores TOTP secrets for **your other accounts** (GitHub, email and so on) and shows their current and next 6-digit codes, like Google Authenticator or Authy. Signing in to the dashboard itself uses only a username and password.
+The Authenticator stores TOTP secrets for **your other accounts** (GitHub, email and so on) and shows their current and next 6-digit codes, like Google Authenticator. Signing in to the dashboard itself uses only a username and password.
 
 To add an account:
-1. Open **Authenticator** in the sidebar (under Personal).
-2. Add an account. Enter the account name, then paste the service's **Base32 setup key**: the text secret that services show next to their QR code, often behind "Can't scan it?" or "Enter key manually". There is no QR scanning. Spaces and dashes are removed, and the key must be at least 16 Base32 characters.
-3. Optionally, give it a category (for example, Work). You can remove the entry later.
+1. Open **Authenticator** in the sidebar.
+2. Enter the account name and paste the service's **Base32 setup key**, the text secret shown next to the QR code (often behind "Can't scan it?"). There is no QR scanning. Spaces and dashes are removed, and the key needs at least 16 Base32 characters.
+3. Optionally give it a category.
 
-Secrets are encrypted with AES-GCM using a key derived from `JWT_SECRET`.
+Secrets are encrypted with AES-GCM, using the first 32 characters of `JWT_SECRET` as the key.
 
 > [!IMPORTANT]
-> **`JWT_SECRET` controls access to every stored 2FA secret.**
-> - **If `JWT_SECRET` is missing,** the app does not fall back to a default key. The Authenticator reports itself as **locked**: it shows no codes and refuses to add or update secrets, which fails with a 503 error.
-> - **If `JWT_SECRET` is changed,** entries encrypted with the old value can no longer be decrypted. The app marks them as **undecryptable** and does not show wrong codes. Changing the secret effectively locks you out of those entries until the original value is restored. Either keep the secret stable, or re-add every account after changing it.
-> - Use the same value locally (`.dev.vars`) as in production if your local setup reads production data. Use it on preview branches too (see the warning above).
+> **`JWT_SECRET` protects every stored 2FA secret.**
+> - If it is **missing**, there is no fallback key. The Authenticator shows as **locked**, shows no codes and refuses to add or change anything.
+> - If it **changes**, old entries can no longer be decrypted. They are marked **undecryptable** and never show a wrong code. Keep the secret stable, or re-add the accounts after changing it.
+> - Use the same value locally (`.dev.vars`) as in production if your local setup reads production data.
 
----
-
-### ⌨️ Keyboard shortcuts
+## Keyboard shortcuts
 
 | Keys | Action |
 | --- | --- |
@@ -180,24 +154,25 @@ Secrets are encrypted with AES-GCM using a key derived from `JWT_SECRET`.
 | <kbd>/</kbd> | Open search from anywhere |
 | <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>B</kbd> | Collapse or expand the sidebar |
 | <kbd>N</kbd> | New task |
-| <kbd>Q</kbd> | Quick capture (new note) |
+| <kbd>Q</kbd> | Quick capture (a new note) |
 | <kbd>Esc</kbd> | Close menus and dialogs |
 
-The single-letter shortcuts do nothing while you are typing in a field or while a dialog is open. In the search palette, <kbd>↑</kbd>/<kbd>↓</kbd> moves between results and <kbd>Enter</kbd> opens one.
+The single-letter keys do nothing while you are typing in a field or while a dialog is open. In the search palette, <kbd>↑</kbd> and <kbd>↓</kbd> move between results and <kbd>Enter</kbd> opens one.
 
----
+## The downsides
 
-### 🎬 Demo
+- **One user.** There is no sign-up and no sharing, and every query is scoped to a single account.
+- **Cloudflare only.** It uses D1, R2 and Pages Functions directly, so moving to another host means rewriting `server/`.
+- **Offline is only the shell.** The app opens offline, but your data needs a connection. Nothing is cached from the API on purpose.
+- **Prayer times need the internet.** They come from JAKIM and Aladhan, and are cached at the edge for a few hours. If a source is down, the page says so and does not fall back to another one.
+- **Aladhan guesses unknown cities.** Check the time zone shown next to the times, or use coordinates.
+- **JAKIM is Malaysia only.** Outside Malaysia, use Aladhan.
+- **The Authenticator has no QR scanner**, and its key is the first 32 characters of `JWT_SECRET`, not a derived key.
+- **No automated tests yet.** `npm run typecheck` and the build are the only checks.
 
-*No recording yet.* A demo should cover:
-- [ ] Sign in, then the Overview (ayah, today's tasks, pinned notes, clipboard)
-- [ ] Switching between light and dark
-- [ ] Creating a task with <kbd>N</kbd> and a note with <kbd>Q</kbd>; a note with code blocks and a table rendered
-- [ ] Calendar, Goals with milestones, and uploading a file in Files
-- [ ] Spiritual page (Arabic ayah, hadith, prayer times, Hijri date) and the Authenticator's rotating codes, using a dummy secret
-- [ ] Search palette (<kbd>⌘K</kbd>) and collapsing the sidebar (<kbd>⌘B</kbd>)
+## Contributing
 
----
+Bug reports and ideas are welcome as issues. Run `npm run typecheck` and `npm run build` before sending a change, and see [`CLAUDE.md`](CLAUDE.md) for how the code is organised and the conventions it follows.
 
 ---
 
