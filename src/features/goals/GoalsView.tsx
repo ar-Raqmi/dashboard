@@ -7,7 +7,7 @@ import { ConfirmModal, Modal } from '@/components/Modal';
 export function GoalsView({ notify }: { notify: (message: string) => void }) {
   const goals = useStore(s => s.goals);
   const toggleMilestone = useStore(s => s.toggleMilestone), mutate = useStore(s => s.mutate);
-  const [deleting, setDeleting] = useState<GoalView | null>(null), [renaming, setRenaming] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<GoalView | null>(null), [renaming, setRenaming] = useState<string | null>(null), [editingMilestone, setEditingMilestone] = useState<string | null>(null);
   const [tab, setTab] = useState<'ongoing' | 'complete'>('ongoing');
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const fail = (err: unknown) => notify((err as Error).message);
@@ -20,6 +20,13 @@ export function GoalsView({ notify }: { notify: (message: string) => void }) {
     if (!label) return;
     setDrafts(d => ({ ...d, [goal.id]: '' }));
     void mutate('goals:addMilestone', { goalId: goal.id, label }, ['goals']).catch(fail);
+  }
+
+  function saveMilestone(id: string, current: string, value: string) {
+    setEditingMilestone(null);
+    const label = value.trim();
+    if (!label || label === current) return;
+    void mutate('goals:updateMilestone', { id, label }, ['goals']).catch(fail);
   }
 
   const ongoing = goals.filter(g => !isGoalComplete(g)), complete = goals.filter(isGoalComplete);
@@ -52,10 +59,15 @@ export function GoalsView({ notify }: { notify: (message: string) => void }) {
       <div className="goal-progress-meta"><span>{total ? `${done} of ${total} milestones complete` : 'No milestones yet. Set progress manually or add one below.'}</span><span>{goal.progress >= 100 ? 'Complete' : goal.progress > 0 ? 'In motion' : 'Not started'}</span></div>
       {!total && <input type="range" min={0} max={100} step={5} defaultValue={goal.progress} aria-label={`${goal.title} progress`} className="mt-3 w-full" onPointerUp={e => void mutate('goals:update', { id: goal.id, progress: Number(e.currentTarget.value) }, ['goals']).catch(fail)} onKeyUp={e => void mutate('goals:update', { id: goal.id, progress: Number(e.currentTarget.value) }, ['goals']).catch(fail)}/>}
       <div className="milestone-list">{goal.milestones.map(m => <div key={m.id} className="group flex items-center">
+        {editingMilestone === m.id
+          ? <input className="milestone-edit" aria-label="Milestone name" autoFocus defaultValue={m.label} maxLength={300} onBlur={e => saveMilestone(m.id, m.label, e.target.value)} onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') setEditingMilestone(null); }}/>
+          : <>
         <button className={cn('flex flex-1 items-center gap-[9px] px-1 py-2.5 text-left text-xs text-[var(--subtle)] hover:text-[var(--fg)]', m.completed && 'text-[var(--muted)] line-through')} aria-pressed={m.completed} onClick={() => void toggleMilestone(goal.id, m.id).catch(fail)}><span className={`task-checkbox ${m.completed ? 'checked' : ''}`}>{m.completed && <Icon name="check" size={11}/>}</span>{m.label}</button>
+        <button className="icon-button compact opacity-0 group-hover:opacity-100 focus:opacity-100" title="Edit milestone" aria-label={`Edit ${m.label}`} onClick={() => setEditingMilestone(m.id)}><Icon name="pen" size={13}/></button>
         <button className="icon-button compact opacity-0 group-hover:opacity-100 focus:opacity-100" title="Remove milestone" aria-label={`Remove ${m.label}`} onClick={() => void mutate('goals:removeMilestone', { id: m.id }, ['goals']).catch(fail)}><Icon name="close" size={13}/></button>
+          </>}
       </div>)}</div>
-      <form className="inline-search mt-3" onSubmit={e => addMilestone(e, goal)}><Icon name="plus" size={14}/><input aria-label={`Add a milestone to ${goal.title}`} placeholder="Add a milestone..." maxLength={300} value={drafts[goal.id] || ''} onChange={e => setDrafts(d => ({ ...d, [goal.id]: e.target.value }))}/></form>
+      <form className="inline-search milestone-add mt-3" onSubmit={e => addMilestone(e, goal)}><Icon name="plus" size={14}/><input aria-label={`Add a milestone to ${goal.title}`} placeholder="Add a milestone..." maxLength={300} value={drafts[goal.id] || ''} onChange={e => setDrafts(d => ({ ...d, [goal.id]: e.target.value }))}/></form>
     </section>;
   })}
     {deleting && <ConfirmModal title="Delete this project?" message={`"${deleting.title}" and its milestones will be removed.`} onClose={() => setDeleting(null)} onConfirm={() => { const goal = deleting; setDeleting(null); void mutate('goals:remove', { id: goal.id }, ['goals']).then(() => notify('Project deleted')).catch(fail); }}/>}
