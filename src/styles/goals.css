@@ -15,3 +15,7 @@
 .milestone-list > button:hover { color: var(--fg); }
 .milestone-list > button.done { color: var(--muted); text-decoration: line-through; }
 .milestone-list .task-checkbox { width: 13px; height: 13px; }
+
+.inline-search.milestone-add { height: 38px; }
+.inline-search.milestone-add > input { flex: 1; min-width: 0; width: auto; font-size: 12px; }
+.milestone-edit { flex: 1; min-width: 0; margin: 4px 0; padding: 6px 8px; font-size: 12px; border: 1px solid var(--border); border-radius: 6px; background: transparent; }
